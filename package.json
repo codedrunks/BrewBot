@@ -2,7 +2,8 @@
   "name": "bot",
   "version": "0.1.0",
   "scripts": {
-    "start": "ts-node src/bot.ts"
+    "start": "ts-node src/bot.ts",
+    "test": "ts-node test.ts"
   },
   "repository": {
     "type": "git",
@@ -15,11 +16,15 @@
   "homepage": "https://github.com/Jabrils-Discord-Server/bot#readme",
   "devDependencies": {
     "@types/node": "^17.0.23",
+    "@typescript-eslint/eslint-plugin": "^5.19.0",
+    "@typescript-eslint/parser": "^5.19.0",
+    "eslint": "^8.13.0",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
   },
   "dependencies": {
     "discord.js": "^13.6.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "svcorelib": "^1.14.2"
   }
 }

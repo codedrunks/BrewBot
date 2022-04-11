@@ -1,12 +1,16 @@
 import { Client, Message } from "discord.js";
+import { unused } from "svcorelib";
 
+/** Base class for all bot commands */
 export abstract class Command {
-    constructor(meta: CommandMeta)
-    {
+	/** Base class for all bot commands */
+	constructor(meta: CommandMeta)
+	{
+		unused(meta);
+	}
 
-    }
-
-    abstract run(client: Client, msg: Message): void;
+    /** This method is called whenever this commands is run by a user */
+    abstract run(client: Client, msg: Message): Promise<unknown>;
 }
 
 export interface CommandMeta {
