@@ -3,7 +3,7 @@
         "target": "ESNext",
         "module": "CommonJS",
         "rootDir": "./src/",
-        "outDir": "./dist/",
+        "outDir": "./out/",
         "strict": true,
         "moduleResolution": "node",
         "importHelpers": true,
@@ -17,7 +17,7 @@
         "typeRoots": [
             "node_modules/@types"
         ],
-        "sourceMap": false,
+        "sourceMap": true,
         "baseUrl": "./"
     },
     "files": [

@@ -25,6 +25,7 @@
   "dependencies": {
     "discord.js": "^13.6.0",
     "dotenv": "^16.0.0",
+    "kleur": "^4.1.4",
     "svcorelib": "^1.14.2"
   }
 }

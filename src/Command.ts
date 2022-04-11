@@ -1,26 +1,94 @@
-import { Client, Message } from "discord.js";
-import { unused } from "svcorelib";
+import { ApplicationCommandDataResolvable, CommandInteraction, PermissionFlags } from "discord.js";
+import { SlashCommandBuilder } from "@discordjs/builders";
+
+
+export interface CommandMeta {
+    name: string;
+    desc: string;
+    /** Required permission(s) to run this command */
+    perms?: (keyof PermissionFlags)[];
+    /** Optional array of arguments this command has */
+    args?: {
+        name: string;
+        desc: string;
+        /** Defaults to `false` */
+        required?: boolean;
+        // /** A set of predefined choices the user can pick from for this argument */
+        // choices?: {
+        //     name: string;
+        //     value: string;
+        // }[];
+    }[];
+}
+
 
 /** Base class for all bot commands */
 export abstract class Command {
+	readonly meta: CommandMeta;
+	protected slashCmdJson: ApplicationCommandDataResolvable;
+
 	/** Base class for all bot commands */
-	constructor(meta: CommandMeta)
+	constructor(inMeta: CommandMeta)
 	{
-		unused(meta);
+		// prepare metadata
+
+		const fallbackMeta = {
+			perm: "user",
+			args: [],
+		} as { perm: "user", args: [] };
+
+		this.meta = { ...fallbackMeta, ...inMeta };
+		const { name, desc, args } = this.meta;
+
+		// build slash command
+
+		const data = new SlashCommandBuilder()
+			.setName(name)
+			.setDescription(desc);
+
+		Array.isArray(args) && args.forEach(arg => {
+			data.addStringOption(opt => 
+				opt.setName(arg.name)
+					.setDescription(arg.desc)
+					.setRequired(arg.required ?? false)
+			);
+		});
+
+		this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
 	}
 
-    /** This method is called whenever this commands is run by a user */
-    abstract run(client: Client, msg: Message): Promise<unknown>;
-}
+	/**
+     * Returns the slash command JSON data (needed when registering commands)
+     */
+	public getSlashCmdJson(): ApplicationCommandDataResolvable
+	{
+		return this.slashCmdJson;
+	}
 
-export interface CommandMeta {
-    /** Main command and its aliases */
-    aliases: string[];
-    /** Everything regarding the /help command */
-    help: {
-        /** Help text description */
-        desc: string;
-    };
-    /** Required permission level to run this command */
-    perm?: "user" | "mod";
+	/**
+     * Checks if the provided GuildMember has the permission to run this command
+     */
+	public hasPerm({ memberPermissions }: CommandInteraction): boolean
+	{
+		const { perms } = this.meta;
+		const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+
+		return !hasPerms.includes(false);
+	}
+
+	/**
+     * Tries to run this command (if the user doesn't have perms this resolves null)
+     */
+	public async tryRun(interaction: CommandInteraction): Promise<unknown>
+	{
+		if(this.hasPerm(interaction))
+			return this.run(interaction);
+		return null; // TODO: error response?
+	}
+
+    /**
+     * This method is called whenever this commands is run by a user, after verifying the permissions
+     * @abstract This method needs to be overridden in a sub-class
+     */
+    abstract run(interaction: CommandInteraction): Promise<unknown>;
 }
