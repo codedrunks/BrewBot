@@ -86,6 +86,14 @@ export abstract class Command {
 		return null; // TODO: error response?
 	}
 
+	/**
+	 * Resolves a flat object of command arguments from an interaction
+	 */
+	public resolveArgs({ options }: CommandInteraction): Record<string, string>
+	{
+		return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
+	}
+
     /**
      * This method is called whenever this commands is run by a user, after verifying the permissions
      * @abstract This method needs to be overridden in a sub-class

@@ -9,7 +9,7 @@ dotenv.config();
 function init()
 {
 	const client = new Client({
-		intents: [],
+		intents: [ "GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_PRESENCES" ],
 	});
 
 	client.login(process.env.BOT_TOKEN);

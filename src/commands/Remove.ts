@@ -23,14 +23,24 @@ export class Remove extends Command {
 		super(meta);
 	}
 
-	async run({ reply }: CommandInteraction): Promise<void> {
+	async run(int: CommandInteraction): Promise<void> {
+		const { reply, channel, replied } = int;
+		const args = this.resolveArgs(int);
+		const amtRaw = parseInt(args?.amount);
+		const amount = Math.min(Math.max(amtRaw, 1), 50);
+
 		try
 		{
-			await reply({ embeds: [ new MessageEmbed().setDescription("chungus") ] });
-			console.log("reply sent");
+			if(!isNaN(amtRaw) && channel?.type === "GUILD_TEXT")
+			{
+				await channel.bulkDelete(amount);
+				await reply(`Deleted ${amount} message${amount !== 1 ? "s" : ""}`);
+			}
+			else await reply(`Couldn't bulk delete messages`);
 		}
 		catch(err)
 		{
+			!replied && await reply(`Couldn't bulk delete messages`);
 			console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
 		}
 	}
