@@ -82,7 +82,7 @@ export abstract class Command {
 	public async tryRun(interaction: CommandInteraction): Promise<unknown>
 	{
 		if(this.hasPerm(interaction))
-			return this.run(interaction);
+			return await this.run(interaction);
 		return null; // TODO: error response?
 	}
 

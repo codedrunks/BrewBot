@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction } from "discord.js";
 import k from "kleur";
 import { Command, CommandMeta } from "../Command";
 

@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "start": "ts-node src/bot.ts",
-    "test": "ts-node test.ts"
+    "test": "ts-node test.ts",
+    "watch": "nodemon --watch \"ts-node src/bot.ts\""
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13.0",
+    "nodemon": "^2.0.16",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
   },
@@ -27,5 +29,8 @@
     "dotenv": "^16.0.0",
     "kleur": "^4.1.4",
     "svcorelib": "^1.14.2"
+  },
+  "nodemonConfig": {
+    "ignore": [ "out/*" ]
   }
 }

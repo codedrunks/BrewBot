@@ -63,7 +63,7 @@ async function registerCommands(client: Client)
 
 		// listen for slash commands
 
-		client.on("interactionCreate", interaction => {
+		client.on("interactionCreate", async interaction => {
 			if(!interaction.isCommand())
 				return;
 
@@ -74,7 +74,7 @@ async function registerCommands(client: Client)
 			if(!cmd)
 				return;
 
-			cmd.tryRun(interaction);
+			await cmd.tryRun(interaction);
 		});
 	}
 	catch(err: unknown)
