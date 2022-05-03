@@ -36,11 +36,11 @@ export class Remove extends Command {
 				await channel.bulkDelete(amount);
 				await reply(`Deleted ${amount} message${amount !== 1 ? "s" : ""}`);
 			}
-			else await reply(`Couldn't bulk delete messages`);
+			else await reply("Couldn't bulk delete messages");
 		}
 		catch(err)
 		{
-			!replied && await reply(`Couldn't bulk delete messages`);
+			!replied && await reply("Couldn't bulk delete messages");
 			console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
 		}
 	}
