@@ -2,9 +2,9 @@
   "name": "bot",
   "version": "0.1.0",
   "scripts": {
-    "start": "ts-node src/bot.ts",
+    "start": "tsc && node out/bot.js",
     "test": "ts-node test.ts",
-    "watch": "nodemon --watch \"ts-node src/bot.ts\""
+    "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start"
   },
   "repository": {
     "type": "git",
@@ -25,12 +25,19 @@
     "typescript": "^4.6.3"
   },
   "dependencies": {
+    "@discordjs/rest": "^0.4.1",
+    "discord-api-types": "^0.32.1",
     "discord.js": "^13.6.0",
     "dotenv": "^16.0.0",
     "kleur": "^4.1.4",
     "svcorelib": "^1.14.2"
   },
   "nodemonConfig": {
-    "ignore": [ "out/*" ]
+    "watch": [
+      "src/*"
+    ],
+    "ignore": [
+      "out/*"
+    ]
   }
 }

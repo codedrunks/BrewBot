@@ -94,6 +94,11 @@ export abstract class Command {
 		return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
 	}
 
+	public async reply(int: CommandInteraction, content: string)
+	{
+		await int.reply({ content, ephemeral: true });
+	}
+
     /**
      * This method is called whenever this commands is run by a user, after verifying the permissions
      * @abstract This method needs to be overridden in a sub-class

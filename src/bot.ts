@@ -1,10 +1,16 @@
 import { ApplicationCommandDataResolvable, Client } from "discord.js";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v9";
 import dotenv from "dotenv";
 import k from "kleur";
 import { Command } from "./Command";
 import { commands } from "./commands";
 
 dotenv.config();
+
+const rest = new REST({
+	version: "9"
+}).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
 function init()
 {
@@ -15,7 +21,7 @@ function init()
 	client.login(process.env.BOT_TOKEN);
 
 	client.on("ready", async ({ user, guilds }) => {
-		console.log(`${user.username} is ready in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}.`);
+		console.log(`${user.username} is ready in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
 
 		await registerCommands(client);
 	});
@@ -34,7 +40,6 @@ const cmds: Command[] = [];
  */
 async function registerCommands(client: Client)
 {
-	const { guilds } = client;
 	const slashCmds: ApplicationCommandDataResolvable[] = [];
 
 	try
@@ -44,22 +49,13 @@ async function registerCommands(client: Client)
 		for(const c of cmds)
 			slashCmds.push(c.getSlashCmdJson());
 
-		guilds.cache.forEach(async guild => {
-			const slashCmdsData = await guild.commands.set(slashCmds);
+		await rest.put(
+			Routes.applicationCommands(process.env.CLIENT_ID ?? "ERR_NO_ENV"), {
+				body: slashCmds
+			},
+		);
 
-			console.log(`Registered ${k.green(slashCmdsData.size)} slash command${slashCmdsData.size != 1 ? "s" : ""}.`);
-		});
-
-		client.on("guildCreate", async guild => {
-			try
-			{
-				await guild.commands.set(slashCmds);
-			}
-			catch (err)
-			{
-				console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
-			}
-		});
+		console.log(`Registered ${k.green(slashCmds.length)} command${slashCmds.length != 1 ? "s" : ""}`);
 
 		// listen for slash commands
 
