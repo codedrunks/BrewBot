@@ -30,10 +30,10 @@ export class Say extends Command {
 		if(args.message)
 		{
 			let sendChannel: TextBasedChannel | null | undefined;
-			if(!args.channel)
-				sendChannel = int.channel;
+			if(args.channel)
+				sendChannel = int.guild?.channels.cache.find(ch => ch.name.toLowerCase() === args.channel.toLowerCase()) as TextBasedChannel;
 			else
-				sendChannel = int.guild?.channels.cache.find(ch => ch.name.toLowerCase() === args.channel) as TextBasedChannel;
+				sendChannel = int.channel;
 
 			if(typeof sendChannel?.send === "function")
 			{
