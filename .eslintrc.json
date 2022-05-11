@@ -1,6 +1,6 @@
-module.exports = {
+{
 	"env": {
-		"es2021": true,
+		"es6": true,
 		"node": true
 	},
 	"extends": [
@@ -19,21 +19,10 @@ module.exports = {
 		"out/**"
 	],
 	"rules": {
-		"indent": [
-			"error",
-			"tab"
-		],
-		"linebreak-style": [
-			"error",
-			"unix"
-		],
-		"quotes": [
-			"error",
-			"double"
-		],
-		"semi": [
-			"error",
-			"always"
-		]
+		"indent": [ "error", "spaces", 4 ],
+		"linebreak-style": [ "error", "unix" ],
+		"quotes": [ "error", "double" ],
+		"semi": [ "error", "always" ],
+		"eol-last": [ "error", "always" ]
 	}
-};
+}

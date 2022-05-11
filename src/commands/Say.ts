@@ -16,7 +16,7 @@ export class Say extends Command {
 				},
 				{
 					name: "channel",
-					desc: "Which channel to send the message in, leave empty for this channel"
+					desc: "Which channel to send the message in, leave empty for the current channel"
 				}
 			]
 		};

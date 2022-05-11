@@ -37,7 +37,10 @@
       "src/*"
     ],
     "ignore": [
-      "out/*"
+      "out/*",
+      "node_modules/*",
+      "test.js",
+      "test.ts"
     ]
   }
 }

@@ -2,6 +2,7 @@ import { ApplicationCommandDataResolvable, CommandInteraction, PermissionFlags }
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 
+/** Meta information of a Command instance */
 export interface CommandMeta {
     name: string;
     desc: string;
@@ -28,16 +29,16 @@ export abstract class Command {
 	protected slashCmdJson: ApplicationCommandDataResolvable;
 
 	/** Base class for all bot commands */
-	constructor(inMeta: CommandMeta)
+	constructor(cmdMeta: CommandMeta)
 	{
 		// prepare metadata
 
 		const fallbackMeta = {
 			perm: "user",
 			args: [],
-		} as { perm: "user", args: [] };
+		};
 
-		this.meta = { ...fallbackMeta, ...inMeta };
+		this.meta = { ...fallbackMeta, ...cmdMeta };
 		const { name, desc, args } = this.meta;
 
 		// build slash command
