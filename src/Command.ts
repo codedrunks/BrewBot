@@ -25,80 +25,80 @@ export interface CommandMeta {
 
 /** Base class for all bot commands */
 export abstract class Command {
-	readonly meta: CommandMeta;
-	protected slashCmdJson: ApplicationCommandDataResolvable;
+    readonly meta: CommandMeta;
+    protected slashCmdJson: ApplicationCommandDataResolvable;
 
-	/** Base class for all bot commands */
-	constructor(cmdMeta: CommandMeta)
-	{
-		// prepare metadata
+    /** Base class for all bot commands */
+    constructor(cmdMeta: CommandMeta)
+    {
+        // prepare metadata
 
-		const fallbackMeta = {
-			perm: "user",
-			args: [],
-		};
+        const fallbackMeta = {
+            perm: "user",
+            args: [],
+        };
 
-		this.meta = { ...fallbackMeta, ...cmdMeta };
-		const { name, desc, args } = this.meta;
+        this.meta = { ...fallbackMeta, ...cmdMeta };
+        const { name, desc, args } = this.meta;
 
-		// build slash command
+        // build slash command
 
-		const data = new SlashCommandBuilder()
-			.setName(name)
-			.setDescription(desc);
+        const data = new SlashCommandBuilder()
+            .setName(name)
+            .setDescription(desc);
 
-		Array.isArray(args) && args.forEach(arg => {
-			data.addStringOption(opt => 
-				opt.setName(arg.name)
-					.setDescription(arg.desc)
-					.setRequired(arg.required ?? false)
-			);
-		});
+        Array.isArray(args) && args.forEach(arg => {
+            data.addStringOption(opt => 
+                opt.setName(arg.name)
+                    .setDescription(arg.desc)
+                    .setRequired(arg.required ?? false)
+            );
+        });
 
-		this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
-	}
+        this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
+    }
 
-	/**
+    /**
      * Returns the slash command JSON data (needed when registering commands)
      */
-	public getSlashCmdJson(): ApplicationCommandDataResolvable
-	{
-		return this.slashCmdJson;
-	}
+    public getSlashCmdJson(): ApplicationCommandDataResolvable
+    {
+        return this.slashCmdJson;
+    }
 
-	/**
+    /**
      * Checks if the provided GuildMember has the permission to run this command
      */
-	public hasPerm({ memberPermissions }: CommandInteraction): boolean
-	{
-		const { perms } = this.meta;
-		const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+    public hasPerm({ memberPermissions }: CommandInteraction): boolean
+    {
+        const { perms } = this.meta;
+        const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
 
-		return !hasPerms.includes(false);
-	}
+        return !hasPerms.includes(false);
+    }
 
-	/**
+    /**
      * Tries to run this command (if the user doesn't have perms this resolves null)
      */
-	public async tryRun(interaction: CommandInteraction): Promise<unknown>
-	{
-		if(this.hasPerm(interaction))
-			return await this.run(interaction);
-		return null; // TODO: error response?
-	}
+    public async tryRun(interaction: CommandInteraction): Promise<unknown>
+    {
+        if(this.hasPerm(interaction))
+            return await this.run(interaction);
+        return null; // TODO: error response?
+    }
 
-	/**
+    /**
 	 * Resolves a flat object of command arguments from an interaction
 	 */
-	public resolveArgs({ options }: CommandInteraction): Record<string, string>
-	{
-		return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
-	}
+    public resolveArgs({ options }: CommandInteraction): Record<string, string>
+    {
+        return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
+    }
 
-	public async reply(int: CommandInteraction, content: string)
-	{
-		await int.reply({ content, ephemeral: true });
-	}
+    public async reply(int: CommandInteraction, content: string)
+    {
+        await int.reply({ content, ephemeral: true });
+    }
 
     /**
      * This method is called whenever this commands is run by a user, after verifying the permissions

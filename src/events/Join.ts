@@ -4,10 +4,10 @@ import { Event } from "../Event";
 
 export class Join extends Event
 {
-	constructor()
-	{
-		super("guildMemberAdd");
-	}
+    constructor()
+    {
+        super("guildMemberAdd");
+    }
 
     async run({ displayName }: GuildMember)
     {

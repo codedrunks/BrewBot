@@ -4,15 +4,16 @@ import { Event } from "../Event";
 
 export class Message extends Event
 {
-	constructor()
-	{
+    constructor()
+    {
         // didn't wanna split this into two files so both new and edited messages are handled in this class
-		super([ "messageCreate", "messageUpdate" ]);
-	}
+        super([ "messageCreate", "messageUpdate" ]);
+    }
 
     async run(msg: DjsMessage<boolean> | PartialMessage, newMsg?: DjsMessage<boolean> | PartialMessage)
     {
-        if(msg.system)
+        // ignore bot and system messages (welcome, nitro boost, community updates)
+        if(msg.author?.bot || msg.system)
             return;
 
         if(typeof newMsg === "undefined")

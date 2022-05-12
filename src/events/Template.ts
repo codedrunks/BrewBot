@@ -3,10 +3,10 @@ import { Event } from "../Event";
 
 export class TEMPLATE extends Event
 {
-	constructor()
-	{
-		super("debug");
-	}
+    constructor()
+    {
+        super("debug");
+    }
 
     async run()
     {

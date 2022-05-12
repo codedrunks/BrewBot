@@ -19,8 +19,7 @@
 		"out/**"
 	],
 	"rules": {
-		"indent": [ "error", "spaces", 4 ],
-		"linebreak-style": [ "error", "unix" ],
+		"indent": [ "error", 4 ],
 		"quotes": [ "error", "double" ],
 		"semi": [ "error", "always" ],
 		"eol-last": [ "error", "always" ]
