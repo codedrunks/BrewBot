@@ -11,7 +11,7 @@ interface PersistentData
 type DataKey = keyof PersistentData;
 
 
-const dataFilePath = "./src/data.json";
+const dataFilePath = "./data.json";
 
 let persistentData: {
     [key: string]: JSONCompatible
