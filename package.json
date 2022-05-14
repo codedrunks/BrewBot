@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/Jabrils-Discord-Server/bot#readme",
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/node": "^17.0.23",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
@@ -29,6 +30,7 @@
     "discord-api-types": "^0.32.1",
     "discord.js": "^13.6.0",
     "dotenv": "^16.0.0",
+    "fs-extra": "^10.1.0",
     "kleur": "^4.1.4",
     "svcorelib": "^1.14.2"
   },

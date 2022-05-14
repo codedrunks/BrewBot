@@ -3,11 +3,13 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import dotenv from "dotenv";
 import k from "kleur";
-import { Command } from "./Command";
+import { allOfType } from "svcorelib";
+
+import persistentData from "./persistentData";
 import { commands } from "./commands";
 import { events } from "./events";
+import { Command } from "./Command";
 import { Event } from "./Event";
-import { allOfType } from "svcorelib";
 
 const { env } = process;
 
@@ -24,9 +26,12 @@ const cmds: Command[] = [];
 const evts: Event[] = [];
 
 
-function init()
+async function init()
 {
     console.log("Initializing...\n");
+
+    await persistentData.init();
+    await persistentData.set("startupTime", Date.now());
 
     if(!allOfType([ env.BOT_TOKEN, env.CLIENT_ID ], "string"))
         throw new Error("Missing environment variable(s). Please correct them according to the .env.template");

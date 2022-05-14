@@ -3,3 +3,4 @@ out/
 .env
 test.ts
 test.js
+data.json
