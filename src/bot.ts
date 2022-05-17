@@ -93,7 +93,7 @@ async function registerCommands(client: Client)
     {
         commands.forEach(CmdClass => cmds.push(new CmdClass()));
 
-        const slashCmds = cmds.map((cur) => cur.getSlashCmdJson());
+        const slashCmds = cmds.map(c => c.getSlashCmdJson());
 
         try
         {
@@ -115,6 +115,8 @@ async function registerCommands(client: Client)
 
             for await(const guild of guilds)
             {
+                // console.log(`Registering guild commands in ${client.guilds.cache.find(g => g.id === guild)?.name}`);
+
                 await rest.put(
                     Routes.applicationGuildCommands(env.CLIENT_ID ?? "ERR_NO_ENV", guild), {
                         body: slashCmds

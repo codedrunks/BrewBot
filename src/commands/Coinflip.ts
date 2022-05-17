@@ -1,8 +1,9 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randRange } from "svcorelib";
 import { Command, CommandMeta } from "../Command";
+import { settings } from "../settings";
 
-// 0: heads, 1: tails
+// idx 0: heads, idx 1: tails - TODO: make some sexy emoji for this specifically maybe?
 const coins = ["🇭","🇹"];
 
 export class Coinflip extends Command {
@@ -26,6 +27,8 @@ export class Coinflip extends Command {
     async run(int: CommandInteraction): Promise<void> {
         const args = this.resolveArgs(int);
 
+        let replyText = "";
+
         if(args.amount)
         {
             const amount = parseInt(args.amount);
@@ -40,11 +43,15 @@ export class Coinflip extends Command {
             for(let i = 0; i < amount; i++)
                 flips.push(coins[randRange(0, 1)]);
 
-            await this.reply(int, `Flipped ${amount} coin${amount != 1 ? "s" : ""}. Result:\n${flips.join(" ")}`, false);
-            return;
+            replyText = `Flipped ${amount} coin${amount != 1 ? "s" : ""}. Result:\n\n${flips.join(" ")}`;
         }
+        else
+            replyText = `You flipped a coin: ${coins[randRange(0, 1)]}`;
 
-        await this.reply(int, `You flipped a coin: ${coins[randRange(0, 1)]}`, false);
-        return;
+        const embed = new MessageEmbed()
+            .setColor(settings.embedColors.default)
+            .setDescription(replyText);
+
+        await this.reply(int, embed, false);
     }
 }

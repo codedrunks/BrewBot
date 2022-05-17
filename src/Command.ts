@@ -1,4 +1,4 @@
-import { ApplicationCommandDataResolvable, CommandInteraction } from "discord.js";
+import { ApplicationCommandDataResolvable, CommandInteraction, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta } from "./types";
 
@@ -40,17 +40,13 @@ export abstract class Command {
         this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
     }
 
-    /**
-     * Returns the slash command JSON data (needed when registering commands)
-     */
+    /** Returns the slash command JSON data (needed when registering commands) */
     public getSlashCmdJson(): ApplicationCommandDataResolvable
     {
         return this.slashCmdJson;
     }
 
-    /**
-     * Checks if the provided GuildMember has the permission to run this command
-     */
+    /** Checks if the GuildMember of a CommandInteraction has the permission to run this command */
     public hasPerm({ memberPermissions }: CommandInteraction): boolean
     {
         const { perms } = this.meta;
@@ -59,32 +55,49 @@ export abstract class Command {
         return !hasPerms.includes(false);
     }
 
-    /**
-     * Called when a user tries to run this command (if the user doesn't have perms this resolves null)
-     */
+    /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
     public async tryRun(interaction: CommandInteraction): Promise<unknown>
     {
-        if(this.hasPerm(interaction))
-            return await this.run(interaction);
-        return null; // TODO: error response?
+        try
+        {
+            if(this.hasPerm(interaction))
+                return await this.run(interaction);
+            else if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: "You don't have the necessary permissions to run this command!", ephemeral: true });
+
+            return null;
+        }
+        catch(err)
+        {
+            if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: `Couldn't run the command due to an error: ${String(err)}`, ephemeral: true });
+            return null;
+        }
     }
 
-    /**
-	 * Resolves a flat object of command arguments from an interaction
-	 */
-    protected resolveArgs({ options }: CommandInteraction): { [key: string]: string }
+    /** Resolves a flat object of command arguments from an interaction */
+    protected resolveArgs({ options }: CommandInteraction): Record<string, string>
     {
         return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
     }
 
-    protected async reply(int: CommandInteraction, content: string, ephemeral = true)
+    /**
+     * Replies to a CommandInteraction
+     * @param int The CommandInteraction to reply to
+     * @param content Can be a string or a single or multiple MessageEmbed instances
+     * @param ephemeral Set to false to make the reply publicly visible. Defaults to true (only visible for the author).
+     */
+    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = true)
     {
-        await int.reply({ content, ephemeral });
+        if(typeof content === "string")
+            await int.reply({ content, ephemeral });
+        else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
+            await int.reply({ embeds: Array.isArray(content) ? content : [content] });
     }
 
     /**
      * This method is called whenever this commands is run by a user, after verifying the permissions
      * @abstract This method needs to be overridden in a sub-class
      */
-    protected abstract run(interaction: CommandInteraction): Promise<unknown>;
+    protected abstract run(int: CommandInteraction): Promise<unknown>;
 }
