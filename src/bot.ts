@@ -40,7 +40,7 @@ async function init()
         intents: [ "GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_PRESENCES" ],
     });
 
-    client.login(env.BOT_TOKEN);
+    client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
 
     client.on("ready", async ({ user, guilds }) => {
         user.setPresence({

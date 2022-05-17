@@ -4,7 +4,8 @@
   "scripts": {
     "start": "tsc && node out/bot.js",
     "test": "ts-node test.ts",
-    "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start"
+    "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start",
+    "clearCommands": "ts-node src/tools/clearCommands.ts"
   },
   "repository": {
     "type": "git",
