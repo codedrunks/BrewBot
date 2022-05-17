@@ -1,28 +1,14 @@
 import { filesystem } from "svcorelib";
 import { readFile, writeFile } from "fs-extra";
+import { PersistentData, DataKey } from "./types";
 
-
-interface PersistentData
-{
-    /** Timestamp of when the bot last started up */
-    startupTime: number;
-    /** Array of the current reaction roles message IDs */
-    reactionMessages: string[];
-    /** Bot logs channel */
-    botLogs: {
-        guild: string;
-        channel: string;
-    }
-}
 
 const defaultData: Partial<PersistentData> = {
     botLogs: {
-        guild: "693878197107949572",
-        channel: "696108019146293360",
+        guild: "693878197107949572", // BAC
+        channel: "696108019146293360", // #bot-logs
     },
 };
-
-type DataKey = keyof PersistentData;
 
 
 const dataFilePath = "./data.json";

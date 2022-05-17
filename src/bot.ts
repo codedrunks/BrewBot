@@ -12,6 +12,9 @@ import { events } from "./events";
 import { Command } from "./Command";
 import { Event } from "./Event";
 
+// TODO: figure out something better
+const firstLaunch = false;
+
 const { env, exit } = process;
 
 dotenv.config();
@@ -49,7 +52,7 @@ async function init()
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
 
-        await user.setAvatar("./assets/avatar.png");
+        firstLaunch && await user.setAvatar("./assets/avatar.png");
 
         await botLogs.init(client);
 

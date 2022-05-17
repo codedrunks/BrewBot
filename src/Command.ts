@@ -1,26 +1,8 @@
-import { ApplicationCommandDataResolvable, CommandInteraction, PermissionFlags } from "discord.js";
+import { ApplicationCommandDataResolvable, CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandMeta } from "./types";
 
-
-/** Meta information of a Command instance */
-export interface CommandMeta {
-    name: string;
-    desc: string;
-    /** Required permission(s) to run this command */
-    perms?: (keyof PermissionFlags)[];
-    /** Optional array of arguments this command has */
-    args?: {
-        name: string;
-        desc: string;
-        /** Defaults to `false` */
-        required?: boolean;
-        // /** A set of predefined choices the user can pick from for this argument */
-        // choices?: {
-        //     name: string;
-        //     value: string;
-        // }[];
-    }[];
-}
+export { CommandMeta };
 
 
 /** Base class for all bot commands */
@@ -78,7 +60,7 @@ export abstract class Command {
     }
 
     /**
-     * Tries to run this command (if the user doesn't have perms this resolves null)
+     * Called when a user tries to run this command (if the user doesn't have perms this resolves null)
      */
     public async tryRun(interaction: CommandInteraction): Promise<unknown>
     {
@@ -90,12 +72,12 @@ export abstract class Command {
     /**
 	 * Resolves a flat object of command arguments from an interaction
 	 */
-    public resolveArgs({ options }: CommandInteraction): Record<string, string>
+    protected resolveArgs({ options }: CommandInteraction): { [key: string]: string }
     {
         return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
     }
 
-    public async reply(int: CommandInteraction, content: string, ephemeral = true)
+    protected async reply(int: CommandInteraction, content: string, ephemeral = true)
     {
         await int.reply({ content, ephemeral });
     }
@@ -104,5 +86,5 @@ export abstract class Command {
      * This method is called whenever this commands is run by a user, after verifying the permissions
      * @abstract This method needs to be overridden in a sub-class
      */
-    abstract run(interaction: CommandInteraction): Promise<unknown>;
+    protected abstract run(interaction: CommandInteraction): Promise<unknown>;
 }
