@@ -49,6 +49,8 @@ async function init()
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
 
+        await user.setAvatar("./assets/avatar.png");
+
         await botLogs.init(client);
 
         await registerCommands(client);
