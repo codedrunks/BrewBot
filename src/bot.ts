@@ -6,6 +6,7 @@ import k from "kleur";
 import { allOfType } from "svcorelib";
 
 import persistentData from "./persistentData";
+import botLogs from "./botLogs";
 import { commands } from "./commands";
 import { events } from "./events";
 import { Command } from "./Command";
@@ -47,6 +48,8 @@ async function init()
             status: "dnd",
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
+
+        await botLogs.init(client);
 
         await registerCommands(client);
         await registerEvents(client);
