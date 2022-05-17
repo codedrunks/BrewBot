@@ -12,19 +12,21 @@ export class Message extends Event
 
     async run(msg: DjsMessage<boolean> | PartialMessage, newMsg?: DjsMessage<boolean> | PartialMessage)
     {
+        const { author, guild } = msg;
+
         // ignore bot and system messages (welcome, nitro boost, community updates)
-        if(msg.author?.bot || msg.system)
+        if(author?.bot || msg.system)
             return;
 
         if(typeof newMsg === "undefined")
         {
             // new message
-            console.log("New message - content:", msg.content);
+            console.log(`[${guild?.name}] New message - content: ${msg.content}`);
         }
         else
         {
             // edited message
-            console.log("Edited message - from:", msg.content, "- to:", newMsg.content);
+            console.log(`[${guild?.name}] Edited message - from: ${msg.content} - to: ${newMsg.content}`);
         }
     }
 }

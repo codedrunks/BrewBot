@@ -37,7 +37,7 @@ export class Say extends Command {
 
             if(typeof sendChannel?.send === "function")
             {
-                sendChannel.send({ content: args.message });
+                await sendChannel.send({ content: args.message });
                 await this.reply(int, "Successfully sent the message");
             }
             else await this.reply(int, "Couldn't find a channel with that name");

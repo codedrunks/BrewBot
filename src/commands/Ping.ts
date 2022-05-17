@@ -14,8 +14,6 @@ export class Ping extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const latency = int.createdTimestamp - Date.now();
-
-        await int.reply({ content: `Pong! API latency: ${latency}ms`, ephemeral: true });
+        await this.reply(int, "Pong!");
     }
 }

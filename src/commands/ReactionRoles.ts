@@ -1,5 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { Command, CommandMeta } from "../Command";
+import persistentData from "../persistentData";
 
 export class ReactionRoles extends Command {
     constructor()
@@ -14,6 +15,14 @@ export class ReactionRoles extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        void int;
+        const { channel } = int;
+
+        const sentMsg = await channel?.send("");
+
+        if(sentMsg)
+        {
+            const { id } = sentMsg;
+            await persistentData.set("reactionMessages", [id]);
+        }
     }
 }

@@ -6,6 +6,8 @@ interface PersistentData
 {
     /** Timestamp of when the bot last started up */
     startupTime: number;
+    /** Array of the current reaction roles message IDs */
+    reactionMessages: string[];
 }
 
 type DataKey = keyof PersistentData;
