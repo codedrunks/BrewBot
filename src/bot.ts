@@ -11,7 +11,7 @@ import { events } from "./events";
 import { Command } from "./Command";
 import { Event } from "./Event";
 
-const { env } = process;
+const { env, exit } = process;
 
 dotenv.config();
 
@@ -62,6 +62,17 @@ async function init()
     client.on("error", err => {
         console.error(`${k.red("Client error:")}\n${err}`);
     });
+
+    ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, async () => {
+        console.log("Shutting down...");
+
+        await client.user?.setPresence({
+            status: "dnd",
+            activities: [{ type: "PLAYING", name: "shutting down..." }]
+        });
+
+        exit(0);
+    }));
 }
 
 /**
@@ -76,13 +87,39 @@ async function registerCommands(client: Client)
 
         const slashCmds = cmds.map((cur) => cur.getSlashCmdJson());
 
-        await rest.put(
-            Routes.applicationCommands(env.CLIENT_ID ?? "ERR_NO_ENV"), {
-                body: slashCmds
-            },
-        );
+        try
+        {
+            // use this when ready for production, as global commands take an hour to update across guilds, while guild commands update instantly
+            // see https://discordjs.guide/interactions/slash-commands.html#global-commands
+            // 
+            // await rest.put(
+            //     Routes.applicationCommands(env.CLIENT_ID ?? "ERR_NO_ENV"), {
+            //         body: slashCmds
+            //     },
+            // );
+            // 
+            // console.log(`• Registered ${k.green(slashCmds.length)} global slash command${slashCmds.length != 1 ? "s" : ""}`);
 
-        console.log(`• Registered ${k.green(slashCmds.length)} global slash command${slashCmds.length != 1 ? "s" : ""}`);
+
+            // guild commands
+            // see https://discordjs.guide/interactions/slash-commands.html#guild-commands
+            const guilds = [ "693878197107949572" ];
+
+            for await(const guild of guilds)
+            {
+                await rest.put(
+                    Routes.applicationGuildCommands(env.CLIENT_ID ?? "ERR_NO_ENV", guild), {
+                        body: slashCmds
+                    },
+                );
+            }
+
+            console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""} in ${k.green(guilds.length)} guild${guilds.length != 1 ? "s" : ""}`);
+        }
+        catch(err)
+        {
+            console.error(k.red("Error while registering commands:\n") + (err instanceof Error) ? String(err) : "Unknown Error");
+        }
 
         // listen for slash commands
 

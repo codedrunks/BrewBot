@@ -95,9 +95,9 @@ export abstract class Command {
         return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
     }
 
-    public async reply(int: CommandInteraction, content: string)
+    public async reply(int: CommandInteraction, content: string, ephemeral = true)
     {
-        await int.reply({ content, ephemeral: true });
+        await int.reply({ content, ephemeral });
     }
 
     /**
