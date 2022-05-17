@@ -2,8 +2,6 @@ import { ApplicationCommandDataResolvable, CommandInteraction, MessageEmbed } fr
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta } from "./types";
 
-export { CommandMeta };
-
 
 /** Base class for all bot commands */
 export abstract class Command {

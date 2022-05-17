@@ -1,16 +1,14 @@
 import { CommandInteraction } from "discord.js";
-import { Command, CommandMeta } from "../Command";
+import { Command } from "../Command";
 
 export class Ping extends Command {
     constructor()
     {
-        const meta: CommandMeta = {
+        super({
             name: "ping",
             desc: "Check if the bot is alive",
             perms: [],
-        };
-
-        super(meta);
+        });
     }
 
     async run(int: CommandInteraction): Promise<void> {

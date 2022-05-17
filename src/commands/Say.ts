@@ -1,10 +1,11 @@
 import { CommandInteraction, TextBasedChannel } from "discord.js";
-import { Command, CommandMeta } from "../Command";
+import { Command } from "../Command";
 
-export class Say extends Command {
+export class Say extends Command
+{
     constructor()
     {
-        const meta: CommandMeta = {
+        super({
             name: "say",
             desc: "Makes the bot send a message",
             perms: [ "MANAGE_MESSAGES" ],
@@ -19,12 +20,11 @@ export class Say extends Command {
                     desc: "Which channel to send the message in, leave empty for the current channel"
                 }
             ]
-        };
-
-        super(meta);
+        });
     }
 
-    async run(int: CommandInteraction): Promise<void> {
+    async run(int: CommandInteraction): Promise<void>
+    {
         const args = this.resolveArgs(int);
 
         if(args.message)
@@ -40,8 +40,10 @@ export class Say extends Command {
                 await sendChannel.send({ content: args.message });
                 await this.reply(int, "Successfully sent the message");
             }
-            else await this.reply(int, "Couldn't find a channel with that name");
+            else
+                await this.reply(int, "Couldn't find a channel with that name");
         }
-        else await this.reply(int, "Please enter a message to send");
+        else
+            await this.reply(int, "Please enter a message to send");
     }
 }

@@ -28,7 +28,7 @@ client.on("ready", async () => {
 
 
     // guild cmds
-    const guilds = [ "693878197107949572" ];
+    const guilds = client.guilds.cache.map(g => g.id);
 
     for await(const guild of guilds)
     {

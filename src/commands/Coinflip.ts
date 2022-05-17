@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randRange } from "svcorelib";
-import { Command, CommandMeta } from "../Command";
+import { Command } from "../Command";
 import { settings } from "../settings";
 
 // idx 0: heads, idx 1: tails - TODO: make some sexy emoji for this specifically maybe?
@@ -9,7 +9,7 @@ const coins = ["🇭","🇹"];
 export class Coinflip extends Command {
     constructor()
     {
-        const meta: CommandMeta = {
+        super({
             name: "coinflip",
             desc: "Flips one or multiple coins",
             perms: [],
@@ -19,9 +19,7 @@ export class Coinflip extends Command {
                     desc: "How many coins to flip. Must be between 1 and 50"
                 }
             ]
-        };
-
-        super(meta);
+        });
     }
 
     async run(int: CommandInteraction): Promise<void> {

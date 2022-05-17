@@ -97,7 +97,7 @@ async function registerCommands(client: Client)
 
         try
         {
-            // use this when ready for production, as global commands take an hour to update across guilds, while guild commands update instantly
+            // use this when ready for production, as global commands are aggressively cached and take an hour to update across guilds, while guild commands update instantly
             // see https://discordjs.guide/interactions/slash-commands.html#global-commands
             // 
             // await rest.put(
@@ -111,7 +111,8 @@ async function registerCommands(client: Client)
 
             // guild commands
             // see https://discordjs.guide/interactions/slash-commands.html#guild-commands
-            const guilds = [ "693878197107949572" ];
+            // TODO: needs to be run when a guild is joined
+            const guilds = client.guilds.cache.map(g => g.id);
 
             for await(const guild of guilds)
             {
