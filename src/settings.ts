@@ -10,7 +10,7 @@ interface Settings {
 
 export const settings: Settings = {
     embedColors: {
-        default: "BLURPLE"
+        default: "LUMINOUS_VIVID_PINK"
     },
     /** When reached, sends a message to the moderators */
     warningsThreshold: 3,

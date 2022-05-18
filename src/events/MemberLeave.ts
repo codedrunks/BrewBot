@@ -8,12 +8,12 @@ export class MemberLeave extends Event
     constructor()
     {
         super("guildMemberRemove");
+
+        this.enabled = false;
     }
 
-    async run({ guild, displayName }: GuildMember | PartialGuildMember)
+    async run({ displayName }: GuildMember | PartialGuildMember)
     {
-        console.log(`[${guild.name}] User left: ${displayName}`);
-
         sendLogMsg(`🛑 Member ${displayName} left`);
     }
 }

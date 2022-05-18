@@ -28,9 +28,9 @@ export type DataKey = keyof PersistentData;
 //#MARKER commands
 
 /** A single argument of a slash command */
-type CommandArg = BaseCmdArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg);
+type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg);
 
-interface BaseCmdArg {
+interface BaseCommandArg {
     name: string;
     desc: string;
     /** Defaults to `false` */
@@ -58,6 +58,10 @@ interface BooleanCommandArg {
 
 interface UserCommandArg {
     type: "user";
+}
+
+interface ChannelCommandArg {
+    type: "channel";
 }
 
 /** Meta information of a regular Command instance */

@@ -8,6 +8,8 @@ export abstract class Command
 {
     readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
+    /** Set to false to disable this event */
+    public enabled = true;
 
     /** Base class for all bot commands */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
@@ -52,6 +54,13 @@ export abstract class Command
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
+                    );
+                else if(arg.type === "channel")
+                    data.addChannelOption(opt =>
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                            .addChannelTypes([ 0, 5, 11 ])
                     );
                 else
                     data.addStringOption(opt => {
@@ -102,6 +111,13 @@ export abstract class Command
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
+                            );
+                        else if(arg.type === "channel")
+                            data.addChannelOption(opt =>
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false)
+                                    .addChannelTypes([ 0, 5, 11 ])
                             );
                         else
                             sc.addStringOption(opt => {

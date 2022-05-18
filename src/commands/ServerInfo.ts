@@ -65,7 +65,7 @@ export class ServerInfo extends Command
                 .setColor(settings.embedColors.default)
                 .setFields(fields);
 
-            const iconUrl = guild.iconURL({ format: "png" });
+            const iconUrl = guild.iconURL({ format: "png", size: 1024 });
             iconUrl && embed.setThumbnail(iconUrl);
 
             return await this.reply(int, embed, false);

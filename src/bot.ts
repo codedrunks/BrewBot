@@ -93,7 +93,7 @@ async function registerCommands(client: Client)
     {
         commands.forEach(CmdClass => cmds.push(new CmdClass()));
 
-        const slashCmds = cmds.map(c => c.getSlashCmdJson());
+        const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
 
         try
         {
@@ -125,7 +125,7 @@ async function registerCommands(client: Client)
                 );
             }
 
-            console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""} in ${k.green(guilds.length)} guild${guilds.length != 1 ? "s" : ""}`);
+            console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""} in ${k.green(guilds.length)} guild${guilds.length != 1 ? "s" : ""} each`);
         }
         catch(err)
         {
@@ -144,7 +144,7 @@ async function registerCommands(client: Client)
 
             const cmd = cmds.find(({ meta }) => meta.name === commandName);
 
-            if(!cmd)
+            if(!cmd || !cmd.enabled)
                 return;
 
             await cmd.tryRun(interaction, Array.isArray(opts) ? opts[0] : opts);
@@ -168,13 +168,19 @@ async function registerEvents(client: Client)
 
         // listen for events
 
+        let registeredAmt = 0;
+
         for(const ev of evts)
         {
+            if(!ev.enabled) continue;
+
             for(const evName of ev.names)
                 client.on(evName, async (...args) => void await ev.run(...args));
+
+            registeredAmt++;
         }
 
-        console.log(`• Registered ${k.green(evts.length)} client event${evts.length != 1 ? "s" : ""}`);
+        registeredAmt > 0 && console.log(`• Registered ${k.green(registeredAmt)} client event${registeredAmt != 1 ? "s" : ""}`);
     }
     catch(err: unknown)
     {

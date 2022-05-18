@@ -49,6 +49,6 @@ client.on("ready", async () => {
         await Promise.all(guildCmds);
     }
 
-    console.log(k.yellow("\nDeleted all slash commands.\n"), "Guild commands take up to a few minutes, while global commands take about an hour or so to get updated across Discord servers.\n");
-    process.exit();
+    console.log(k.yellow("\nDeleted all slash commands.") + "\nGuild commands take up to a few minutes, while global commands take about an hour or so to get updated across Discord servers.\n");
+    process.exit(0);
 });

@@ -8,6 +8,8 @@ export class Message extends Event
     {
         // didn't wanna split this into two files so both new and edited messages are handled in this class
         super([ "messageCreate", "messageUpdate" ]);
+
+        this.enabled = false;
     }
 
     async run(msg: DjsMessage<boolean> | PartialMessage, newMsg?: DjsMessage<boolean> | PartialMessage)

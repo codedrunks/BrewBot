@@ -3,6 +3,8 @@ import { EventName } from "./types";
 /** Base class for all client events */
 export abstract class Event {
     readonly names: EventName[];
+    /** Set to false to disable this event */
+    public enabled = true;
 
     /** Base class for all client events. Can listen for one or multiple events at once. */
     constructor(names: EventName | EventName[])

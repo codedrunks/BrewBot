@@ -7,12 +7,12 @@ export class MemberJoin extends Event
     constructor()
     {
         super("guildMemberAdd");
+
+        this.enabled = false;
     }
 
-    async run({ guild, displayName }: GuildMember)
+    async run({ displayName }: GuildMember)
     {
-        console.log(`[${guild.name}] Member joined: ${displayName}`);
-
         sendLogMsg(`▶️ Member ${displayName} joined`);
     }
 }
