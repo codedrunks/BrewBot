@@ -17,7 +17,15 @@ export class ServerInfo extends Command
                 {
                     name: "banner",
                     desc: "Shows the server banner",
-                }
+                },
+                {
+                    name: "icon",
+                    desc: "Shows the server icon in full size",
+                },
+                {
+                    name: "splash",
+                    desc: "Shows the server's splash image (invite background)",
+                },
             ]
         });
     }
@@ -44,7 +52,7 @@ export class ServerInfo extends Command
             guild.description && guild.description.length > 0 && fields.push({ name: "Description", value: guild.description, inline: true });
 
             fields.push({ name: "Owner", value: `<@${guild.ownerId}>`, inline: true });
-            fields.push({ name: "Created", value: guild.createdAt.toUTCString(), inline: false });
+            fields.push({ name: "Created", value: guild.createdAt.toUTCString(), inline: true });
 
             const verifLevel = verifLevelMap[guild.verificationLevel];
             fields.push({ name: "Verification level", value: verifLevel, inline: true });
@@ -53,12 +61,21 @@ export class ServerInfo extends Command
             const botMembers = guild.members.cache.filter(m => m.user.bot).size ?? undefined;
             const onlineMembers = botMembers ? guild.members.cache.filter(m => (!m.user.bot && ["online", "idle", "dnd"].includes(m.presence?.status ?? "_"))).size : undefined;
 
+            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => ["GUILD_NEWS", "GUILD_TEXT"].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has("VIEW_CHANNEL")).size;
+            const publicVoiceChannelsAmt = guild.channels.cache.filter(ch => ch.type === "GUILD_VOICE" && ch.permissionsFor(guild.roles.everyone).has("SPEAK")).size;
+
             let memberCount = `Total: ${allMembers}`;
             if(onlineMembers) memberCount += `\nOnline: ${onlineMembers}`;
             if(botMembers) memberCount += `\nBots: ${botMembers}`;
 
             fields.push({ name: "Member count", value: memberCount, inline: true });
             fields.push({ name: "Role count", value: String(guild.roles.cache.size), inline: true });
+            fields.push({ name: "Public channels", value: `Text: ${publicTxtChannelsAmt}\nVoice: ${publicVoiceChannelsAmt}`, inline: true });
+
+            const staticEmojiAmt = guild.emojis.cache.filter(em => !em.animated).size;
+            const animatedEmojiAmt = guild.emojis.cache.filter(em => em.animated === true).size;
+
+            fields.push({ name: "Emojis", value: `Total: ${staticEmojiAmt + animatedEmojiAmt}\nStatic: ${staticEmojiAmt}\nAnimated: ${animatedEmojiAmt}`, inline: true });
             // TODO: add amount of assignable roles?
 
             const embed = new MessageEmbed()
@@ -79,9 +96,37 @@ export class ServerInfo extends Command
                 return await this.reply(int, "This server doesn't have a banner.");
 
             const embed = new MessageEmbed()
-                .setTitle(`**${guild.name}** banner`)
+                .setTitle(`**${guild.name}** - banner:`)
                 .setColor(settings.embedColors.default)
                 .setImage(bannerUrl);
+
+            return await this.reply(int, embed, false);
+        }
+        case "icon":
+        {
+            const iconUrl = guild.iconURL({ format: "png", size: 4096 });
+
+            if(!iconUrl)
+                return await this.reply(int, "This server doesn't have an icon.");
+
+            const embed = new MessageEmbed()
+                .setTitle(`**${guild.name}** - icon:`)
+                .setColor(settings.embedColors.default)
+                .setImage(iconUrl);
+
+            return await this.reply(int, embed, false);
+        }
+        case "splash":
+        {
+            const splashUrl = guild.splashURL({ format: "png", size: 4096 });
+
+            if(!splashUrl)
+                return await this.reply(int, "This server doesn't have a splash image (invite background).");
+
+            const embed = new MessageEmbed()
+                .setTitle(`**${guild.name}** - splash image:`)
+                .setColor(settings.embedColors.default)
+                .setImage(splashUrl);
 
             return await this.reply(int, embed, false);
         }
