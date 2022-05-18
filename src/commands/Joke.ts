@@ -54,7 +54,7 @@ export class Joke extends Command
                 },
                 {
                     name: "safe-mode",
-                    desc: "Enable to not get any potentially unsafe or triggering jokes",
+                    desc: "Disable to get potentially unsafe and triggering jokes",
                     type: "boolean",
                 },
                 {
@@ -78,7 +78,7 @@ export class Joke extends Command
         const args = this.resolveArgs(int);
 
         const { category, amount, contains } = args;
-        const safeMode = args["safe-mode"] ?? false;
+        const safeMode = args["safe-mode"] ?? true;
 
         let amt = parseInt(amount);
         if(!isNaN(amt) && amt > 10)

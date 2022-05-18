@@ -41,16 +41,17 @@ export class ServerInfo extends Command
 
             const fields: EmbedFieldData[] = [];
 
-            const verifLevel = verifLevelMap[guild.verificationLevel];
+            guild.description && guild.description.length > 0 && fields.push({ name: "Description", value: guild.description, inline: true });
 
             fields.push({ name: "Owner", value: `<@${guild.ownerId}>`, inline: true });
             fields.push({ name: "Created", value: guild.createdAt.toUTCString(), inline: false });
+
+            const verifLevel = verifLevelMap[guild.verificationLevel];
             fields.push({ name: "Verification level", value: verifLevel, inline: true });
 
             const allMembers = guild.memberCount;
-            const membersNoBots = guild.members.cache.filter(m => !m.user.bot).size ?? undefined;
-            const botMembers = allMembers && membersNoBots ? allMembers - membersNoBots : undefined;
-            const onlineMembers = botMembers ? guild.members.cache.filter(m => m.presence?.status === "online" || m.presence?.status === "idle" || m.presence?.status === "dnd").size - botMembers : undefined;
+            const botMembers = guild.members.cache.filter(m => m.user.bot).size ?? undefined;
+            const onlineMembers = botMembers ? guild.members.cache.filter(m => (!m.user.bot && ["online", "idle", "dnd"].includes(m.presence?.status ?? "_"))).size : undefined;
 
             let memberCount = `Total: ${allMembers}`;
             if(onlineMembers) memberCount += `\nOnline: ${onlineMembers}`;
