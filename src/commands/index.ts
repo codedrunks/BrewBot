@@ -9,6 +9,7 @@ import { Joke } from "./Joke";
 import { Ferret } from "./Ferret";
 import { Mock } from "./Mock";
 import { Cheese } from "./Cheese";
+import { Cat } from "./Cat";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -23,4 +24,5 @@ export const commands = [
     Ferret,
     Mock,
     Cheese,
+    Cat,
 ];
