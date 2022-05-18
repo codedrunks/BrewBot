@@ -15,9 +15,7 @@ export class Remove extends Command {
                     required: true,
                 },
             ],
-            perms: [
-                "MANAGE_MESSAGES",
-            ],
+            perms: [ "MANAGE_MESSAGES" ],
         });
     }
 

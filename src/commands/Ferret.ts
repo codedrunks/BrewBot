@@ -7,7 +7,8 @@ import { settings } from "../settings";
 const titles = [
     "Look at this cutie",
     "One ferret, coming up",
-    "Ferret time :)"
+    "Ferret time :)",
+    "<a:madeWithAdobe:740517707958452257>",
 ];
 
 export class Ferret extends Command
@@ -25,7 +26,7 @@ export class Ferret extends Command
     {
         await int.deferReply();
 
-        const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/");
+        const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
 
         if(status < 200 || status >= 300 || !data.file)
             return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);

@@ -1,6 +1,42 @@
 {
+    // extension: dbaeumer.vscode-eslint
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true
+        "source.fixAll.eslint": true,
     },
     "eslint.validate": ["javascript", "typescript"],
+
+    // extension: fabiospampinato.vscode-highlight
+    "highlight.regexes": {
+        "(#MARKER)": { // #MARKER test
+            "backgroundColor": "#f41",
+            "color": "#fff",
+            "isWholeLine": true,
+            "overviewRulerColor": "#f41"
+        },
+        "(#SECTION ([^\\S\\r\\n]*[\\w,.\\-_&]+)*[:]*)": { // #SECTION test, 123 & foo
+            "backgroundColor": "#44f",
+            "color": "white",
+            "overviewRulerColor": "#44f"
+        },
+        "(#DEBUG#?)": { // #DEBUG# or #DEBUG
+            "backgroundColor": "#ff0",
+            "color": "blue",
+            "overviewRulerColor": "#ff0"
+        },
+        "(IMPORTANT:)": { // IMPORTANT:
+            "backgroundColor": "#a22",
+            "color": "#fff"
+        },
+        "(FIXME:)": // FIXME:
+        {
+            "backgroundColor": "#a22",
+            "color": "#fff",
+            "overviewRulerColor": "#752020"
+        }
+    },
+
+    // other
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+    },
 }

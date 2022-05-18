@@ -20,7 +20,9 @@ const apiInfo = {
 const embedTitles = [
     "cat.",
     "Good cat",
-    "Aww, look at it"
+    "Aww, look at it",
+    "What a cutie",
+    "<:qt_cett:610817939276562433>",
 ];
 
 export class Cat extends Command
@@ -54,7 +56,7 @@ export class Cat extends Command
         if(!api || api.length === 0)
             api = randomItem(Object.keys(apiInfo)) as "illusion" | "thatcopy";
 
-        const { data, status, statusText } = await axios.get(apiInfo[api].url);
+        const { data, status, statusText } = await axios.get(apiInfo[api].url, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
         {

@@ -98,7 +98,7 @@ export class Joke extends Command
         if(urlParams.length > 0)
             url += `?${urlParams.join("&")}`;
 
-        const { data, status, statusText } = await axios.get(url);
+        const { data, status, statusText } = await axios.get(url, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
         {

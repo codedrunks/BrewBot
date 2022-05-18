@@ -39,7 +39,7 @@ export class Cheese extends Command
             break;
         }
 
-        const { data, status, statusText } = await axios.get(`https://api.illusionman1212.tech/cheese${urlPath}`);
+        const { data, status, statusText } = await axios.get(`https://api.illusionman1212.tech/cheese${urlPath}`, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
         {
