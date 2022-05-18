@@ -54,11 +54,12 @@ export class Warn extends Command
             timestamp: Date.now(),
         });
 
-        const warningsAmt = warnings?.filter(w => w.memberId === user.id).length;
+        const memberWarnings = warnings?.filter(w => w.memberId === user.id);
+        const warningsAmt = memberWarnings.length;
 
         await persistentData.set("warnings", warnings);
 
-        const reasonList = `- ${warnings.map(w => `${w.reason} (${new Date(w.timestamp).toUTCString()})`).join("\n- ")}`;
+        const reasonList = `- ${memberWarnings.map(w => `${w.reason} (${new Date(w.timestamp).toUTCString()})`).join("\n- ")}`;
 
         if(warningsAmt >= settings.warningsThreshold)
             await sendLogMsg(`Member <@!${user.id}> has been warned ${warningsAmt} time${warningsAmt != 1 ? "s" : ""}.\nPrevious warnings:\n${reasonList}`);
