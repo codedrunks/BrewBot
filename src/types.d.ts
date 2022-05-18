@@ -18,24 +18,33 @@ export interface PersistentData
 /** Keys of the persistent data object */
 export type DataKey = keyof PersistentData;
 
-/** Meta information of a Command instance */
+interface CommandArgs {
+    name: string;
+    desc: string;
+    /** Defaults to `false` */
+    required?: boolean;
+    // /** A set of predefined choices the user can pick from for this argument */
+    // choices?: {
+    //     name: string;
+    //     value: string;
+    // }[];
+}
+
+/** Meta information of a regular Command instance */
 export interface CommandMeta {
     name: string;
     desc: string;
+    /** Optional array of arguments this command has */
+    args?: CommandArgs[];
     /** Required permission(s) to run this command */
     perms?: (keyof PermissionFlags)[];
-    /** Optional array of arguments this command has */
-    args?: {
-        name: string;
-        desc: string;
-        /** Defaults to `false` */
-        required?: boolean;
-        // /** A set of predefined choices the user can pick from for this argument */
-        // choices?: {
-        //     name: string;
-        //     value: string;
-        // }[];
-    }[];
+}
+
+/** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
+export interface SubcommandMeta {
+    name: string;
+    desc: string;
+    subcommands: CommandMeta[];
 }
 
 /** Client event names */

@@ -1,41 +1,81 @@
-import { ApplicationCommandDataResolvable, CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandDataResolvable, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandMeta } from "./types";
+import { CommandMeta, SubcommandMeta } from "./types";
 
 
 /** Base class for all bot commands */
 export abstract class Command {
-    readonly meta: CommandMeta;
+    readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
 
     /** Base class for all bot commands */
-    constructor(cmdMeta: CommandMeta)
+    constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
-        // prepare metadata
+        const data = new SlashCommandBuilder();
 
-        const fallbackMeta = {
-            perm: "user",
-            args: [],
-        };
+        if(Command.isCommandMeta(cmdMeta))
+        {
+            // regular command
+            const fallbackMeta = {
+                perms: [],
+                args: [],
+            };
 
-        this.meta = { ...fallbackMeta, ...cmdMeta };
-        const { name, desc, args } = this.meta;
+            this.meta = { ...fallbackMeta, ...cmdMeta };
+            const { name, desc, args } = this.meta;
 
-        // build slash command
+            data.setName(name)
+                .setDescription(desc);
 
-        const data = new SlashCommandBuilder()
-            .setName(name)
-            .setDescription(desc);
+            // string arguments
+            Array.isArray(args) && args.forEach(arg => {
+                data.addStringOption(opt => 
+                    opt.setName(arg.name)
+                        .setDescription(arg.desc)
+                        .setRequired(arg.required ?? false)
+                );
+            });
+        }
+        else
+        {
+            // subcommands
+            this.meta = cmdMeta;
 
-        Array.isArray(args) && args.forEach(arg => {
-            data.addStringOption(opt => 
-                opt.setName(arg.name)
-                    .setDescription(arg.desc)
-                    .setRequired(arg.required ?? false)
-            );
-        });
+            data.setName(cmdMeta.name)
+                .setDescription(cmdMeta.desc);
 
+            (cmdMeta as SubcommandMeta).subcommands.forEach(scmd => {
+                data.addSubcommand(sc => {
+                    sc.setName(scmd.name)
+                        .setDescription(scmd.desc);
+
+                    Array.isArray(scmd.args) && scmd.args.forEach(arg => {
+                        sc.addStringOption(opt =>
+                            opt.setName(arg.name)
+                                .setDescription(arg.desc)
+                                .setRequired(arg.required ?? false)
+                        );
+                    });
+
+                    return sc;
+                });
+            });
+        }
+
+        // finalize
         this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public static isCommandMeta(meta: any): meta is CommandMeta
+    {
+        return typeof meta === "object" && meta?.name && meta?.desc && !Array.isArray(meta?.subcommands);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public static isSubcommandMeta(meta: any): meta is SubcommandMeta
+    {
+        return typeof meta === "object" && meta?.name && meta?.desc && Array.isArray(meta?.subcommands);
     }
 
     /** Returns the slash command JSON data (needed when registering commands) */
@@ -44,22 +84,45 @@ export abstract class Command {
         return this.slashCmdJson;
     }
 
-    /** Checks if the GuildMember of a CommandInteraction has the permission to run this command */
-    public hasPerm({ memberPermissions }: CommandInteraction): boolean
+    /**
+     * Checks if the GuildMember of a CommandInteraction has the permission to run this command.
+     * @param subcommandName Needs to be provided if this command has subcommands
+     * @returns Returns null if the subcommand name is invalid
+     */
+    public hasPerm(int: CommandInteraction, subcommandName?: string): boolean | null
     {
-        const { perms } = this.meta;
-        const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+        const { memberPermissions } = int;
 
-        return !hasPerms.includes(false);
+        if(!Array.isArray(this.meta))
+        {
+            // regular command
+            const { perms } = this.meta as CommandMeta;
+            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+
+            return !hasPerms.includes(false);
+        }
+        else if(subcommandName)
+        {
+            // subcommands
+            const scMeta = (this.meta as SubcommandMeta).subcommands.find(me => me.name === subcommandName);
+            if(!scMeta) return null;
+
+            const { perms } = scMeta;
+            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+
+            return !hasPerms.includes(false);
+        }
+
+        return null;
     }
 
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
-    public async tryRun(interaction: CommandInteraction): Promise<unknown>
+    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
     {
         try
         {
-            if(this.hasPerm(interaction))
-                return await this.run(interaction);
+            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
+                return await this.run(interaction, opt);
             else if(typeof interaction.reply === "function")
                 return await interaction.reply({ content: "You don't have the necessary permissions to run this command!", ephemeral: true });
 
@@ -97,5 +160,5 @@ export abstract class Command {
      * This method is called whenever this commands is run by a user, after verifying the permissions
      * @abstract This method needs to be overridden in a sub-class
      */
-    protected abstract run(int: CommandInteraction): Promise<unknown>;
+    protected abstract run(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>;
 }

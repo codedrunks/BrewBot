@@ -138,14 +138,16 @@ async function registerCommands(client: Client)
             if(!interaction.isCommand())
                 return;
 
-            const { commandName } = interaction;
+            const { commandName, options } = interaction;
+
+            const opts = options.data && options.data.length > 0 ? options.data : undefined;
 
             const cmd = cmds.find(({ meta }) => meta.name === commandName);
 
             if(!cmd)
                 return;
 
-            await cmd.tryRun(interaction);
+            await cmd.tryRun(interaction, Array.isArray(opts) ? opts[0] : opts);
         });
     }
     catch(err: unknown)

@@ -2,8 +2,11 @@ import { Client } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import dotenv from "dotenv";
+import k from "kleur";
 
 dotenv.config();
+
+console.log("Logging in...");
 
 const clientId = process.env.CLIENT_ID ?? "ERR_NO_ENV";
 
@@ -18,6 +21,8 @@ const client = new Client({
 client.login(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
 client.on("ready", async () => {
+    console.log("Clearing commands...");
+
     // global cmds
     const commands = await rest.get(Routes.applicationCommands(clientId)) as { id: string }[];
 
@@ -40,6 +45,6 @@ client.on("ready", async () => {
         }
     }
 
-    console.log("Deleted all slash commands. Global commands may take an hour or so to update.");
+    console.log(k.yellow("\nDeleted all slash commands."), "Global commands take an hour or so to get updated across Discord servers.\n");
     process.exit();
 });
