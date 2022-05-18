@@ -4,7 +4,8 @@ import { CommandMeta, SubcommandMeta } from "./types";
 
 
 /** Base class for all bot commands */
-export abstract class Command {
+export abstract class Command
+{
     readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
 
@@ -29,11 +30,18 @@ export abstract class Command {
 
             // string arguments
             Array.isArray(args) && args.forEach(arg => {
-                data.addStringOption(opt => 
-                    opt.setName(arg.name)
-                        .setDescription(arg.desc)
-                        .setRequired(arg.required ?? false)
-                );
+                if(arg.type === "user")
+                    data.addUserOption(opt => 
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                    );
+                else
+                    data.addStringOption(opt => 
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                    );
             });
         }
         else
@@ -50,11 +58,18 @@ export abstract class Command {
                         .setDescription(scmd.desc);
 
                     Array.isArray(scmd.args) && scmd.args.forEach(arg => {
-                        sc.addStringOption(opt =>
-                            opt.setName(arg.name)
-                                .setDescription(arg.desc)
-                                .setRequired(arg.required ?? false)
-                        );
+                        if(arg.type === "user")
+                            sc.addUserOption(opt =>
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false)
+                            );
+                        else
+                            sc.addStringOption(opt =>
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false)
+                            );
                     });
 
                     return sc;
@@ -137,7 +152,7 @@ export abstract class Command {
     }
 
     /** Resolves a flat object of command arguments from an interaction */
-    protected resolveArgs({ options }: CommandInteraction): Record<string, string>
+    protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
         return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
     }
@@ -158,6 +173,7 @@ export abstract class Command {
 
     /**
      * This method is called whenever this commands is run by a user, after verifying the permissions
+     * @param opt If this command has subcommands, this argument is set
      * @abstract This method needs to be overridden in a sub-class
      */
     protected abstract run(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>;

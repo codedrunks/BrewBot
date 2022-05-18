@@ -21,30 +21,34 @@ const client = new Client({
 client.login(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
 client.on("ready", async () => {
-    console.log("Clearing commands...");
-
     // global cmds
+    console.log("Clearing global commands...");
+
     const commands = await rest.get(Routes.applicationCommands(clientId)) as { id: string }[];
 
-    for await(const command of commands)
-    {
-        await rest.delete(`${Routes.applicationCommands(clientId)}/${command.id}`);
-    }
+    const globalCmds = [];
+    for(const command of commands)
+        globalCmds.push(rest.delete(`${Routes.applicationCommands(clientId)}/${command.id}`));
+
+    await Promise.all(globalCmds);
 
 
     // guild cmds
+    console.log("Clearing guild commands...");
+
     const guilds = client.guilds.cache.map(g => g.id);
 
     for await(const guild of guilds)
     {
         const commands = await rest.get(Routes.applicationGuildCommands(clientId, guild)) as { id: string }[];
 
-        for await(const command of commands)
-        {
-            await rest.delete(`${Routes.applicationGuildCommands(clientId, guild)}/${command.id}`);
-        }
+        const guildCmds = [];
+        for(const command of commands)
+            guildCmds.push(rest.delete(`${Routes.applicationGuildCommands(clientId, guild)}/${command.id}`));
+
+        await Promise.all(guildCmds);
     }
 
-    console.log(k.yellow("\nDeleted all slash commands."), "Global commands take an hour or so to get updated across Discord servers.\n");
+    console.log(k.yellow("\nDeleted all slash commands.\n"), "Guild commands take up to a few minutes, while global commands take about an hour or so to get updated across Discord servers.\n");
     process.exit();
 });

@@ -18,6 +18,8 @@ let persistentData: Partial<PersistentData> = defaultData;
 
 export async function init()
 {
+    // TODO: listen for file changes to re-read the file at runtime
+
     if(await filesystem.exists(dataFilePath))
         persistentData = JSON.parse((await readFile(dataFilePath)).toString());
     else

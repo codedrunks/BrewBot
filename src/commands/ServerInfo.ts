@@ -72,7 +72,7 @@ export class ServerInfo extends Command
         }
         case "banner":
         {
-            const bannerUrl = guild.bannerURL({ format: "png" });
+            const bannerUrl = guild.bannerURL({ format: "png", size: 4096 });
 
             if(!bannerUrl)
                 return await this.reply(int, "This server doesn't have a banner.");

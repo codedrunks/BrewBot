@@ -12,15 +12,22 @@ export interface PersistentData
     botLogs: {
         guild: string;
         channel: string;
-    }
+    };
+    warnings: {
+        memberId: string;
+        reason: string;
+        timestamp: number;
+    }[];
 }
 
 /** Keys of the persistent data object */
 export type DataKey = keyof PersistentData;
 
-interface CommandArgs {
+interface CommandArg {
     name: string;
     desc: string;
+    /** Type of argument. Defaults to string. */
+    type?: "string" | "user";
     /** Defaults to `false` */
     required?: boolean;
     // /** A set of predefined choices the user can pick from for this argument */
@@ -35,7 +42,7 @@ export interface CommandMeta {
     name: string;
     desc: string;
     /** Optional array of arguments this command has */
-    args?: CommandArgs[];
+    args?: CommandArg[];
     /** Required permission(s) to run this command */
     perms?: (keyof PermissionFlags)[];
 }

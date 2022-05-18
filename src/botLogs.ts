@@ -1,4 +1,4 @@
-import { Client, TextBasedChannel } from "discord.js";
+import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
 import persistentData from "./persistentData";
 
 
@@ -10,9 +10,15 @@ export function init(client: Client)
     botLogsChannel = client?.guilds.cache.find(g => g.id === botLogs?.guild)?.channels.cache.find(ch => ch.id === botLogs?.channel) as TextBasedChannel | undefined;
 }
 
-export function sendLogMsg(msg: string)
+export function sendLogMsg(msg: string | MessageEmbed | MessageEmbed[])
 {
-    botLogsChannel && botLogsChannel.send(msg);
+    if(botLogsChannel)
+    {
+        if(typeof msg === "string")
+            botLogsChannel.send(msg);
+        else
+            botLogsChannel.send({ embeds: Array.isArray(msg) ? msg : [msg] });
+    }
 }
 
 export default {
