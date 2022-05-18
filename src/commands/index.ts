@@ -6,6 +6,7 @@ import { Coinflip } from "./Coinflip";
 import { ServerInfo } from "./ServerInfo";
 import { Warn } from "./Warn";
 import { Joke } from "./Joke";
+import { Ferret } from "./Ferret";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -17,4 +18,5 @@ export const commands = [
     ServerInfo,
     Warn,
     Joke,
+    Ferret,
 ];

@@ -12,7 +12,8 @@ export class TEMPLATE extends Command
         });
     }
 
-    async run(int: CommandInteraction): Promise<void> {
+    async run(int: CommandInteraction): Promise<void>
+    {
         void int;
     }
 }

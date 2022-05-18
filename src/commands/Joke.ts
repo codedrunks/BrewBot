@@ -73,6 +73,8 @@ export class Joke extends Command
     }
 
     async run(int: CommandInteraction): Promise<void> {
+        await int.deferReply();
+
         const args = this.resolveArgs(int);
 
         const { category, amount, contains } = args;
@@ -99,10 +101,16 @@ export class Joke extends Command
         const { data, status, statusText } = await axios.get(url);
 
         if(status < 200 || status >= 300)
-            return await this.reply(int, `JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+        {
+            await int.editReply(`JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+            return;
+        }
 
         if(data.error === true)
-            return await this.reply(int, "Couldn't find a joke that matches the set filters.");
+        {
+            await int.editReply("Couldn't find a joke that matches the set filters.");
+            return;
+        }
 
         let jokes: JokeObj[];
 
@@ -121,13 +129,13 @@ export class Joke extends Command
             const poweredBy = amt > 1 && i === amt - 1 || amt === 1 || !amt;
 
             embed.setFooter({
-                text: `${jokes.length > 1 ? `(${i + 1}/${amt})${poweredBy ? " - " : ""}` : ""}${poweredBy ? "Powered by www.jokeapi.dev" : ""}`,
+                text: `${jokes.length > 1 ? `(${i + 1}/${amt})${poweredBy ? " - " : ""}` : ""}${poweredBy ? "https://jokeapi.dev" : ""}`,
                 ...(poweredBy ? { iconURL: "https://cdn.sv443.net/jokeapi/icon_tiny.png" } : {}),
             });
 
             embeds.push(embed);
         });
 
-        return await this.reply(int, embeds, false);
+        await int.editReply({ embeds });
     }
 }
