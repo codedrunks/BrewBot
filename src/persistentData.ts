@@ -1,5 +1,5 @@
 import { filesystem } from "svcorelib";
-import { readFile, writeFile } from "fs-extra";
+import { readFile, watch, writeFile } from "fs-extra";
 import { PersistentData, DataKey } from "./types";
 
 
@@ -18,25 +18,38 @@ let persistentData: Partial<PersistentData> = defaultData;
 
 export async function init()
 {
-    // TODO: listen for file changes to re-read the file at runtime
-
     if(await filesystem.exists(dataFilePath))
-        persistentData = JSON.parse((await readFile(dataFilePath)).toString());
+        persistentData = await readPersistentData();
     else
-        await writeFile(dataFilePath, JSON.stringify(defaultData, undefined, 4));
+        await writePersistentData(defaultData);
+
+    watch(dataFilePath, async () => {
+        console.log("data.json changed, reloading it");
+        persistentData = await readPersistentData();
+    });
 }
 
 /** Sets the property with the provided `key` to a new `value` */
 export async function set<T extends DataKey>(key: T, value: PersistentData[T])
 {
     persistentData[key] = value;
-    await writeFile(dataFilePath, JSON.stringify(persistentData, undefined, 4));
+    await writePersistentData(persistentData);
 }
 
 /** Returns the value of the property with the provided `key` */
 export function get<T extends DataKey>(key: T): PersistentData[T] | null
 {
     return persistentData?.[key] ?? null;
+}
+
+async function writePersistentData(data: PersistentData | Partial<PersistentData>)
+{
+    return await writeFile(dataFilePath, JSON.stringify(data, undefined, 4));
+}
+
+async function readPersistentData()
+{
+    return JSON.parse((await readFile(dataFilePath)).toString());
 }
 
 export default {
