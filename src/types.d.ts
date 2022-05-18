@@ -1,6 +1,8 @@
 import { ClientEvents, PermissionFlags } from "discord.js";
 
 
+//#MARKER persistent data
+
 /** Persistent data stored in `./data.json` */
 export interface PersistentData
 {
@@ -23,18 +25,39 @@ export interface PersistentData
 /** Keys of the persistent data object */
 export type DataKey = keyof PersistentData;
 
-interface CommandArg {
+//#MARKER commands
+
+/** A single argument of a slash command */
+type CommandArg = BaseCmdArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg);
+
+interface BaseCmdArg {
     name: string;
     desc: string;
-    /** Type of argument. Defaults to string. */
-    type?: "string" | "user";
     /** Defaults to `false` */
     required?: boolean;
-    // /** A set of predefined choices the user can pick from for this argument */
-    // choices?: {
-    //     name: string;
-    //     value: string;
-    // }[];
+}
+
+interface StringCommandArg {
+    type?: "string";
+    /** A set of predefined choices the user can pick from for this argument */
+    choices?: {
+        name: string;
+        value: string;
+    }[];
+}
+
+interface NumberCommandArg {
+    type: "number";
+    min?: number;
+    max?: number;
+}
+
+interface BooleanCommandArg {
+    type: "boolean";
+}
+
+interface UserCommandArg {
+    type: "user";
 }
 
 /** Meta information of a regular Command instance */
@@ -53,6 +76,8 @@ export interface SubcommandMeta {
     desc: string;
     subcommands: CommandMeta[];
 }
+
+//#MARKER events
 
 /** Client event names */
 export type EventName = keyof ClientEvents;

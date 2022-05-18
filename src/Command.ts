@@ -31,17 +31,39 @@ export abstract class Command
             // string arguments
             Array.isArray(args) && args.forEach(arg => {
                 if(arg.type === "user")
-                    data.addUserOption(opt => 
+                    data.addUserOption(opt =>
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                    );
+                else if(arg.type === "number")
+                    data.addNumberOption(opt => {
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false);
+
+                        arg.min && opt.setMinValue(arg.min);
+                        arg.max && opt.setMinValue(arg.max);
+
+                        return opt;
+                    });
+                else if(arg.type === "boolean")
+                    data.addBooleanOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                     );
                 else
-                    data.addStringOption(opt => 
+                    data.addStringOption(opt => {
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
-                            .setRequired(arg.required ?? false)
-                    );
+                            .setRequired(arg.required ?? false);
+
+                        if(Array.isArray(arg.choices))
+                            arg.choices.forEach(ch => opt.addChoice(ch.name, ch.value));
+
+                        return opt;
+                    });
             });
         }
         else
@@ -52,7 +74,7 @@ export abstract class Command
             data.setName(cmdMeta.name)
                 .setDescription(cmdMeta.desc);
 
-            (cmdMeta as SubcommandMeta).subcommands.forEach(scmd => {
+            cmdMeta.subcommands.forEach(scmd => {
                 data.addSubcommand(sc => {
                     sc.setName(scmd.name)
                         .setDescription(scmd.desc);
@@ -64,12 +86,34 @@ export abstract class Command
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
-                        else
-                            sc.addStringOption(opt =>
+                        else if(arg.type === "number")
+                            sc.addNumberOption(opt => {
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false);
+
+                                arg.min && opt.setMinValue(arg.min);
+                                arg.max && opt.setMinValue(arg.max);
+
+                                return opt;
+                            });
+                        else if(arg.type === "boolean")
+                            data.addBooleanOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
+                        else
+                            sc.addStringOption(opt => {
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false);
+
+                                if(Array.isArray(arg.choices))
+                                    arg.choices.forEach(ch => opt.addChoice(ch.name, ch.value));
+
+                                return opt;
+                            });
                     });
 
                     return sc;
@@ -108,10 +152,10 @@ export abstract class Command
     {
         const { memberPermissions } = int;
 
-        if(!Array.isArray(this.meta))
+        if(Command.isCommandMeta(this.meta))
         {
             // regular command
-            const { perms } = this.meta as CommandMeta;
+            const { perms } = this.meta;
             const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
 
             return !hasPerms.includes(false);
@@ -119,7 +163,7 @@ export abstract class Command
         else if(subcommandName)
         {
             // subcommands
-            const scMeta = (this.meta as SubcommandMeta).subcommands.find(me => me.name === subcommandName);
+            const scMeta = this.meta.subcommands.find(me => me.name === subcommandName);
             if(!scMeta) return null;
 
             const { perms } = scMeta;
