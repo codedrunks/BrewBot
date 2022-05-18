@@ -29,7 +29,7 @@ export class Cat extends Command
     {
         super({
             name: "cat",
-            desc: "Template_desc",
+            desc: "Shows you images of cats",
             perms: [],
             args: [
                 {
