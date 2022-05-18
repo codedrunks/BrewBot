@@ -91,7 +91,7 @@ async function registerCommands(client: Client)
 {
     try
     {
-        commands.forEach(CmdClass => cmds.push(new CmdClass()));
+        commands.forEach(CmdClass => cmds.push(new CmdClass(client)));
 
         const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
 

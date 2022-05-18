@@ -34,6 +34,7 @@
     "dotenv": "^16.0.0",
     "fs-extra": "^10.1.0",
     "kleur": "^4.1.4",
+    "parse-relative-time": "^1.1.0",
     "svcorelib": "^1.14.2"
   },
   "nodemonConfig": {

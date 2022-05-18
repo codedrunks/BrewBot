@@ -2,7 +2,7 @@ import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEm
 import { Command } from "../Command";
 import { settings } from "../settings";
 
-export class ServerInfo extends Command
+export class Server extends Command
 {
     constructor()
     {

@@ -9,16 +9,22 @@ export interface PersistentData
     /** Timestamp of when the bot last started up */
     startupTime: number;
     /** Array of the current reaction roles message IDs */
-    reactionMessages: string[];
+    reactionMessages?: string[];
     /** Bot logs channel */
     botLogs: {
         guild: string;
         channel: string;
     };
-    warnings: {
+    warnings?: {
         memberId: string;
         reason: string;
         timestamp: number;
+    }[];
+    reminders?: {
+        memberId: string;
+        guildId: string;
+        name: string;
+        dueTimestamp: number;
     }[];
 }
 

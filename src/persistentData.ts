@@ -24,7 +24,6 @@ export async function init()
         await writePersistentData(defaultData);
 
     watch(dataFilePath, async () => {
-        console.log("data.json changed, reloading it");
         persistentData = await readPersistentData();
     });
 }
