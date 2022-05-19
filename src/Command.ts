@@ -3,17 +3,17 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
 
 
-/** Base class for all bot commands */
+/** Base class for all slash commands */
 export abstract class Command
 {
     readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
-    /** Set to false to disable this event */
+    /** Set to false to disable this command */
     public enabled = true;
 
     //#SECTION constructor
 
-    /** Base class for all bot commands */
+    /** Base class for all slash commands */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
         const data = new SlashCommandBuilder();
@@ -109,13 +109,13 @@ export abstract class Command
                                 return opt;
                             });
                         else if(arg.type === "boolean")
-                            data.addBooleanOption(opt =>
+                            sc.addBooleanOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
                         else if(arg.type === "channel")
-                            data.addChannelOption(opt =>
+                            sc.addChannelOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)

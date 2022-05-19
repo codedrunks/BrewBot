@@ -41,6 +41,12 @@ export function get<T extends DataKey>(key: T): PersistentData[T] | null
     return persistentData?.[key] ?? null;
 }
 
+/** Reloads the persistent data stored in memory with the content of `./data.json` */
+export async function reload()
+{
+    persistentData = await readPersistentData();
+}
+
 async function writePersistentData(data: PersistentData | Partial<PersistentData>)
 {
     return await writeFile(dataFilePath, JSON.stringify(data, undefined, 4));
@@ -55,4 +61,5 @@ export default {
     init,
     get,
     set,
+    reload,
 };
