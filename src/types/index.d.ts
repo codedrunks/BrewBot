@@ -72,7 +72,9 @@ interface ChannelCommandArg {
 
 /** Meta information of a regular Command instance */
 export interface CommandMeta {
+    /** Name of the command (`/name` to call it in chat) */
     name: string;
+    /** Description that's displayed when typing the command in chat */
     desc: string;
     /** Optional array of arguments this command has */
     args?: CommandArg[];
@@ -82,8 +84,11 @@ export interface CommandMeta {
 
 /** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
 export interface SubcommandMeta {
+    /** Name of the command (`/name` to call it in chat) */
     name: string;
+    /** Description that's displayed when typing the command in chat */
     desc: string;
+    /** Array of subcommands */
     subcommands: CommandMeta[];
 }
 
