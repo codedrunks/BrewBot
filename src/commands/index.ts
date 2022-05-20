@@ -1,5 +1,6 @@
 import { Remove } from "./Remove";
 import { Say } from "./Say";
+import { Log } from "./Log";
 import { ReactionRoles } from "./ReactionRoles";
 import { Ping } from "./Ping";
 import { Coinflip } from "./Coinflip";
@@ -16,6 +17,7 @@ import { Reminder } from "./Reminder";
 export const commands = [
     Remove,
     Say,
+    Log,
     ReactionRoles,
     Ping,
     Coinflip,
