@@ -89,7 +89,7 @@ export class Reminder extends Command
             const dueTimestamp = Date.now() + dueInMs;
 
             const reminders = persistentData.get("reminders");
-            reminders?.push({ memberId: member.user.id, guildId: guild.id, name, dueTimestamp });
+            reminders?.push({ member: member.user.id, guild: guild.id, name, dueTimestamp });
             reminders && await persistentData.set("reminders", reminders);
 
             return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``);
@@ -97,7 +97,7 @@ export class Reminder extends Command
         case "list":
         {
             const reminders = persistentData.get("reminders");
-            const ownReminders = reminders?.filter(rem => rem.memberId === int.member?.user.id);
+            const ownReminders = reminders?.filter(rem => rem.member === int.member?.user.id);
 
             if(!ownReminders || ownReminders.length === 0)
                 return await this.reply(int, "You don't have any set reminders. Create a new one with `/reminder set`");
@@ -140,8 +140,8 @@ export class Reminder extends Command
             {
                 atLeastOneDue = true;
 
-                const guild = client.guilds.cache.find(g => g.id === rem.guildId);
-                const member = guild?.members.cache.find(m => m.id === rem.memberId);
+                const guild = client.guilds.cache.find(g => g.id === rem.guild);
+                const member = guild?.members.cache.find(m => m.id === rem.member);
 
                 if(member)
                 {

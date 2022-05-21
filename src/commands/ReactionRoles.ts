@@ -1,16 +1,39 @@
-import { CommandInteraction, Message, MessageReaction } from "discord.js";
+import { Client, Collection, CommandInteraction, Message, MessageReaction, TextBasedChannel } from "discord.js";
 import { Command } from "../Command";
 import persistentData from "../persistentData";
 
 export class ReactionRoles extends Command
 {
-    constructor()
+    constructor(client: Client)
     {
         super({
             name: "reactionroles",
             desc: "Sends a reaction role list in the current channel",
             perms: [ "MANAGE_ROLES", "MANAGE_MESSAGES" ],
         });
+
+        const reactionMsgs = persistentData.get("reactionMessages");
+
+        if(reactionMsgs)
+        {
+            const { guild, channel, messages } = reactionMsgs[0];
+
+            const chan = client.guilds.cache.find(g => g.id === guild)?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
+
+            chan?.messages.fetch().then(() => {
+                const msgs = chan?.messages.cache.filter(m => messages.map(ms => ms.id).includes(m.id));
+
+                if(msgs instanceof Collection)
+                {
+                    const msgArr: Message[] = [];
+
+                    this.createCollector(reactionMsgs[0].messages[0].emojis, msgs.reduce((a, c) => {
+                        a.push(c);
+                        return a;
+                    }, msgArr));
+                }
+            });
+        }
     }
 
     async run(int: CommandInteraction): Promise<void>
@@ -23,15 +46,26 @@ export class ReactionRoles extends Command
 
         const roleEmojis = ["🇦", "🇧"];
 
-        if(sentMsg)
+        if(sentMsg && sentMsg.guild)
         {
             for await(const em of roleEmojis)
                 await sentMsg.react(em);
 
-            this.createCollector(roleEmojis, sentMsg);
+            this.createCollector(roleEmojis, [sentMsg]);
 
-            const { id } = sentMsg;
-            await persistentData.set("reactionMessages", [id]);
+            const { id: msgId } = sentMsg;
+            await persistentData.set("reactionMessages", [
+                {
+                    messages: [
+                        {
+                            id: msgId,
+                            emojis: roleEmojis,
+                        }
+                    ],
+                    channel: sentMsg.channel.id,
+                    guild: sentMsg.guild.id,
+                }
+            ]);
 
             await this.editReply(int, "Sent reaction roles");
         }
@@ -39,22 +73,35 @@ export class ReactionRoles extends Command
             await this.editReply(int, "Can't send reaction roles in this channel");
     }
 
-    private createCollector(roleEmojis: string[], message: Message<boolean>)
+    /**
+     * @param emojis The emojis that should be listened for
+     * @param message The messages the emoji reactions are attached to
+     */
+    private async createCollector(emojis: string[], messages: Message<boolean>[])
     {
-        const filter = (reaction: MessageReaction) => roleEmojis.includes(reaction.emoji.name ?? "_");
+        const message = messages[0];
 
-        const collector = message.createReactionCollector({ filter, time: 99999999 });
+        const filter = (reaction: MessageReaction) => emojis.includes(reaction.emoji.name ?? "_");
+
+        // const collector = message.createReactionCollector({ filter, time: 24 * 60 * 60 * 1000 });
+        const collector = message.createReactionCollector({ filter, time: 20 * 1000, max: 50 });
 
         collector.on("collect", (reaction, user) => {
             console.log(`${user.username} selected ${reaction.emoji.name}`);
         });
 
+        collector.on("remove", (reaction, user) => {
+            console.log(`${user.username} removed ${reaction.emoji.name}`);
+        });
+
         collector.on("dispose", (reaction, user) => {
-            console.log(`${user.username} unselected ${reaction.emoji.name}`);
+            console.log(`${user.username} disposed ${reaction.emoji.name}`);
         });
 
         collector.on("end", collected => {
-            console.log(`Collected ${collected.size} items`);
+            console.log(`Collected ${collected.size} items, rebuilding collector`);
+
+            this.createCollector(emojis, messages);
         });
     }
 }

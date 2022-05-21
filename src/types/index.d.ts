@@ -8,21 +8,33 @@ export interface PersistentData
 {
     /** Timestamp of when the bot last started up */
     startupTime: number;
-    /** Array of the current reaction roles message IDs */
-    reactionMessages?: string[];
+    /** Reaction roles message stuff */
+    reactionMessages?: {
+        /** Reaction roles guild ID */
+        guild: string;
+        /** Reaction roles channel ID */
+        channel: string;
+        /** Reaction role message IDs and attached emoji reactions */
+        messages: {
+            id: string;
+            emojis: string[];
+        }[];
+    }[];
     /** Bot logs channel */
     botLogs: {
         guild: string;
         channel: string;
     };
+    /** Warnings given to a user */
     warnings?: {
-        memberId: string;
+        guild: string;
+        member: string;
         reason: string;
         timestamp: number;
     }[];
     reminders?: {
-        memberId: string;
-        guildId: string;
+        member: string;
+        guild: string;
         name: string;
         dueTimestamp: number;
     }[];

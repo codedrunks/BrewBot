@@ -49,12 +49,13 @@ export class Warn extends Command
         const warnings = persistentData.get("warnings") ?? [];
 
         warnings.push({
-            memberId: user.id,
+            guild: user.guild.id,
+            member: user.id,
             reason,
             timestamp: Date.now(),
         });
 
-        const memberWarnings = warnings?.filter(w => w.memberId === user.id);
+        const memberWarnings = warnings?.filter(w => w.member === user.id);
         const warningsAmt = memberWarnings.length;
 
         await persistentData.set("warnings", warnings);
