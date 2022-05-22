@@ -57,6 +57,7 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     // 
     // console.log(`• Registered ${k.green(slashCmds.length)} global slash command${slashCmds.length != 1 ? "s" : ""}`);
 
+    // register guild commands
     for await(const guild of guilds)
     {
         // console.log(`Registering guild commands in ${client.guilds.cache.find(g => g.id === guild)?.name}`);

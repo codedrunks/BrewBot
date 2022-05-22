@@ -3,7 +3,7 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": true,
     },
-    "eslint.validate": ["javascript", "typescript"],
+    "eslint.validate": ["typescript"],
 
     // extension: fabiospampinato.vscode-highlight
     "highlight.regexes": {
