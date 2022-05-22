@@ -8,11 +8,9 @@ import { commands } from "./commands";
 import { events } from "./events";
 
 
-const rest = new REST({
-    version: "9"
-}).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
+let rest: REST;
 
-let botClient: Client | undefined;
+let botClient: Client;
 
 const cmds: Command[] = [];
 const evts: Event[] = [];
@@ -21,6 +19,10 @@ const evts: Event[] = [];
 export function initRegistry(client: Client)
 {
     botClient = client;
+
+    rest = new REST({
+        version: "9"
+    }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
 
 export function getCommands()

@@ -1,5 +1,5 @@
 import { Guild } from "discord.js";
-import { registerGuildCommands } from "src/registry";
+import { registerGuildCommands } from "../registry";
 import { Event } from "../Event";
 
 

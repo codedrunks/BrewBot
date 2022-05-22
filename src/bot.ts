@@ -94,8 +94,7 @@ async function registerCommands(client: Client)
 
         const guilds = client.guilds.cache.map(g => g.id);
 
-        for await(const guild of guilds)
-            await registerGuildCommands(guild);
+        await registerGuildCommands(guilds);
 
         console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""} in ${k.green(guilds.length)} guild${guilds.length != 1 ? "s" : ""} each`);
     }

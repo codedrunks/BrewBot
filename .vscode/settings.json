@@ -43,4 +43,8 @@
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },
+    "files.exclude": {
+        "**/.env": true,
+        "out/**": true,
+    }
 }
