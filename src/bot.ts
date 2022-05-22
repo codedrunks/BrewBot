@@ -24,7 +24,6 @@ async function init()
         throw new Error("Missing environment variable(s). Please correct them according to the .env.template");
 
     await persistentData.init();
-    await persistentData.set("startupTime", Date.now());
 
 
     const client = new Client({

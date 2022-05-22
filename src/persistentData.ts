@@ -18,10 +18,14 @@ let persistentData: Partial<PersistentData> = defaultData;
 
 export async function init()
 {
+    const t = Date.now();
+
     if(await filesystem.exists(dataFilePath))
         persistentData = await readPersistentData();
     else
         await writePersistentData(defaultData);
+
+    await set("startupTime", t);
 
     watch(dataFilePath, async () => {
         persistentData = await readPersistentData();
