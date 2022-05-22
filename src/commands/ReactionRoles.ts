@@ -1,4 +1,4 @@
-import { Client, Collection, CommandInteraction, Message, MessageReaction, TextBasedChannel } from "discord.js";
+import { Client, CommandInteraction, Message, MessageReaction, TextBasedChannel } from "discord.js";
 import { Command } from "../Command";
 import persistentData from "../persistentData";
 
@@ -12,27 +12,34 @@ export class ReactionRoles extends Command
             perms: [ "MANAGE_ROLES", "MANAGE_MESSAGES" ],
         });
 
+        this.prepare(client);
+    }
+
+    private async prepare(client: Client)
+    {
         const reactionMsgs = persistentData.get("reactionMessages");
 
         if(reactionMsgs)
         {
             const { guild, channel, messages } = reactionMsgs[0];
 
-            const chan = client.guilds.cache.find(g => g.id === guild)?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
+            const gui = client.guilds.cache.find(g => g.id === guild);
+            gui && await gui.fetch();
 
-            chan?.messages.fetch().then(() => {
-                const msgs = chan?.messages.cache.filter(m => messages.map(ms => ms.id).includes(m.id));
+            const chan = gui?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
 
-                if(msgs instanceof Collection)
-                {
-                    const msgArr: Message[] = [];
+            if(!chan) return;
 
-                    this.createCollector(reactionMsgs[0].messages[0].emojis, msgs.reduce((a, c) => {
-                        a.push(c);
-                        return a;
-                    }, msgArr));
-                }
-            });
+            await chan.messages.fetch();
+
+            const msgs = chan.messages.cache.filter(m => messages.map(ms => ms.id).includes(m.id));
+
+            if(msgs)
+            {
+                const msgArr = msgs.reduce((a, c) => { a.push(c); return a; }, [] as Message[]);
+
+                this.createCollector(reactionMsgs[0].messages[0].emojis, msgArr);
+            }
         }
     }
 
@@ -44,24 +51,23 @@ export class ReactionRoles extends Command
 
         const sentMsg = await channel?.send("Click the reactions to manage your roles:\n🇦 One\n🇧 Two");
 
-        const roleEmojis = ["🇦", "🇧"];
+        const emojis = ["🇦", "🇧"];
 
         if(sentMsg && sentMsg.guild)
         {
-            for await(const em of roleEmojis)
+            await sentMsg.guild.fetch();
+            await sentMsg.guild.channels.fetch();
+
+            for await(const em of emojis)
                 await sentMsg.react(em);
 
-            this.createCollector(roleEmojis, [sentMsg]);
+            this.createCollector(emojis, [/*#DEBUG*/ sentMsg ]);
 
-            const { id: msgId } = sentMsg;
+            const { id } = sentMsg;
+
             await persistentData.set("reactionMessages", [
                 {
-                    messages: [
-                        {
-                            id: msgId,
-                            emojis: roleEmojis,
-                        }
-                    ],
+                    messages: [ { id, emojis } ],
                     channel: sentMsg.channel.id,
                     guild: sentMsg.guild.id,
                 }

@@ -229,7 +229,7 @@ export abstract class Command
     /**
      * Defers a CommandInteraction and displays a "bot is thinking..." message, so it can be responded to after a maximum of 15 minutes
      * @param int The CommandInteraction to reply to
-     * @param ephemeral Set to false to make the "bot is thinking..." message and reply publicly visible. Defaults to true (only visible for the author).
+     * @param ephemeral Set to false to make the "bot is thinking..." message and command reply publicly visible. Defaults to true (only visible for the author).
      */
     protected async deferReply(int: CommandInteraction, ephemeral = true)
     {
@@ -237,7 +237,7 @@ export abstract class Command
     }
 
     /**
-     * Edits the reply of a CommandInteraction
+     * Edits the reply of a CommandInteraction or sends a new reply when used after `deferReply()`
      * @param int The CommandInteraction to edit the reply of
      * @param content Can be a string or a single or multiple MessageEmbed instances
      */

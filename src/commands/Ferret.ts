@@ -24,7 +24,7 @@ export class Ferret extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await int.deferReply();
+        await this.deferReply(int);
 
         const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
 
@@ -37,6 +37,6 @@ export class Ferret extends Command
             .setFooter({ text: "https://ferret.canarado.xyz" })
             .setImage(data.file);
 
-        await int.editReply({ embeds: [embed] });
+        await this.editReply(int, embed);
     }
 }

@@ -73,7 +73,7 @@ export class Joke extends Command
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        await int.deferReply();
+        await this.deferReply(int);
 
         const args = this.resolveArgs(int);
 
@@ -101,16 +101,10 @@ export class Joke extends Command
         const { data, status, statusText } = await axios.get(url, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
-        {
-            await int.editReply(`JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
-            return;
-        }
+            return await this.editReply(int, `JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
 
         if(data.error === true)
-        {
-            await int.editReply("Couldn't find a joke that matches the set filters.");
-            return;
-        }
+            return await this.editReply(int, "Couldn't find a joke that matches the set filters.");
 
         let jokes: JokeObj[];
 
@@ -136,6 +130,6 @@ export class Joke extends Command
             embeds.push(embed);
         });
 
-        await int.editReply({ embeds });
+        await this.editReply(int, embeds);
     }
 }

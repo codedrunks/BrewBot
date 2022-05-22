@@ -26,7 +26,7 @@ export class Cheese extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
-        await int.deferReply();
+        await this.deferReply(int);
 
         let urlPath = "";
         switch(opt.name)
@@ -42,10 +42,7 @@ export class Cheese extends Command
         const { data, status, statusText } = await axios.get(`https://api.illusionman1212.tech/cheese${urlPath}`, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
-        {
-            await int.editReply(`Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
-            return;
-        }
+            return await this.editReply(int, `Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
 
         if(data.failed === false)
         {
@@ -64,8 +61,7 @@ export class Cheese extends Command
                 .addField(`Texture${cheese.attributes.textures.length != 1 ? "s" : ""}`, cheese.attributes.textures.join(", "), true)
                 .addField("Vegetarian", cheese.attributes.vegetarian ? "yes" : "no", true);
 
-            await int.editReply({ embeds: [embed] });
-            return;
+            return await this.editReply(int, embed);
         }
     }
 }
