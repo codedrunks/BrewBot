@@ -11,6 +11,7 @@ import { Mock } from "./Mock";
 import { Cheese } from "./Cheese";
 import { Cat } from "./Cat";
 import { Reminder } from "./Reminder";
+import { Avatar } from "./Avatar";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -27,4 +28,5 @@ export const commands = [
     Cheese,
     Cat,
     Reminder,
+    Avatar,
 ];
