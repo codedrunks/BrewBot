@@ -44,7 +44,7 @@ async function init()
         firstLaunch && await user.setAvatar("./assets/avatar.png");
 
 
-        await botLogs.init(cl);
+        botLogs.init(cl);
 
         initRegistry(cl);
 
