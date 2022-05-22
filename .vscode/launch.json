@@ -12,6 +12,15 @@
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": ["${workspaceFolder}/out/**/*.js"],
             "console": "integratedTerminal"
-          }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "test.ts",
+            "program": "${workspaceFolder}/src/test.ts",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": ["${workspaceFolder}/out/**/*.js"],
+            "console": "integratedTerminal"
+        }
     ]
 }

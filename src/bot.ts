@@ -7,6 +7,7 @@ import persistentData from "./persistentData";
 import botLogs from "./botLogs";
 import { initRegistry, registerGuildCommands, registerEvents, getCommands } from "./registry";
 import { commands as slashCmds } from "./commands";
+import { settings } from "./settings";
 
 // TODO: figure out something better
 const firstLaunch = false;
@@ -27,7 +28,7 @@ async function init()
 
 
     const client = new Client({
-        intents: [ "GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_PRESENCES" ],
+        intents: settings.client.intents,
     });
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");

@@ -1,6 +1,18 @@
-import { Client, CommandInteraction, Message, MessageReaction, TextBasedChannel } from "discord.js";
+import { Client, CommandInteraction, Message, MessageReaction, TextBasedChannel, ReactionCollector, MessageEmbed, Guild } from "discord.js";
+import { ReactionRole } from "../types";
 import { Command } from "../Command";
 import persistentData from "../persistentData";
+import { settings } from "../settings";
+
+
+const roles: ReactionRole[] = [
+    { emoji: "🇦", id: "978021647468609606" }, // JavaScript
+    { emoji: "🇧", id: "978030175470096384" }, // C#
+    { emoji: "🇨", id: "978030210987479091" }, // TypeScript
+    { emoji: "🇩", id: "978030239953354862" }, // Unity
+    { emoji: "🇪", id: "978030260878733372" }, // Unreal
+    // { emoji: "", name: "", id: "" },
+];
 
 export class ReactionRoles extends Command
 {
@@ -47,11 +59,15 @@ export class ReactionRoles extends Command
     {
         await this.deferReply(int, true);
 
-        const { channel } = int;
+        const { channel, guild } = int;
 
-        const sentMsg = await channel?.send("Click the reactions to manage your roles:\n🇦 One\n🇧 Two");
+        if(!channel || !guild) return;
 
-        const emojis = ["🇦", "🇧"];
+        const embeds = this.buildEmbeds(guild);
+
+        const sentMsg = await channel?.send({ embeds });
+
+        const emojis = roles.map(r => r.emoji);
 
         if(sentMsg && sentMsg.guild)
         {
@@ -79,6 +95,52 @@ export class ReactionRoles extends Command
             await this.editReply(int, "Can't send reaction roles in this channel");
     }
 
+    private buildEmbeds(guild: Guild): MessageEmbed[]
+    {
+        const totalPages = Math.ceil(roles.length - 1 / 20);
+
+        const embeds = [ new MessageEmbed().setTitle(`Manage your roles (1/${totalPages})`) ];
+        
+        let embedIdx = 0;
+        let roleColIdx = 0;
+        
+        roles.forEach(({ emoji, id: roleID }, i) => {
+            const roleLists: string[] = [ "" ];
+
+            const pageNbr = Math.ceil((i === 0 ? 1 : i) / 20);
+
+            const roleName = guild.roles.cache.find(r => r.id === roleID);
+
+            if(roleName)
+                roleLists[roleColIdx] += `${emoji} ${roleName}`;
+
+            if(i === 19)
+                roleColIdx = 0;
+
+            if(i !== 0 && i % 9 === 0)
+                roleColIdx++;
+
+            if(i !== 0 && i % 19 === 0)
+                embedIdx++;
+
+            if(!embeds[embedIdx])
+                embeds[embedIdx] = new MessageEmbed().setTitle(`Manage your roles ${pageNbr}/${totalPages}`);
+
+            if(!roleLists[roleColIdx])
+                roleLists[roleColIdx] = "";
+
+            if(i === roles.length - 1 || i % 19 === 0)
+            {
+                for(const roleList of roleLists)
+                    embeds[embedIdx].addField("Roles:", roleList);
+            }
+        });
+
+        embeds.map(e => e.setColor(settings.embedColors.default));
+
+        return embeds;
+    }
+
     /**
      * @param emojis The emojis that should be listened for
      * @param message The messages the emoji reactions are attached to
@@ -89,8 +151,8 @@ export class ReactionRoles extends Command
 
         const filter = (reaction: MessageReaction) => emojis.includes(reaction.emoji.name ?? "_");
 
-        // const collector = message.createReactionCollector({ filter, time: 24 * 60 * 60 * 1000 });
-        const collector = message.createReactionCollector({ filter, time: 20 * 1000, max: 50 });
+        // const collector = new ReactionCollector(message, { filter, dispose: true, time: 10 * 1000 });
+        const collector = new ReactionCollector(message, { filter, dispose: true, time: 24 * 60 * 60 * 1000 });
 
         collector.on("collect", (reaction, user) => {
             console.log(`${user.username} selected ${reaction.emoji.name}`);
@@ -104,8 +166,8 @@ export class ReactionRoles extends Command
             console.log(`${user.username} disposed ${reaction.emoji.name}`);
         });
 
-        collector.on("end", collected => {
-            console.log(`Collected ${collected.size} items, rebuilding collector`);
+        collector.on("end", () => {
+            !collector.ended && collector.stop();
 
             this.createCollector(emojis, messages);
         });

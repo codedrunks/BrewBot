@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "start": "tsc && node out/bot.js",
-    "test": "ts-node test.ts",
+    "test": "ts-node src/test.ts",
     "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start",
     "clearCommands": "ts-node src/tools/clearCommands.ts"
   },

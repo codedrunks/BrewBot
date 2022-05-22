@@ -104,6 +104,13 @@ export interface SubcommandMeta {
     subcommands: CommandMeta[];
 }
 
+export interface ReactionRole {
+    /** Reaction emoji */
+    emoji: string;
+    /** Role ID */
+    id: string;
+}
+
 //#MARKER events
 
 /** Client event names */
