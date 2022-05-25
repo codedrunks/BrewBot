@@ -11,6 +11,8 @@ const roles: ReactionRole[] = [
     { emoji: "🇨", id: "978030210987479091" }, // TypeScript
     { emoji: "🇩", id: "978030239953354862" }, // Unity
     { emoji: "🇪", id: "978030260878733372" }, // Unreal
+    { emoji: "🇫", id: "979134412589510757" }, // React
+    { emoji: "🇬", id: "979134509368872970" }, // Angular
     // { emoji: "", name: "", id: "" },
 ];
 
@@ -50,7 +52,7 @@ export class ReactionRoles extends Command
             {
                 const msgArr = msgs.reduce((a, c) => { a.push(c); return a; }, [] as Message[]);
 
-                this.createCollector(reactionMsgs[0].messages[0].emojis, msgArr);
+                this.createCollector(roles, msgArr);
             }
         }
     }
@@ -77,7 +79,7 @@ export class ReactionRoles extends Command
             for await(const em of emojis)
                 await sentMsg.react(em);
 
-            this.createCollector(emojis, [/*#DEBUG*/ sentMsg ]);
+            this.createCollector(roles, [/*#DEBUG*/ sentMsg ]);
 
             const { id } = sentMsg;
 
@@ -97,27 +99,31 @@ export class ReactionRoles extends Command
 
     private buildEmbeds(guild: Guild): MessageEmbed[]
     {
-        const totalPages = Math.ceil(roles.length - 1 / 20);
+        const pageSize = 4;
 
-        const embeds = [ new MessageEmbed().setTitle(`Manage your roles (1/${totalPages})`) ];
-        
+        const totalPages = Math.ceil((roles.length - 1) / 20);
+
+        const pageDisp = totalPages > 1 ? ` (1/${totalPages})` : "";
+
+        const embeds = [ new MessageEmbed().setTitle(`Manage your roles${pageDisp}`) ];
+
         let embedIdx = 0;
         let roleColIdx = 0;
-        
-        roles.forEach(({ emoji, id: roleID }, i) => {
-            const roleLists: string[] = [ "" ];
 
+        const roleLists: string[] = [ "" ];
+
+        roles.forEach(({ emoji, id: roleID }, i) => {
             const pageNbr = Math.ceil((i === 0 ? 1 : i) / 20);
 
             const roleName = guild.roles.cache.find(r => r.id === roleID);
 
             if(roleName)
-                roleLists[roleColIdx] += `${emoji} ${roleName}`;
+                roleLists[roleColIdx] += `${emoji} ${roleName}\n`;
 
             if(i === 19)
                 roleColIdx = 0;
 
-            if(i !== 0 && i % 9 === 0)
+            if(i !== 0 && i % pageSize - 1 === 0)
                 roleColIdx++;
 
             if(i !== 0 && i % 19 === 0)
@@ -129,24 +135,28 @@ export class ReactionRoles extends Command
             if(!roleLists[roleColIdx])
                 roleLists[roleColIdx] = "";
 
-            if(i === roles.length - 1 || i % 19 === 0)
-            {
-                for(const roleList of roleLists)
-                    embeds[embedIdx].addField("Roles:", roleList);
-            }
+            const filteredRoleLists = roleLists.reduce((acc: string[], cur?: string) => {
+                cur && cur.length > 0 && acc.push(cur);
+                return acc;
+            }, []);
+
+            if(i === roles.length - 1 || (i !== 0 && i % 19 === 0))
+                filteredRoleLists.forEach((roleList, i) =>
+                    embeds[embedIdx].addField(String(i + 1), roleList, true)
+                );
         });
 
-        embeds.map(e => e.setColor(settings.embedColors.default));
-
-        return embeds;
+        return embeds.map(e => e.setColor(settings.embedColors.default));
     }
 
     /**
-     * @param emojis The emojis that should be listened for
+     * @param emojis The reactions and their emojis that should be listened for
      * @param message The messages the emoji reactions are attached to
      */
-    private async createCollector(emojis: string[], messages: Message<boolean>[])
+    private async createCollector(roles: ReactionRole[], messages: Message<boolean>[])
     {
+        const emojis = roles.map(r => r.emoji);
+
         const message = messages[0];
 
         const filter = (reaction: MessageReaction) => emojis.includes(reaction.emoji.name ?? "_");
@@ -154,12 +164,54 @@ export class ReactionRoles extends Command
         // const collector = new ReactionCollector(message, { filter, dispose: true, time: 10 * 1000 });
         const collector = new ReactionCollector(message, { filter, dispose: true, time: 24 * 60 * 60 * 1000 });
 
-        collector.on("collect", (reaction, user) => {
+        collector.on("collect", async (reaction, user) => {
             console.log(`${user.username} selected ${reaction.emoji.name}`);
+
+            const role = roles.find(r => r.emoji === reaction.emoji.name);
+
+            const member = message.guild?.members.cache.find(u => u.id === user.id);
+
+            const guildRole = message.guild?.roles.cache.find(r => r.id === role?.id);
+
+            if(member && guildRole)
+            {
+                member.roles.add(guildRole);
+
+                const m = await message.channel.send(`${user.username}, I gave you the role ${guildRole?.name}`);
+
+                setTimeout(async () => await m.delete(), 5000);
+            }
+            else
+            {
+                const m = await message.channel.send(`${user.username}, I couldn't give you that role due to an error`);
+
+                setTimeout(async () => await m.delete(), 5000);
+            }
         });
 
-        collector.on("remove", (reaction, user) => {
+        collector.on("remove", async (reaction, user) => {
             console.log(`${user.username} removed ${reaction.emoji.name}`);
+
+            const role = roles.find(r => r.emoji === reaction.emoji.name);
+
+            const member = message.guild?.members.cache.find(u => u.id === user.id);
+
+            const guildRole = message.guild?.roles.cache.find(r => r.id === role?.id);
+
+            if(member && guildRole)
+            {
+                member.roles.remove(guildRole);
+
+                const m = await message.channel.send(`${user.username}, I removed your role ${guildRole?.name}`);
+
+                setTimeout(async () => await m.delete(), 5000);
+            }
+            else
+            {
+                const m = await message.channel.send(`${user.username}, I couldn't remove that role due to an error`);
+
+                setTimeout(async () => await m.delete(), 5000);
+            }
         });
 
         collector.on("dispose", (reaction, user) => {
@@ -169,7 +221,7 @@ export class ReactionRoles extends Command
         collector.on("end", () => {
             !collector.ended && collector.stop();
 
-            this.createCollector(emojis, messages);
+            this.createCollector(roles, messages);
         });
     }
 }
