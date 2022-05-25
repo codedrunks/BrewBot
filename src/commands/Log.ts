@@ -25,6 +25,8 @@ export class Log extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
+        await int.deferReply();
+
         const { channel } = int;
 
         const args = this.resolveArgs(int);
@@ -37,32 +39,40 @@ export class Log extends Command {
         try {
             if (!isNaN(amtRaw) && channel?.type === "GUILD_TEXT" && typeof(logChannel?.send) === "function") {
 
-                await channel.messages.fetch({limit: amount})
+                await channel.messages.fetch({ limit: amount })
                     .then(messages => {
-                        logChannel.send(`Displaying **${amount}** logged entries:`);
+
+                        let messageEmbedString = `Displaying **${amount}** logged messages:`;                        
 
                         messages.reverse().forEach(message => {
                             const messageDate = new Date(message.createdTimestamp);
+                            
+                            messageEmbedString += (`\
 
-                            const loggedMessageEmbed = new MessageEmbed()
-                                .setAuthor({ name: `${message.author.username}#${message.author.discriminator}`, iconURL: message.author.displayAvatarURL() })
-                                .setTitle("#" + channel.name)
-                                .setDescription(message.content)
-                                .setFooter({text: `${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}`});
 
-                            logChannel.send({ embeds: [loggedMessageEmbed] });
+                            <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
+                            > ${message.content}
+                            > [link](${message.url})`);
                         });
+
+                        const loggedMessagesEmbed = new MessageEmbed()
+                            // .setAuthor({ name: `${message.author.username}#${message.author.discriminator}`, iconURL: message.author.displayAvatarURL() })
+                            // .setTitle("#" + channel.name)
+                            .setDescription(messageEmbedString);
+                            // .setFooter({ text: `${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}` });
+
+                        logChannel.send({ embeds: [loggedMessagesEmbed] });
                     });
-                
-                await this.reply(int, `Successfully logged **${amount}** entries to **#${channel.name}**`);
+                    
+                await int.editReply(`Successfully logged **${amount}** messages to **#${channel.name}**`);
             }
             else
-                await this.reply(int, "Error logging messages");
+                return await this.reply(int, "Error logging messages");
         }
         catch (err) {
-            await this.reply(int, "Error logging messages");
-
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
+
+            return await this.reply(int, "Error logging messages");
         }
     }
 }
