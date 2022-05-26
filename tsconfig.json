@@ -17,8 +17,7 @@
         "typeRoots": [
             "node_modules/@types"
         ],
-        "sourceMap": true,
-        "baseUrl": "./"
+        "sourceMap": true
     },
     "files": [
         "src/bot.ts"
