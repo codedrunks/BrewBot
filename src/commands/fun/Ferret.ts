@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import axios from "axios";
 import { randomItem } from "svcorelib";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 const titles = [
     "Look at this cutie",

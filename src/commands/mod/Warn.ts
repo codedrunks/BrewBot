@@ -1,8 +1,8 @@
 import { CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
-import { Command } from "../Command";
-import { sendLogMsg } from "../botLogs";
-import persistentData from "../persistentData";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { sendLogMsg } from "../../botLogs";
+import persistentData from "../../persistentData";
+import { settings } from "../../settings";
 
 export class Warn extends Command
 {

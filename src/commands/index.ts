@@ -1,17 +1,17 @@
-import { Remove } from "./Remove";
-import { Say } from "./Say";
-import { ReactionRoles } from "./ReactionRoles";
-import { Ping } from "./Ping";
-import { Coinflip } from "./Coinflip";
-import { Server } from "./Server";
-import { Warn } from "./Warn";
-import { Joke } from "./Joke";
-import { Ferret } from "./Ferret";
-import { Mock } from "./Mock";
-import { Cheese } from "./Cheese";
-import { Cat } from "./Cat";
-import { Reminder } from "./Reminder";
-import { Avatar } from "./Avatar";
+import { Remove } from "./mod/Remove";
+import { Say } from "./mod/Say";
+import { ReactionRoles } from "./mod/ReactionRoles";
+import { Ping } from "./util/Ping";
+import { Coinflip } from "./fun/Coinflip";
+import { Server } from "./util/Server";
+import { Warn } from "./mod/Warn";
+import { Joke } from "./fun/Joke";
+import { Ferret } from "./fun/Ferret";
+import { Mock } from "./fun/Mock";
+import { Cheese } from "./fun/Cheese";
+import { Cat } from "./fun/Cat";
+import { Reminder } from "./util/Reminder";
+import { Avatar } from "./util/Avatar";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [

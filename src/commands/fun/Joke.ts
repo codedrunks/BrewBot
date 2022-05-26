@@ -1,7 +1,7 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 export type JokeType = "single" | "twopart";
 export type JokeCategory = "Misc" | "Programming" | "Dark" | "Pun" | "Spooky" | "Christmas";

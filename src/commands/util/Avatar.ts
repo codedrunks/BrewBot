@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { settings } from "../settings";
-import { Command } from "../Command";
+import { settings } from "../../settings";
+import { Command } from "../../Command";
 
 export class Avatar extends Command
 {

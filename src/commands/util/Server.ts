@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 export class Server extends Command
 {

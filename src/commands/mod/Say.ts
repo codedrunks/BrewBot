@@ -1,5 +1,5 @@
 import { CommandInteraction, TextBasedChannel } from "discord.js";
-import { Command } from "../Command";
+import { Command } from "../../Command";
 
 export class Say extends Command
 {

@@ -1,7 +1,7 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randRange } from "svcorelib";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 // idx 0: heads, idx 1: tails - TODO: make some sexy emoji for this specifically maybe?
 const coins = ["🇭","🇹"];

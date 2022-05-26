@@ -1,13 +1,14 @@
 import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import parseRelativeTime from "parse-relative-time";
 import { readableArray } from "svcorelib";
-import { Command } from "../Command";
-import persistentData from "../persistentData";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import persistentData from "../../persistentData";
+import { settings } from "../../settings";
+import { CommandMeta } from "../../types";
 
 export class Reminder extends Command
 {
-    constructor(client: Client)
+    constructor(client: Client | CommandMeta)
     {
         super({
             name: "reminder",
@@ -63,9 +64,12 @@ export class Reminder extends Command
             ]
         });
 
-        // since the constructor is called exactly once at startup, this should work just fine
-        this.checkReminders(client);
-        setInterval(() => this.checkReminders(client), 1000);
+        if(!Command.isCommandMeta(client))
+        {
+            // since the constructor is called exactly once at startup, this should work just fine
+            this.checkReminders(client);
+            setInterval(() => this.checkReminders(client), 1000);
+        }
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>

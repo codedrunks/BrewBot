@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import k from "kleur";
-import { Command } from "../Command";
+import { Command } from "../../Command";
 
 export class Remove extends Command {
     constructor()
