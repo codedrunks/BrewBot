@@ -10,6 +10,10 @@ export const settings: Settings = {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
     },
+    moderation: {
+        /** How many reaction votes are needed to ban someone */
+        votesToBan: 2,
+    },
     client: {
         /**
          * List of intents the client requests from the gateway.  
@@ -28,7 +32,8 @@ export const settings: Settings = {
     },
     embedColors: {
         default: "FUCHSIA",
-        error: "DARK_RED"
+        warning: "ORANGE",
+        error: "DARK_RED",
     },
     /** When reached, sends a message to the moderators */
     warningsThreshold: 3,
@@ -45,11 +50,15 @@ interface Settings {
     debug: {
         bellOnReady: boolean;
     }
+    moderation: {
+        votesToBan: number;
+    }
     client: {
         intents: IntentsString[];
     }
     embedColors: {
         default: ColorResolvable;
+        warning: ColorResolvable;
         error: ColorResolvable;
     }
     warningsThreshold: number;

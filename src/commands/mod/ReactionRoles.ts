@@ -178,8 +178,6 @@ export class ReactionRoles extends Command
         const collector = new ReactionCollector(message, { filter, dispose: true, time: 24 * 60 * 60 * 1000 });
 
         collector.on("collect", async (reaction, user) => {
-            console.log(`${user.username} selected ${reaction.emoji.name}`);
-
             const role = roles.find(r => r.emoji === reaction.emoji.name);
 
             const member = message.guild?.members.cache.find(u => u.id === user.id);
@@ -203,8 +201,6 @@ export class ReactionRoles extends Command
         });
 
         collector.on("remove", async (reaction, user) => {
-            console.log(`${user.username} removed ${reaction.emoji.name}`);
-
             const role = roles.find(r => r.emoji === reaction.emoji.name);
 
             const member = message.guild?.members.cache.find(u => u.id === user.id);
@@ -225,10 +221,6 @@ export class ReactionRoles extends Command
 
                 setTimeout(async () => await m.delete(), 5000);
             }
-        });
-
-        collector.on("dispose", (reaction, user) => {
-            console.log(`${user.username} disposed ${reaction.emoji.name}`);
         });
 
         collector.on("end", () => {

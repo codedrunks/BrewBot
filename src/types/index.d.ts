@@ -25,12 +25,16 @@ export interface PersistentData
         guild: string;
         channel: string;
     };
-    /** Warnings given to a user */
+    /** Warnings given to users */
     warnings?: {
+        /** Guild ID */
         guild: string;
+        /** Member ID */
         member: string;
-        reason: string;
-        timestamp: number;
+        warnings: {
+            reason: string;
+            timestamp: number;
+        }[];
     }[];
     reminders?: {
         member: string;
