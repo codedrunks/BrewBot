@@ -62,7 +62,7 @@ async function init()
             activities: [{ type: "WATCHING", name: "ur mom" }],
         });
 
-        console.log(`• ${user.username} is listening in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+        console.log(`• ${user.username} is listening for commands and events in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
 
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 

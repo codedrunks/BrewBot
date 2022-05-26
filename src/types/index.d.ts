@@ -9,7 +9,7 @@ export interface PersistentData
     /** Timestamp of when the bot last started up */
     startupTime: number;
     /** Reaction roles message stuff */
-    reactionMessages?: {
+    reactionMessage?: {
         /** Reaction roles guild ID */
         guild: string;
         /** Reaction roles channel ID */
@@ -19,7 +19,7 @@ export interface PersistentData
             id: string;
             emojis: string[];
         }[];
-    }[];
+    };
     /** Bot logs channel */
     botLogs: {
         guild: string;

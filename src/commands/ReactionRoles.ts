@@ -1,9 +1,14 @@
 import { Client, CommandInteraction, Message, MessageReaction, TextBasedChannel, ReactionCollector, MessageEmbed, Guild } from "discord.js";
-import { ReactionRole } from "../types";
+import { PersistentData, ReactionRole } from "../types";
 import { Command } from "../Command";
 import persistentData from "../persistentData";
 import { settings } from "../settings";
 
+
+type EmbedMsg = {
+    embed: MessageEmbed,
+    emojis: ReactionRole[],
+};
 
 const roles: ReactionRole[] = [
     { emoji: "🇦", id: "978021647468609606" }, // JavaScript
@@ -15,6 +20,8 @@ const roles: ReactionRole[] = [
     { emoji: "🇬", id: "979134509368872970" }, // Angular
     // { emoji: "", name: "", id: "" },
 ];
+
+const rolesPerMsg = 20;
 
 export class ReactionRoles extends Command
 {
@@ -31,11 +38,11 @@ export class ReactionRoles extends Command
 
     private async prepare(client: Client)
     {
-        const reactionMsgs = persistentData.get("reactionMessages");
+        const reactionMsg = persistentData.get("reactionMessage");
 
-        if(reactionMsgs)
+        if(reactionMsg)
         {
-            const { guild, channel, messages } = reactionMsgs[0];
+            const { guild, channel, messages } = reactionMsg;
 
             const gui = client.guilds.cache.find(g => g.id === guild);
             gui && await gui.fetch();
@@ -67,86 +74,74 @@ export class ReactionRoles extends Command
 
         const embeds = this.buildEmbeds(guild);
 
-        const sentMsg = await channel?.send({ embeds });
+        await guild.fetch();
+        await guild.channels.fetch();
 
-        const emojis = roles.map(r => r.emoji);
+        const messages: Required<PersistentData>["reactionMessage"]["messages"] = [];
 
-        if(sentMsg && sentMsg.guild)
+        const sentMsgs = [];
+        for await(const ebd of embeds)
         {
-            await sentMsg.guild.fetch();
-            await sentMsg.guild.channels.fetch();
+            const m = await channel?.send({ embeds: [ ebd.embed ] });
 
-            for await(const em of emojis)
-                await sentMsg.react(em);
+            if(m)
+            {
+                sentMsgs.push(m);
 
-            this.createCollector(roles, [/*#DEBUG*/ sentMsg ]);
+                for await(const em of ebd.emojis)
+                    await m.react(em.emoji);
 
-            const { id } = sentMsg;
-
-            await persistentData.set("reactionMessages", [
-                {
-                    messages: [ { id, emojis } ],
-                    channel: sentMsg.channel.id,
-                    guild: sentMsg.guild.id,
-                }
-            ]);
-
-            await this.editReply(int, "Sent reaction roles");
+                messages.push({ id: m.id, emojis: ebd.emojis.map(e => e.emoji) });
+            }
         }
-        else
-            await this.editReply(int, "Can't send reaction roles in this channel");
-    }
 
-    private buildEmbeds(guild: Guild): MessageEmbed[]
-    {
-        const pageSize = 4;
+        this.createCollector(roles, sentMsgs);
 
-        const totalPages = Math.ceil((roles.length - 1) / 20);
-
-        const pageDisp = totalPages > 1 ? ` (1/${totalPages})` : "";
-
-        const embeds = [ new MessageEmbed().setTitle(`Manage your roles${pageDisp}`) ];
-
-        let embedIdx = 0;
-        let roleColIdx = 0;
-
-        const roleLists: string[] = [ "" ];
-
-        roles.forEach(({ emoji, id: roleID }, i) => {
-            const pageNbr = Math.ceil((i === 0 ? 1 : i) / 20);
-
-            const roleName = guild.roles.cache.find(r => r.id === roleID);
-
-            if(roleName)
-                roleLists[roleColIdx] += `${emoji} ${roleName}\n`;
-
-            if(i === 19)
-                roleColIdx = 0;
-
-            if(i !== 0 && i % pageSize - 1 === 0)
-                roleColIdx++;
-
-            if(i !== 0 && i % 19 === 0)
-                embedIdx++;
-
-            if(!embeds[embedIdx])
-                embeds[embedIdx] = new MessageEmbed().setTitle(`Manage your roles ${pageNbr}/${totalPages}`);
-
-            if(!roleLists[roleColIdx])
-                roleLists[roleColIdx] = "";
-
-            const filteredRoleLists = roleLists.reduce((acc: string[], cur?: string) => {
-                cur && cur.length > 0 && acc.push(cur);
-                return acc;
-            }, []);
-
-            if(i === roles.length - 1 || (i !== 0 && i % 19 === 0))
-                filteredRoleLists.forEach((roleList, i) =>
-                    embeds[embedIdx].addField(String(i + 1), roleList, true)
-                );
+        await persistentData.set("reactionMessage", {
+            guild: sentMsgs[0].guild?.id ?? int.guild?.id ?? "unknown guild",
+            channel: sentMsgs[0].channel.id,
+            messages,
         });
 
-        return embeds.map(e => e.setColor(settings.embedColors.default));
+        await this.editReply(int, "Sent reaction roles");
+    }
+
+    private buildEmbeds(guild: Guild): EmbedMsg[]
+    {
+        const totalPages = Math.ceil((roles.length - 1) / rolesPerMsg);
+
+        const msgs: EmbedMsg[] = [];
+
+
+        const roleList = (roles: ReactionRole[]) => roles.reduce((acc, c) => acc += `${c.emoji} ${guild.roles.cache.find(r => r.id === c.id)?.name}\n`, "");
+
+        const ebdRoles = roles;
+        let pageNbr = 0;
+
+        while(ebdRoles.length > 0)
+        {
+            pageNbr++;
+            const eRoles = ebdRoles.splice(0, rolesPerMsg - 1);
+
+            const half = Math.ceil(eRoles.length / 2);    
+            const first = eRoles.slice(0, half);
+            const second = eRoles.slice(-half);
+
+            const pageDisp = totalPages > 1 ? ` (${pageNbr}/${totalPages})` : "";
+
+            msgs.push({
+                embed: new MessageEmbed()
+                    .setTitle(`Manage your roles${pageDisp}`)
+                    .setColor(settings.embedColors.default)
+                    .setFields([
+                        { name: "Roles", value: roleList(first), inline: true },
+                        { name: "Roles", value: roleList(second), inline: true },
+                    ]),
+                emojis: eRoles,
+            });
+        }
+
+        return msgs;
     }
 
     /**
@@ -157,6 +152,7 @@ export class ReactionRoles extends Command
     {
         const emojis = roles.map(r => r.emoji);
 
+        // TODO: listen for all messages
         const message = messages[0];
 
         const filter = (reaction: MessageReaction) => emojis.includes(reaction.emoji.name ?? "_");
