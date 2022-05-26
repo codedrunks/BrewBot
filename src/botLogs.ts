@@ -10,14 +10,14 @@ export function init(client: Client)
     botLogsChannel = client?.guilds.cache.find(g => g.id === botLogs?.guild)?.channels.cache.find(ch => ch.id === botLogs?.channel) as TextBasedChannel | undefined;
 }
 
-export function sendLogMsg(msg: string | MessageEmbed | MessageEmbed[])
+export async function sendLogMsg(msg: string | MessageEmbed | MessageEmbed[])
 {
     if(botLogsChannel)
     {
         if(typeof msg === "string")
-            botLogsChannel.send(msg);
+            return await botLogsChannel.send(msg);
         else
-            botLogsChannel.send({ embeds: Array.isArray(msg) ? msg : [msg] });
+            return await botLogsChannel.send({ embeds: Array.isArray(msg) ? msg : [msg] });
     }
 }
 

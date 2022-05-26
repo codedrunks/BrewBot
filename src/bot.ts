@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
-import { allOfType } from "svcorelib";
+import { allOfType, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
@@ -51,9 +51,10 @@ async function init()
 
 
         await registerCommands(cl);
-        const evtAmt = await registerEvents();
+        const evts = await registerEvents().filter(e => e.enabled);
 
-        evtAmt && console.log(`• Registered ${k.green(evtAmt)} client event${evtAmt != 1 ? "s" : ""}`);
+        console.log(`• Registered ${k.green(evts.length)} client event${evts.length != 1 ? "s" : ""}`);
+        printDbgItmList(evts.map(e => e.constructor.name ?? e.names.join("&")));
 
 
         user.setPresence({
@@ -61,7 +62,11 @@ async function init()
             activities: [{ type: "WATCHING", name: "ur mom" }],
         });
 
-        console.log(`\n${user.username} is ready in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+        console.log(`• ${user.username} is listening in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+
+        printDbgItmList(guilds.cache.map(g => g.name), 4);
+
+        settings.debug.bellOnReady && console.log("\u0007");
     });
 
     client.on("error", err => {
@@ -87,7 +92,6 @@ async function init()
  */
 async function registerCommands(client: Client)
 {
-    
     try
     {
         // register guild commands
@@ -96,8 +100,6 @@ async function registerCommands(client: Client)
         const guilds = client.guilds.cache.map(g => g.id);
 
         await registerGuildCommands(guilds);
-
-        console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""} in ${k.green(guilds.length)} guild${guilds.length != 1 ? "s" : ""} each`);
     }
     catch(err)
     {
@@ -112,6 +114,9 @@ async function registerCommands(client: Client)
 
         if(!cmds)
             throw new Error("No commands found to listen to");
+
+        console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""}`);
+        printDbgItmList(cmds.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
             if(!int.isCommand())
@@ -133,6 +138,22 @@ async function registerCommands(client: Client)
     {
         console.error(k.red("Error while listening for slash commands:\n") + k.red(err instanceof Error ? String(err) : "Unknown Error"));
     }
+}
+
+/** Prints a styled list of items to the console * @param limit Max amount of items per line */
+function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
+{
+    let msg = "";
+
+    list = list.map(itm => itm.toString()).sort();
+
+    while(list.length > 0)
+    {
+        const items = list.splice(0, limit);
+        msg += `│ ${k.gray(`${items.join(", ")}${items.length === 8 ? "," : ""}`)}\n`;
+    }
+
+    console.log(msg);
 }
 
 init();

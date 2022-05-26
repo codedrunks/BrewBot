@@ -1,7 +1,15 @@
 import { ColorResolvable, IntentsString } from "discord.js";
+import dotenv from "dotenv";
+import { Stringifiable } from "svcorelib";
+
+dotenv.config();
 
 
 export const settings: Settings = {
+    debug: {
+        /** Whether to send a bell sound in the console when the bot is ready */
+        bellOnReady: envVarEquals("BELL_ON_READY", true),
+    },
     client: {
         /**
          * List of intents the client requests from the gateway.  
@@ -19,15 +27,24 @@ export const settings: Settings = {
         ],
     },
     embedColors: {
-        default: "GREYPLE",
+        default: "FUCHSIA",
         error: "DARK_RED"
     },
     /** When reached, sends a message to the moderators */
     warningsThreshold: 3,
 };
 
+/** Tests if the environment variable `varName` equals `value` */
+function envVarEquals(varName: string, value: string | Stringifiable)
+{
+    return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
+}
+
 
 interface Settings {
+    debug: {
+        bellOnReady: boolean;
+    }
     client: {
         intents: IntentsString[];
     }

@@ -90,17 +90,13 @@ export function registerEvents()
 
     // listen for events
 
-    let registeredAmt = 0;
-
     for(const ev of evts)
     {
         if(!ev.enabled) continue;
 
         for(const evName of ev.names)
             botClient.on(evName, async (...args) => void await ev.run(...args));
-
-        registeredAmt++;
     }
 
-    return registeredAmt;
+    return evts;
 }

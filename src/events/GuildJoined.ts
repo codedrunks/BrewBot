@@ -1,6 +1,7 @@
 import { Guild } from "discord.js";
 import { registerGuildCommands } from "../registry";
 import { Event } from "../Event";
+import { sendLogMsg } from "../botLogs";
 
 
 export class GuildJoined extends Event
@@ -12,10 +13,8 @@ export class GuildJoined extends Event
 
     async run(guild: Guild)
     {
-        //TODO: register all commands for this guild
-
         await registerGuildCommands(guild.id);
 
-        console.log(`I just joined the guild "${guild.name}" and registered all slash commands there`);
+        await sendLogMsg(`I just joined the guild "${guild.name}" and registered all slash commands there`);
     }
 }
