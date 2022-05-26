@@ -4,6 +4,8 @@ import { Command } from "../../Command";
 import persistentData from "../../persistentData";
 import { settings } from "../../settings";
 
+const emojiRoles = [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ];
+
 
 type EmbedMsg = {
     embed: MessageEmbed,
@@ -11,23 +13,30 @@ type EmbedMsg = {
 };
 
 const roles: ReactionRole[] = [
-    { emoji: "🇦", id: "978021647468609606" }, // JavaScript
-    { emoji: "🇧", id: "979416816512278548" }, // C
-    { emoji: "🇨", id: "979416784610418749" }, // C++
-    { emoji: "🇩", id: "978030175470096384" }, // C#
-    { emoji: "🇪", id: "978030210987479091" }, // TypeScript
-    { emoji: "🇫", id: "978030239953354862" }, // Rust
-    { emoji: "🇬", id: "979416971282100324" }, // Ruby
-    { emoji: "🇭", id: "979416891770699916" }, // Go
-    { emoji: "🇮", id: "978030239953354862" }, // Unity
-    { emoji: "🇯", id: "978030260878733372" }, // Unreal
-    { emoji: "🇰", id: "979134412589510757" }, // React
-    { emoji: "🇱", id: "979134509368872970" }, // Angular
-    { emoji: "🇲", id: "979417658011320350" }, // Vue
-    { emoji: "🇳", id: "979417614474428428" }, // Bootstrap
-    { emoji: "🇴", id: "979417464628736070" }, // Svelte
-    // { emoji: "", name: "", id: "" },
-];
+    { id: "978021647468609606" }, // JavaScript
+    { id: "979416816512278548" }, // C
+    { id: "979416784610418749" }, // C++
+    { id: "978030175470096384" }, // C#
+    { id: "978030210987479091" }, // TypeScript
+    { id: "979416848489676842" }, // Rust
+    { id: "979416971282100324" }, // Ruby
+    { id: "979416891770699916" }, // Go
+    { id: "979422324912697364" }, // Python
+
+    { id: "978030239953354862" }, // Unity
+    { id: "978030260878733372" }, // Unreal
+    { id: "979421553810870322" }, // Visual Studio
+    { id: "979421609423147028" }, // VS Code
+    { id: "979421689484046416" }, // Atom
+    { id: "979421740063150090" }, // JetBrains
+
+    { id: "979134412589510757" }, // React
+    { id: "979134509368872970" }, // Angular
+    { id: "979417658011320350" }, // Vue
+    { id: "979417614474428428" }, // Bootstrap
+    { id: "979417464628736070" }, // Svelte
+    // { emoji: "", name: "", id: "" }, // 
+].map((v, i) => ({ ...v, emoji: emojiRoles[i] }));
 
 const rolesPerMsg = 20;
 
@@ -52,10 +61,10 @@ export class ReactionRoles extends Command
         {
             const { guild, channel, messages } = reactionMsg;
 
-            const gui = client.guilds.cache.find(g => g.id === guild);
-            gui && await gui.fetch();
+            const gld = client.guilds.cache.find(g => g.id === guild);
+            gld && await gld.fetch();
 
-            const chan = gui?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
+            const chan = gld?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
 
             if(!chan) return;
 
@@ -129,9 +138,9 @@ export class ReactionRoles extends Command
         while(ebdRoles.length > 0)
         {
             pageNbr++;
-            const eRoles = ebdRoles.splice(0, rolesPerMsg - 1);
+            const eRoles = ebdRoles.splice(0, rolesPerMsg);
 
-            const half = Math.ceil(eRoles.length / 2);    
+            const half = Math.ceil(eRoles.length / 2);
             const first = eRoles.slice(0, half);
             const second = eRoles.slice((eRoles.length - half) * -1);
 
