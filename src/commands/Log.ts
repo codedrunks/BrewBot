@@ -45,19 +45,33 @@ export class Log extends Command {
         const logChannel = int.client.guilds.cache.find(g => g.id == settings.guildID)?.channels.cache.find(ch => ch.id === settings.messageLogChannel) as TextChannel;
         let startMessageID = args.start;
 
-        if(args.start && args.start[0] === "h") {
+        if (args.start?.match(/\/[0-9]+$/)) {
             startMessageID = args.start.substring(args.start.lastIndexOf("/") + 1);
         }
 
         try {
             if (!isNaN(amtRaw) && channel?.type === "GUILD_TEXT" && typeof(logChannel?.send) === "function") {
 
-                await channel.messages.fetch({ limit: amount, before: startMessageID })
+                if(!args.start) {
+                    await channel.messages.fetch({ limit: 1 }).then(messages => {
+                        const lastMessage = messages?.first();
+
+                        if(lastMessage) {
+                            startMessageID = lastMessage.id;
+                        }
+                    });
+                }
+
+                await channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
                     .then(async (messages) => {
                         
                         messages.set(startMessageID, await channel.messages.fetch(startMessageID));
 
-                        console.log(messages);
+                        const lastMessage = messages?.first();
+
+                        if(amount === 1 && lastMessage) {
+                            messages.delete(lastMessage.id);
+                        }
 
                         const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
                         let newEmbedColor: ColorResolvable = embedColors[0];
@@ -92,7 +106,7 @@ export class Log extends Command {
                                     .setColor(newEmbedColor);
 
                                 if(setNum == 0) {
-                                    loggedMessagesEmbed.setTitle(`Displaying **${amount}** messages, logged by ${int.user.username}#${int.user.discriminator}.`);
+                                    loggedMessagesEmbed.setTitle(`Displaying **${messages.size}** messages, logged by ${int.user.username}#${int.user.discriminator}.`);
                                 }
                             
                                 const embedLength = messageEmbedString.length;
