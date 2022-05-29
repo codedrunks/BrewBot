@@ -1,6 +1,8 @@
-import { CommandInteraction, TextBasedChannel, MessageEmbed } from "discord.js";
+import { CommandInteraction, TextChannel, MessageEmbed, ColorResolvable } from "discord.js";
 import k from "kleur";
 import { Command } from "../Command";
+import { settings } from "../settings";
+import persistentData from "../persistentData";
 
 export class Log extends Command {
     constructor() {
@@ -17,34 +19,63 @@ export class Log extends Command {
                     name: "channel",
                     type: "channel",
                     desc: "Name of log channel.",
-                    required: true,
-                }
+                    required: false,
+                },
+                {
+                    name: "start",
+                    desc: "ID or URL of starting message, logs messages before selected message.",
+                    required: false,
+                },
             ],
             perms: ["MANAGE_MESSAGES"],
         });
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        await int.deferReply();
 
         const { channel } = int;
 
         const args = this.resolveArgs(int);
 
+        console.log(args);
+
         const amtRaw = parseInt(args?.amount);
         const amount = Math.min(Math.max(amtRaw, 1), 50);
 
-        const logChannel = int.guild?.channels.cache.find(ch => ch.id === args.channel) as TextBasedChannel;
+        const logChannel = int.client.guilds.cache.find(g => g.id == settings.guildID)?.channels.cache.find(ch => ch.id === settings.messageLogChannel) as TextChannel;
+        let startMessageID = args.start;
+
+        if(args.start && args.start[0] === "h") {
+            startMessageID = args.start.substring(args.start.lastIndexOf("/") + 1);
+        }
 
         try {
             if (!isNaN(amtRaw) && channel?.type === "GUILD_TEXT" && typeof(logChannel?.send) === "function") {
 
-                await channel.messages.fetch({ limit: amount })
-                    .then(messages => {
+                await channel.messages.fetch({ limit: amount, before: startMessageID })
+                    .then(async (messages) => {
+                        
+                        messages.set(startMessageID, await channel.messages.fetch(startMessageID));
 
-                        let messageEmbedString = `Displaying **${amount}** logged messages:`;                        
+                        console.log(messages);
 
-                        messages.reverse().forEach(message => {
+                        const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
+                        let newEmbedColor: ColorResolvable = embedColors[0];
+
+                        if(persistentData.get("lastLogColor") == embedColors[0]) {
+                            newEmbedColor = embedColors[1];
+                        }
+
+                        let messageEmbedString = "";
+
+                        const messagesSize = Math.ceil(messages.size / 10);
+                        
+                        let i = 0;
+                        let setNum = 0;
+
+                        messages.sort((a, b) => (a.createdTimestamp > b.createdTimestamp) ? 1 : -1).forEach(message => {
+                            i++;
+
                             const messageDate = new Date(message.createdTimestamp);
                             
                             messageEmbedString += (`\
@@ -53,18 +84,36 @@ export class Log extends Command {
                             <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
                             > ${message.content}
                             > [link](${message.url})`);
+
+                            if(i === 10 || (10 * setNum) + i === messages.size) {
+                                const loggedMessagesEmbed = new MessageEmbed()
+                                    .setDescription(messageEmbedString)
+                                    .setFooter({ text: `${setNum + 1}/${messagesSize}` })
+                                    .setColor(newEmbedColor);
+
+                                if(setNum == 0) {
+                                    loggedMessagesEmbed.setTitle(`Displaying **${amount}** messages, logged by ${int.user.username}#${int.user.discriminator}.`);
+                                }
+                            
+                                const embedLength = messageEmbedString.length;
+                                
+                                messageEmbedString = "";
+                                i = 0; 
+
+                                setNum++;
+                                
+                                if (embedLength < 6000) {
+                                    logChannel.send({ embeds: [loggedMessagesEmbed] });
+
+                                    persistentData.set("lastLogColor", newEmbedColor);
+                                } else {
+                                    return this.reply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
+                                }
+                            }
                         });
-
-                        const loggedMessagesEmbed = new MessageEmbed()
-                            // .setAuthor({ name: `${message.author.username}#${message.author.discriminator}`, iconURL: message.author.displayAvatarURL() })
-                            // .setTitle("#" + channel.name)
-                            .setDescription(messageEmbedString);
-                            // .setFooter({ text: `${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}` });
-
-                        logChannel.send({ embeds: [loggedMessagesEmbed] });
                     });
                     
-                await int.editReply(`Successfully logged **${amount}** messages to **#${channel.name}**`);
+                return await this.reply(int, `Successfully logged **${amount}** messages to **#${logChannel.name}**`);
             }
             else
                 return await this.reply(int, "Error logging messages");
