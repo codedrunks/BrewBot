@@ -12,6 +12,7 @@ import { Cheese } from "./fun/Cheese";
 import { Cat } from "./fun/Cat";
 import { Reminder } from "./util/Reminder";
 import { Avatar } from "./util/Avatar";
+import { Define } from "./util/Define";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -29,4 +30,5 @@ export const commands = [
     Cat,
     Reminder,
     Avatar,
+    Define,
 ];
