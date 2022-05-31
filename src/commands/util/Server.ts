@@ -26,6 +26,10 @@ export class Server extends Command
                     name: "splash",
                     desc: "Shows the server's splash image (invite background)",
                 },
+                {
+                    name: "invite",
+                    desc: "Gives you the server's invite link",
+                },
             ]
         });
     }
@@ -129,6 +133,31 @@ export class Server extends Command
                 .setImage(splashUrl);
 
             return await this.reply(int, embed, false);
+        }
+        case "invite":
+        {
+            await guild.invites.fetch();
+
+            const ivts = guild.invites.cache.filter(iv => iv.maxAge === 0);
+
+            const vanityUrl = guild.vanityURLCode ? `https://discord.gg/${guild.vanityURLCode}` : undefined;
+            const mostUsedIvts = ivts.sort((a, b) => a.uses && b.uses && a.uses > b.uses ? 1 : -1);
+
+            const iv = mostUsedIvts.at(0);
+
+            if(!vanityUrl && !iv)
+                return await this.reply(int, "Couldn't find an invite. Please create a new one or ask the moderators to create one.");
+
+            const link = vanityUrl ? vanityUrl : iv?.url;
+            const chan = iv?.channel.id ? `\nChannel: <#${iv.channel.id}>` : undefined;
+            const uses = iv?.uses ? `\nUses: ${iv.uses}${typeof iv.maxUses === "number" && iv.maxUses > 0 ? ` / ${iv.maxUses}` : ""}` : undefined;
+
+            const embed = new MessageEmbed()
+                .setTitle(`**${guild.name}** - invite:`)
+                .setColor(settings.embedColors.default)
+                .setDescription(`**[${link}](${link})**${chan || uses ? "\n" : ""}${chan}${uses}`);
+
+            return await this.reply(int, embed);
         }
         default:
             return await this.reply(int, "Unrecognized subcommand.");

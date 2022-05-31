@@ -24,6 +24,7 @@ export const settings: Settings = {
             "GUILDS",
             "GUILD_MEMBERS",
             "GUILD_INTEGRATIONS",
+            "GUILD_INVITES",
             "GUILD_PRESENCES",
             "GUILD_MESSAGES",
             "GUILD_MESSAGE_REACTIONS",
