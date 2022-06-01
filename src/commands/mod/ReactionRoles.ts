@@ -4,8 +4,6 @@ import { Command } from "../../Command";
 import persistentData from "../../persistentData";
 import { settings } from "../../settings";
 
-const emojiRoles = [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ];
-
 
 type EmbedMsg = {
     embed: MessageEmbed,
@@ -36,7 +34,7 @@ const roles: ReactionRole[] = [
     { id: "979417614474428428" }, // Bootstrap
     { id: "979417464628736070" }, // Svelte
     // { emoji: "", name: "", id: "" }, // 
-].map((v, i) => ({ ...v, emoji: emojiRoles[i] }));
+].map((v, i) => ({ ...v, emoji: settings.emojiList[i] }));
 
 const rolesPerMsg = 20;
 

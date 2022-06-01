@@ -22,6 +22,7 @@
 		"indent": [ "error", 4 ],
 		"quotes": [ "error", "double" ],
 		"semi": [ "error", "always" ],
-		"eol-last": [ "error", "always" ]
+		"eol-last": [ "error", "always" ],
+		"no-async-promise-executor": "off"
 	}
 }

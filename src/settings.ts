@@ -36,8 +36,10 @@ export const settings: Settings = {
         warning: "ORANGE",
         error: "DARK_RED",
     },
-    /** When reached, sends a message to the moderators */
+    /** When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,
+    /** Incremental list of emojis used in reactions */
+    emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
 };
 
 /** Tests if the environment variable `varName` equals `value` */
@@ -63,4 +65,5 @@ interface Settings {
         error: ColorResolvable;
     }
     warningsThreshold: number;
+    emojiList: string[];
 }

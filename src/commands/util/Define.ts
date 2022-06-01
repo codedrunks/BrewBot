@@ -3,6 +3,14 @@ import { CommandInteraction, MessageEmbed } from "discord.js";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
+type WikiArticle = {
+    title: string;
+    extract: string;
+    pageid: number;
+    url: string;
+    thumbnail?: string;
+};
+
 export class Define extends Command
 {
     constructor()
@@ -69,48 +77,121 @@ export class Define extends Command
         }
         case "wikipedia":
         {
-            const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(term)}`);
+            const normalize = (str: string) => str
+                .replace(/\s(\(|\))\s/gm, " ")
+                .replace(/a/gm, "a");
 
-            const searchObj = searchReq.data?.query?.search;
+            const searchWiki = async (searchTerm: string): Promise<void> => {
+                const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(searchTerm)}`);
 
-            if(!Array.isArray(searchObj) || searchReq.status < 200 || searchReq.status >= 300)
-                return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                // follow suggestion if needed
+                if(typeof searchReq.data?.query?.searchinfo?.suggestion === "string")
+                    return await searchWiki(searchReq.data.query.searchinfo.suggestion);
 
-            // TODO: if page is type=disambiguation, use index 1 and so on
-            const articleTitle = searchObj?.[0]?.title;
+                const searchResults = searchReq.data?.query?.search as WikiArticle[] | undefined;
 
-            if(!articleTitle)
-                return this.editReply(int, "Couldn't find that term on Wikipedia. Please make sure it's spelled more or less correctly.");
+                if(!Array.isArray(searchResults) || searchReq.status < 200 || searchReq.status >= 300)
+                    return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
 
-            const { data, status } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(articleTitle)}`);
+                const articles: WikiArticle[] = [];
 
-            if(!data?.titles?.display || status < 200 || status >= 300)
-                return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                for await(const { title: artTitle } of searchResults)
+                {
+                    const { data, status } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(artTitle)}`);
 
-            const type = data.type;
+                    if(!data.title || status < 200 || status >= 300)
+                        return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
 
-            switch(type)
-            {
-            default:
-            case "standard":
-            {
-                const title = data.title;
-                const extract = data.extract;
-                const thumb = data.originalimage?.source ?? data.thumbnail?.source;
-                const url = data.content_urls?.desktop?.page;
+                    data.type === "standard" && articles.push({
+                        title: data.title,
+                        extract: normalize(data.extract),
+                        pageid: data.pageid,
+                        url: data.content_urls.desktop.page,
+                        thumbnail: data?.originalimage?.source ?? data?.thumbnail?.source,
+                    });
 
-                embed.setTitle(`Wikipedia definition for **${title}**:`)
-                    .setDescription(String(extract).trim());
+                    if(articles.length === 5)
+                        break;
+                }
 
-                thumb && embed.setThumbnail(thumb);
-                url && embed.setFooter({ text: url });
+                try
+                {
+                    if(articles.length === 0)
+                        return this.editReply(int, "Couldn't find a wikipedia article with that term");
 
-                break;
-            }
-            }
+                    return await this.findWikiArticle(int, articles);
+                }
+                catch(err)
+                {
+                    return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                }
+            };
+
+            return await searchWiki(term);
         }
         }
 
         this.editReply(int, embed);
+    }
+
+    async findWikiArticle(int: CommandInteraction, articles: WikiArticle[])
+    {
+        if(!int.channel)
+            throw new Error("Couldn't find channel for /define command");
+
+        const m = await int.channel.send({ embeds: [
+            new MessageEmbed()
+                .setTitle("Select the best matching article")
+                .setDescription(articles.map((a, i) => `${settings.emojiList[i]}  **${a.title} [\\🔗](${a.url})**`).join("\n"))
+                .setColor(settings.embedColors.default)
+        ]});
+
+        const emList = settings.emojiList.slice(0, Math.min(articles.length, settings.emojiList.length));
+
+        const coll = m.createReactionCollector({
+            filter: (re, usr) => {
+                return !usr.bot
+                    && emList.includes(re.emoji.name ?? "_")
+                    && (re.message.createdTimestamp && Date.now() - re.message.createdTimestamp < 20000 ? usr.id === int.user.id : true) ? true : false;
+            },
+            time: 2 * 60 * 1000,
+            dispose: true,
+            max: 1,
+        });
+
+        let mDeleted = false;
+
+        coll.on("collect", async (re) => {
+            const artIdx = settings.emojiList.indexOf(re.emoji.name ?? "_");
+
+            if(artIdx >= 0)
+            {
+                mDeleted = true;
+                await m.delete();
+
+                const { title, extract, url, thumbnail } = articles[artIdx];
+
+                const ebd = new MessageEmbed()
+                    .setTitle(`Wikipedia definition for **${title}**:`)
+                    .setColor(settings.embedColors.default)
+                    .setDescription(extract)
+                    .setFooter({ text: url });
+
+                thumbnail && ebd.setThumbnail(thumbnail);
+
+                await this.editReply(int, ebd);
+            }
+        });
+
+        coll.on("end", async (_c, reason) => {
+            if(reason === "time")
+            {
+                await m.reactions.removeAll();
+                await this.editReply(int, "No article was selected in time. Please try again.");
+            }
+        });
+
+        for await(const e of emList)
+            !mDeleted && await m.react(e);
     }
 }
