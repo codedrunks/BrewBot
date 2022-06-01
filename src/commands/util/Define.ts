@@ -63,12 +63,52 @@ export class Define extends Command
                 .setDescription(`${removeAnnotations(def)}\n\n> Example:\n> ${removeAnnotations(ex)}`);
 
             author && thumbs_up && thumbs_down &&
-                embed.setFooter({ text: `By ${author} - ${thumbs_up} 👍 ${thumbs_down} 👎 - https://www.urbandictionary.com` });
+                embed.setFooter({ text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down} - https://www.urbandictionary.com` });
 
             break;
         }
         case "wikipedia":
-            return this.editReply(int, "WIP  <:angery_bubz:680459945703243851>");
+        {
+            const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(term)}`);
+
+            const searchObj = searchReq.data?.query?.search;
+
+            if(!Array.isArray(searchObj) || searchReq.status < 200 || searchReq.status >= 300)
+                return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+
+            // TODO: if page is type=disambiguation, use index 1 and so on
+            const articleTitle = searchObj?.[0]?.title;
+
+            if(!articleTitle)
+                return this.editReply(int, "Couldn't find that term on Wikipedia. Please make sure it's spelled more or less correctly.");
+
+            const { data, status } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(articleTitle)}`);
+
+            if(!data?.titles?.display || status < 200 || status >= 300)
+                return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+
+            const type = data.type;
+
+            switch(type)
+            {
+            default:
+            case "standard":
+            {
+                const title = data.title;
+                const extract = data.extract;
+                const thumb = data.originalimage?.source ?? data.thumbnail?.source;
+                const url = data.content_urls?.desktop?.page;
+
+                embed.setTitle(`Wikipedia definition for **${title}**:`)
+                    .setDescription(String(extract).trim());
+
+                thumb && embed.setThumbnail(thumb);
+                url && embed.setFooter({ text: url });
+
+                break;
+            }
+            }
+        }
         }
 
         this.editReply(int, embed);
