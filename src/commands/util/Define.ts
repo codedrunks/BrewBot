@@ -68,7 +68,7 @@ export class Define extends Command
             break;
         }
         case "wikipedia":
-            return this.editReply(int, "WIP <:angery_bubz:680459945703243851>");
+            return this.editReply(int, "WIP  <:angery_bubz:680459945703243851>");
         }
 
         this.editReply(int, embed);
