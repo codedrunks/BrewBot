@@ -1,4 +1,5 @@
-import { Client } from "discord.js";
+import { EventEmitter } from "events";
+import { ButtonInteraction, Client } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 
@@ -24,6 +25,8 @@ export function initRegistry(client: Client)
         version: "9"
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
+
+//#MARKER commands
 
 export function getCommands()
 {
@@ -72,6 +75,8 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     }
 }
 
+//#MARKER events
+
 export function getEvents()
 {
     return evts;
@@ -100,3 +105,30 @@ export function registerEvents()
 
     return evts;
 }
+
+//#MARKER buttons
+
+interface ButtonEvent {
+    messageId: string;
+}
+
+interface BtnListener {
+    /** Gets emitted when a button is pressed. Listen for this event and check if the message ID matches. */
+    on(event: "press", listener: (messageId: string, int: ButtonInteraction) => void): this;
+}
+
+class BtnListener extends EventEmitter {
+    public evtList: ButtonEvent[] = [];
+
+    constructor()
+    {
+        super();
+    }
+
+    addButton(messageId: string)
+    {
+        this.evtList.push({ messageId });
+    }
+}
+
+export const ButtonListener = new BtnListener();
