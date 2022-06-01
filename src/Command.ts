@@ -1,10 +1,15 @@
-import { ApplicationCommandDataResolvable, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
+import EventEmitter from "events";
+import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
 
 
+export interface Command {
+    on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
+}
+
 /** Base class for all slash commands */
-export abstract class Command
+export abstract class Command extends EventEmitter
 {
     readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
@@ -16,6 +21,8 @@ export abstract class Command
     /** Base class for all slash commands */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
+        super();
+
         const data = new SlashCommandBuilder();
 
         if(Command.isCommandMeta(cmdMeta))
@@ -217,13 +224,14 @@ export abstract class Command
      * @param int The CommandInteraction to reply to
      * @param content Can be a string or a single or multiple MessageEmbed instances
      * @param ephemeral Set to true to make the command reply only visible to the author. Defaults to false (publicly visible).
+     * @param actions An action or an array of actions to attach to the reply
      */
-    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false)
+    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral });
+            await int.reply({ content, ephemeral, ...this.useActions(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.reply({ embeds: Array.isArray(content) ? content : [content] });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...this.useActions(actions) });
     }
 
     /**
@@ -240,13 +248,28 @@ export abstract class Command
      * Edits the reply of a CommandInteraction or sends a new reply when used after `deferReply()`
      * @param int The CommandInteraction to edit the reply of
      * @param content Can be a string or a single or multiple MessageEmbed instances
+     * @param actions An action or an array of actions to attach to the reply
      */
-    protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[])
+    protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content });
+            await int.editReply({ content, ...this.useActions(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content] });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...this.useActions(actions) });
+    }
+
+    /** Returns an object from passed actions that can be spread onto an interaction reply */
+    protected useActions(actions?: MessageButton | MessageButton[])
+    {
+        const actRows = Array.isArray(actions) ? actions : (actions ? [actions] : undefined);
+
+        if(!actRows)
+            return {};
+
+        const act = new MessageActionRow()
+            .addComponents(actRows);
+
+        return actRows ? { components: [act] } : {};
     }
 
     //#SECTION static

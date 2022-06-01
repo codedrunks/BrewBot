@@ -14,6 +14,7 @@ import { Reminder } from "./util/Reminder";
 import { Avatar } from "./util/Avatar";
 import { Define } from "./util/Define";
 import { Fact } from "./fun/Fact";
+import { Btn } from "./mod/Btn";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -33,4 +34,5 @@ export const commands = [
     Avatar,
     Define,
     Fact,
+    Btn,
 ];

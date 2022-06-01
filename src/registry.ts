@@ -1,12 +1,12 @@
-import { EventEmitter } from "events";
-import { ButtonInteraction, Client } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
+import type { ButtonInteraction, Client } from "discord.js";
 
 import { Command } from "./Command";
 import { Event } from "./Event";
 import { commands } from "./commands";
 import { events } from "./events";
+import { ButtonMessage } from "./ButtonMessage";
 
 
 let rest: REST;
@@ -108,27 +108,14 @@ export function registerEvents()
 
 //#MARKER buttons
 
-interface ButtonEvent {
-    messageId: string;
+const btnMsgs: ButtonMessage[] = [];
+
+export function registerBtnMsg(btnMsg: ButtonMessage)
+{
+    console.log("TODO:");
 }
 
-interface BtnListener {
-    /** Gets emitted when a button is pressed. Listen for this event and check if the message ID matches. */
-    on(event: "press", listener: (messageId: string, int: ButtonInteraction) => void): this;
+export function btnPressed(int: ButtonInteraction)
+{
+    console.log("TODO: emit 'press' event on the correct btnMsg");
 }
-
-class BtnListener extends EventEmitter {
-    public evtList: ButtonEvent[] = [];
-
-    constructor()
-    {
-        super();
-    }
-
-    addButton(messageId: string)
-    {
-        this.evtList.push({ messageId });
-    }
-}
-
-export const ButtonListener = new BtnListener();

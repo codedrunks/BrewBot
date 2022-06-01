@@ -15,7 +15,7 @@ export class Delete extends Command {
                 },
                 {
                     name: "up_until",
-                    desc: "Deletes all messages upwards until the provided message ID or link is reached (which is also included in deletion).\nIf the amount parameter is set, the amount of messages will be deleted starting from the provided message ID or link, going downwards.",
+                    desc: "Deletes from the bottom until this ID or link is reached.\nIf amount is set, deletes downwards",
                 },
             ],
             perms: [ "MANAGE_MESSAGES" ],
@@ -34,6 +34,8 @@ export class Delete extends Command {
 
         try
         {
+            await channel.messages.fetch();
+
             const until = String(args.up_until ?? "_");
             const untilType = until.match(/\/[0-9]+$/) ? "link" : (until.match(/^[0-9]+$/) ? "id" : undefined);
 
@@ -68,7 +70,6 @@ export class Delete extends Command {
 
                 // TODO: check all the fucky wucky shit
 
-                await channel.messages.fetch();
                 const msgs = channel.messages.cache.reduce((acc, cur) => ([ ...acc, cur ]), emptyMsgArr).sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 0 : 1);
 
                 let cutoffIdx = 0;

@@ -5,7 +5,7 @@ import { allOfType, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands, ButtonListener } from "./registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands } from "./registry";
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 
@@ -121,25 +121,23 @@ async function registerCommands(client: Client)
         printDbgItmList(cmds.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
-            if(int.isButton())
+            if(int.isCommand())
             {
-                ButtonListener.emit("press", int.message.id, int);
-                return;
+                const { commandName, options } = int;
+
+                const opts = options.data && options.data.length > 0 ? options.data : undefined;
+
+                const cmd = cmds.find(({ meta }) => meta.name === commandName);
+
+                if(!cmd || !cmd.enabled)
+                    return;
+
+                await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
-
-            if(!int.isCommand())
-                return;
-
-            const { commandName, options } = int;
-
-            const opts = options.data && options.data.length > 0 ? options.data : undefined;
-
-            const cmd = cmds.find(({ meta }) => meta.name === commandName);
-
-            if(!cmd || !cmd.enabled)
-                return;
-
-            await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
+            else if(int.isButton())
+            {
+                console.log();
+            }
         });
     }
     catch(err: unknown)

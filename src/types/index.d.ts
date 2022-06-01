@@ -54,6 +54,7 @@ type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | Boolea
 
 interface BaseCommandArg {
     name: string;
+    /** Max 100 chars */
     desc: string;
     /** Defaults to `false` */
     required?: boolean;
