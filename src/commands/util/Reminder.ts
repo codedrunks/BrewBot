@@ -96,7 +96,7 @@ export class Reminder extends Command
             reminders?.push({ member: member.user.id, guild: guild.id, name, dueTimestamp });
             reminders && await persistentData.set("reminders", reminders);
 
-            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``);
+            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``, true);
         }
         case "list":
         {
@@ -104,7 +104,7 @@ export class Reminder extends Command
             const ownReminders = reminders?.filter(rem => rem.member === int.member?.user.id);
 
             if(!ownReminders || ownReminders.length === 0)
-                return await this.reply(int, "You don't have any set reminders. Create a new one with `/reminder set`");
+                return await this.reply(int, "You don't have any set reminders. Create a new one with `/reminder set`", true);
 
             const remList = ownReminders.reduce((acc, cur) => acc += `\n**${cur.name}**\n${new Date(cur.dueTimestamp).toUTCString()}\n`, "");
 
@@ -118,14 +118,12 @@ export class Reminder extends Command
             if(avatar)
                 embed.setThumbnail(avatar);
 
-            return await this.reply(int, embed);
+            return await this.reply(int, embed, true);
         }
         case "delete":
         {
             break;
         }
-        default:
-            return await this.reply(int, "Unrecognized subcommand.");
         }
     }
 

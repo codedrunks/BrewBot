@@ -216,9 +216,9 @@ export abstract class Command
      * Has to be called within 3 seconds, otherwise the reply times out. Alternatively, use `deferReply()` and `editReply()` for 15 minutes.
      * @param int The CommandInteraction to reply to
      * @param content Can be a string or a single or multiple MessageEmbed instances
-     * @param ephemeral Set to false to make the reply publicly visible. Defaults to true (only visible for the author).
+     * @param ephemeral Set to true to make the command reply only visible to the author. Defaults to false (publicly visible).
      */
-    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = true)
+    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false)
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral });
@@ -229,9 +229,9 @@ export abstract class Command
     /**
      * Defers a CommandInteraction and displays a "bot is thinking..." message, so it can be responded to after a maximum of 15 minutes
      * @param int The CommandInteraction to reply to
-     * @param ephemeral Set to false to make the "bot is thinking..." message and command reply publicly visible. Defaults to true (only visible for the author).
+     * @param ephemeral Set to true to make both the "bot is thinking..." message and command reply only visible to the author. Defaults to false (publicly visible).
      */
-    protected async deferReply(int: CommandInteraction, ephemeral = true)
+    protected async deferReply(int: CommandInteraction, ephemeral = false)
     {
         return await int.deferReply({ ephemeral });
     }

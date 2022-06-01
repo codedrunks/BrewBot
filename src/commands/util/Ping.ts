@@ -12,6 +12,6 @@ export class Ping extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        await this.reply(int, "Pong!");
+        await this.reply(int, "Pong!", true);
     }
 }

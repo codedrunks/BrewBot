@@ -23,7 +23,7 @@ export class Fact extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await this.deferReply(int, false);
+        await this.deferReply(int);
 
         const { data, status } = await axios.get("https://uselessfacts.jsph.pl/random.json?language=en");
 

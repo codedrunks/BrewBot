@@ -29,7 +29,7 @@ export class Ferret extends Command
         const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
 
         if(status < 200 || status >= 300 || !data.file)
-            return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+            return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, true);
 
         const embed = new MessageEmbed()
             .setTitle(randomItem(titles))

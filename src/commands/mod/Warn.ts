@@ -43,11 +43,12 @@ export class Warn extends Command
         const user = guild?.members.cache.find(m => m.id === member);
 
         if(!user)
-            return await this.reply(int, "Couldn't find the provided member");
+            return await this.reply(int, "Couldn't find the provided member", true);
 
         const warnAmount = await this.addWarning(user, reason);
 
-        return await this.reply(int, `Successfully warned the user. They have **${warnAmount}** warning${warnAmount != 1 ? "s" : ""}.`);
+        const bold = warnAmount >= settings.warningsThreshold ? "**" : "";
+        return await this.reply(int, `Successfully warned the user. They now have ${bold}${warnAmount} warning${warnAmount != 1 ? "s" : ""}${bold} in total.`, true);
     }
 
     private async addWarning(user: GuildMember, reason: string): Promise<number>

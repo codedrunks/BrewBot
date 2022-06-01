@@ -21,7 +21,7 @@ export class Avatar extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await this.deferReply(int, false);
+        await this.deferReply(int);
 
         const { user } = this.resolveArgs(int);
 

@@ -33,7 +33,7 @@ export class Coinflip extends Command {
 
             if(isNaN(amount) || amount < 1 || amount > 50)
             {
-                await this.reply(int, "Please enter a valid amount between 1 and 50");
+                await this.reply(int, "Please enter a valid amount between 1 and 50", true);
                 return;
             }
 
@@ -50,6 +50,6 @@ export class Coinflip extends Command {
             .setColor(settings.embedColors.default)
             .setDescription(replyText);
 
-        await this.reply(int, embed, false);
+        await this.reply(int, embed);
     }
 }

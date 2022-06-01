@@ -31,14 +31,14 @@ export class Remove extends Command {
             if(!isNaN(amtRaw) && channel?.type === "GUILD_TEXT")
             {
                 await channel.bulkDelete(amount);
-                await this.reply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`);
+                await this.reply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`, true);
             }
             else
-                await this.reply(int, "Couldn't bulk delete messages");
+                await this.reply(int, "Couldn't bulk delete messages", true);
         }
         catch (err)
         {
-            await this.reply(int, "Couldn't bulk delete messages");
+            await this.reply(int, "Couldn't bulk delete messages", true);
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
         }
     }

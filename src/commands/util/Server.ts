@@ -90,28 +90,28 @@ export class Server extends Command
             const iconUrl = guild.iconURL({ format: "png", size: 1024 });
             iconUrl && embed.setThumbnail(iconUrl);
 
-            return await this.reply(int, embed, false);
+            return await this.reply(int, embed);
         }
         case "banner":
         {
             const bannerUrl = guild.bannerURL({ format: "png", size: 4096 });
 
             if(!bannerUrl)
-                return await this.reply(int, "This server doesn't have a banner.");
+                return await this.reply(int, "This server doesn't have a banner.", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - banner:`)
                 .setColor(settings.embedColors.default)
                 .setImage(bannerUrl);
 
-            return await this.reply(int, embed, false);
+            return await this.reply(int, embed);
         }
         case "icon":
         {
             const iconUrl = guild.iconURL({ format: "png", size: 4096 });
 
             if(!iconUrl)
-                return await this.reply(int, "This server doesn't have an icon.");
+                return await this.reply(int, "This server doesn't have an icon.", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - icon:`)
@@ -125,7 +125,7 @@ export class Server extends Command
             const splashUrl = guild.splashURL({ format: "png", size: 4096 });
 
             if(!splashUrl)
-                return await this.reply(int, "This server doesn't have a splash image (invite background).");
+                return await this.reply(int, "This server doesn't have a splash image (invite background).", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - splash image:`)
@@ -146,7 +146,7 @@ export class Server extends Command
             const iv = mostUsedIvts.at(0);
 
             if(!vanityUrl && !iv)
-                return await this.reply(int, "Couldn't find an invite. Please create a new one or ask the moderators to create one.");
+                return await this.reply(int, "Couldn't find an invite. Please create a new one or ask the moderators to create one.", true);
 
             const link = vanityUrl ? vanityUrl : iv?.url;
             const chan = iv?.channel.id ? `\nChannel: <#${iv.channel.id}>` : undefined;
@@ -157,10 +157,8 @@ export class Server extends Command
                 .setColor(settings.embedColors.default)
                 .setDescription(`**[${link}](${link})**${chan || uses ? "\n" : ""}${chan}${uses}`);
 
-            return await this.reply(int, embed);
+            return await this.reply(int, embed, true);
         }
-        default:
-            return await this.reply(int, "Unrecognized subcommand.");
         }
     }
 }

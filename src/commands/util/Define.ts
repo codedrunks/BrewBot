@@ -42,9 +42,9 @@ export class Define extends Command
         const { term, engine } = this.resolveArgs(int);
 
         if(!term || term.length < 1 || !["urbandictionary", "wikipedia"].includes(engine))
-            return this.reply(int, "Please provide a term to search for and a search engine.");
+            return this.reply(int, "Please provide a term to search for and a search engine.", true);
 
-        await this.deferReply(int, false);
+        await this.deferReply(int);
 
         const embed = new MessageEmbed()
             .setColor(settings.embedColors.default);
