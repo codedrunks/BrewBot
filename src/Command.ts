@@ -191,14 +191,14 @@ export abstract class Command
             if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
                 return await this.run(interaction, opt);
             else if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: "You don't have the necessary permissions to run this command!", ephemeral: true });
+                return await interaction.reply({ content: "You don't have permission to run this command.", ephemeral: true });
 
             return null;
         }
         catch(err)
         {
             if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: `Couldn't run the command due to an error: ${String(err)}`, ephemeral: true });
+                return await interaction.reply({ content: `Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, ephemeral: true });
             return null;
         }
     }

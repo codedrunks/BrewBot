@@ -5,7 +5,7 @@ import { allOfType, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands } from "./registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, ButtonListener } from "./registry";
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 
@@ -50,11 +50,13 @@ async function init()
         initRegistry(cl);
 
 
-        await registerCommands(cl);
-        const evts = await registerEvents().filter(e => e.enabled);
+        const evts = registerEvents().filter(e => e.enabled);
 
         console.log(`• Registered ${k.green(evts.length)} client event${evts.length != 1 ? "s" : ""}`);
         printDbgItmList(evts.map(e => e.constructor.name ?? e.names.join("&")));
+
+        await registerCommands(cl);
+
 
 
         user.setPresence({
@@ -119,6 +121,12 @@ async function registerCommands(client: Client)
         printDbgItmList(cmds.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
+            if(int.isButton())
+            {
+                ButtonListener.emit("press", int.message.id, int);
+                return;
+            }
+
             if(!int.isCommand())
                 return;
 

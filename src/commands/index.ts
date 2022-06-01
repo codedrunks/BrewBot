@@ -1,4 +1,4 @@
-import { Remove } from "./mod/Remove";
+import { Delete } from "./mod/Delete";
 import { Say } from "./mod/Say";
 import { ReactionRoles } from "./mod/ReactionRoles";
 import { Ping } from "./util/Ping";
@@ -17,7 +17,7 @@ import { Fact } from "./fun/Fact";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
-    Remove,
+    Delete,
     Say,
     ReactionRoles,
     Ping,
