@@ -15,6 +15,7 @@ import { Avatar } from "./util/Avatar";
 import { Define } from "./util/Define";
 import { Fact } from "./fun/Fact";
 import { Btn } from "./mod/Btn";
+import { Steam } from "./fun/Steam";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -35,4 +36,5 @@ export const commands = [
     Define,
     Fact,
     Btn,
+    Steam,
 ];
