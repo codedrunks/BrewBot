@@ -158,12 +158,34 @@ export abstract class Command extends EventEmitter
         return this.slashCmdJson;
     }
 
+    /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
+    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
+    {
+        try
+        {
+            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
+                return await this.run(interaction, opt);
+            else if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: "You don't have permission to run this command.", ephemeral: true });
+
+            return null;
+        }
+        catch(err)
+        {
+            if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: `Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, ephemeral: true });
+            return null;
+        }
+    }
+
+    //#SECTION protected
+
     /**
      * Checks if the GuildMember of a CommandInteraction has the permission to run this command.
      * @param subcommandName Needs to be provided if this command has subcommands
      * @returns Returns null if the subcommand name is invalid
      */
-    public hasPerm(int: CommandInteraction, subcommandName?: string): boolean | null
+    protected hasPerm(int: CommandInteraction, subcommandName?: string): boolean | null
     {
         const { memberPermissions } = int;
 
@@ -190,28 +212,6 @@ export abstract class Command extends EventEmitter
         return null;
     }
 
-    /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
-    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
-    {
-        try
-        {
-            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
-                return await this.run(interaction, opt);
-            else if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: "You don't have permission to run this command.", ephemeral: true });
-
-            return null;
-        }
-        catch(err)
-        {
-            if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: `Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, ephemeral: true });
-            return null;
-        }
-    }
-
-    //#SECTION protected
-
     /** Resolves a flat object of command arguments from an interaction */
     protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
@@ -229,9 +229,9 @@ export abstract class Command extends EventEmitter
     protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral, ...this.useActions(actions) });
+            await int.reply({ content, ephemeral, ...this.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...this.useActions(actions) });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...this.useButtons(actions) });
     }
 
     /**
@@ -253,15 +253,21 @@ export abstract class Command extends EventEmitter
     protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content, ...this.useActions(actions) });
+            await int.editReply({ content, ...this.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...this.useActions(actions) });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...this.useButtons(actions) });
     }
 
-    /** Returns an object from passed actions that can be spread onto an interaction reply */
-    protected useActions(actions?: MessageButton | MessageButton[])
+    /** Deletes the reply of a CommandInteraction */
+    protected async deleteReply(int: CommandInteraction)
     {
-        const actRows = Array.isArray(actions) ? actions : (actions ? [actions] : undefined);
+        int.replied && await int.deleteReply();
+    }
+
+    /** Returns an object from passed buttons that can be spread onto an interaction reply */
+    protected useButtons(buttons?: MessageButton | MessageButton[])
+    {
+        const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
 
         if(!actRows)
             return {};
@@ -277,13 +283,13 @@ export abstract class Command extends EventEmitter
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isCommandMeta(meta: any): meta is CommandMeta
     {
-        return typeof meta === "object" && meta?.name && meta?.desc && !Array.isArray(meta?.subcommands);
+        return typeof meta === "object" && meta.name && meta.desc && !Array.isArray(meta?.subcommands);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isSubcommandMeta(meta: any): meta is SubcommandMeta
     {
-        return typeof meta === "object" && meta?.name && meta?.desc && Array.isArray(meta?.subcommands);
+        return typeof meta === "object" && meta.name && meta.desc && Array.isArray(meta?.subcommands);
     }
 
     //#SECTION abstract
