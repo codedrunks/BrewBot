@@ -46,32 +46,39 @@ export class Steam extends Command
             avatar && embed.setThumbnail(avatar.large ?? avatar.medium ?? avatar.small);
             realName && embed.addField("Real name", realName, true);
             embed.addField("Created at", createdAt.toLocaleDateString("en-GB", { dateStyle: "medium" }), true);
-            countryCode && embed.addField("Country", await this.getCountryName(countryCode), true);
 
-            try
-            {
+            const promises: (() => Promise<void>)[] = [];
+
+            promises.push(async () => {
+                countryCode && embed.addField("Country", await this.getCountryName(countryCode), true);
+            });
+
+            promises.push(async () => {
                 const games = await this.api.getUserOwnedGames(usrId);
                 Array.isArray(games) && games.length > 0 && embed.addField("Games", String(games.length), true);
+            });
 
+            promises.push(async () => {
                 const recentGames = await this.api.getUserRecentGames(usrId);
                 Array.isArray(recentGames) && recentGames.length > 0 && embed.addField("Recent Games", recentGames.map(r => r.name).join(", "), true);
+            });
 
+            promises.push(async () => {
                 const level = await this.api.getUserLevel(usrId);
                 const badges = await this.api.getUserBadges(usrId);
+
                 typeof level === "number" && embed.addField("Level", `**${level}**${badges.playerXP ? ` (${badges.playerXP} / ${badges.playerXP + badges.playerNextLevelXP} XP)` : ""}`, true);
                 Array.isArray(badges.badges) && badges.badges.length > 0 && embed.addField("Badges", String(badges.badges.length), true);
+            });
 
+            promises.push(async () => {
                 const bans = await this.api.getUserBans(usrId);
                 bans && embed.addField("Bans", `VAC: ${bans.vacBans}\nGame: ${bans.gameBans}${bans.communityBanned ? "\nCommunity: banned" : ""}`, true);
-            }
-            catch(err)
-            {
-                void err;
-            }
-            finally
-            {
-                await this.editReply(int, embed);
-            }
+            });
+
+            await Promise.allSettled(promises.map(p => p()));
+
+            await this.editReply(int, embed);
         }
         catch(err)
         {
