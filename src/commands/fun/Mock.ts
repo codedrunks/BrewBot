@@ -12,8 +12,13 @@ export class Mock extends Command
             args: [
                 {
                     name: "text",
-                    desc: "The text to mockify",
+                    desc: "The text to mockify.",
                     required: true,
+                },
+                {
+                    name: "copy",
+                    desc: "Set to true to hide the bot's reply from other members, so you can copy and send it instead.",
+                    type: "boolean",
                 }
             ]
         });
@@ -25,15 +30,16 @@ export class Mock extends Command
 
         const args = this.resolveArgs(int);
 
-        if(args.text && args.text.length > 0)
-        {
-            await int.reply("Sending message...");
+        const mockified = args.text.split("").map((ch, i) => i % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase()).join("");
+        const ephemeral = (args.copy && args.copy.length > 0 && args.copy === "true") ? true : false;
 
-            const mockified = args.text.split("").map((ch, i) => i % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase()).join("");
+        if(ephemeral)
+            return this.reply(int, mockified, ephemeral);
 
-            await int.channel.send(`<:mock:506303207400669204> ${mockified}`);
+        await this.reply(int, "Sending message...");
 
-            await int.deleteReply();
-        }
+        await int.channel.send(`<:mock:506303207400669204> ${mockified}`);
+
+        return int.deleteReply();
     }
 }
