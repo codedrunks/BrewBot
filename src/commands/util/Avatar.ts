@@ -1,4 +1,4 @@
-import { AllowedImageSize, CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, MessageEmbed } from "discord.js";
 import { settings } from "../../settings";
 import { Command } from "../../Command";
 import axios, { AxiosError } from "axios";
@@ -32,7 +32,7 @@ export class Avatar extends Command
     {
         await this.deferReply(int);
 
-        const { user, format: fmt, size: sz } = this.resolveArgs(int);
+        const { user, format: fmt } = this.resolveArgs(int);
 
         const member = int.guild?.members.cache.find(m => user ? m.id === user : m.id === int.user.id);
         const usr = member?.user;
