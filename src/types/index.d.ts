@@ -8,18 +8,8 @@ export interface PersistentData
 {
     /** Timestamp of when the bot last started up */
     startupTime: number;
-    /** Reaction roles message stuff */
-    reactionMessage?: {
-        /** Reaction roles guild ID */
-        guild: string;
-        /** Reaction roles channel ID */
-        channel: string;
-        /** Reaction role message IDs and attached emoji reactions */
-        messages: {
-            id: string;
-            emojis: string[];
-        }[];
-    };
+    /** Reaction roles messages and emojis */
+    reactionMessages?: ReactionMsg[];
     /** Bot logs channel */
     botLogs: {
         guild: string;
@@ -109,11 +99,23 @@ export interface SubcommandMeta {
     subcommands: CommandMeta[];
 }
 
+//#SECTION reactionroles
+
 export interface ReactionRole {
     /** Reaction emoji */
     emoji: string;
     /** Role ID */
     id: string;
+}
+
+export interface ReactionMsg {
+    /** Guild ID */
+    guild: string;
+    msgs: {
+        /** Message ID */
+        message: string;
+        roles: ReactionRole[];
+    }[];
 }
 
 //#MARKER events

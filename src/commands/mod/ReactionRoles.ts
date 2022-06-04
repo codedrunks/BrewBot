@@ -1,5 +1,5 @@
-import { Client, CommandInteraction, Message, MessageReaction, TextBasedChannel, ReactionCollector, MessageEmbed } from "discord.js";
-import { CommandMeta, PersistentData, ReactionRole } from "../../types";
+import { Client, CommandInteraction, Message, MessageReaction, ReactionCollector, MessageEmbed, EmbedFieldData } from "discord.js";
+import { PersistentData, ReactionMsg, ReactionRole } from "../../types";
 import { Command } from "../../Command";
 import persistentData from "../../persistentData";
 import { settings } from "../../settings";
@@ -40,7 +40,7 @@ const rolesPerMsg = 20;
 
 export class ReactionRoles extends Command
 {
-    constructor(client: Client | CommandMeta)
+    constructor(client: Client)
     {
         super({
             name: "reactionroles",
@@ -48,35 +48,9 @@ export class ReactionRoles extends Command
             perms: [ "MANAGE_ROLES", "MANAGE_MESSAGES" ],
         });
 
-        !Command.isCommandMeta(client) && this.prepare(client);
-    }
+        const reactionMsgs = persistentData.get("reactionMessages");
 
-    private async prepare(client: Client)
-    {
-        const reactionMsg = persistentData.get("reactionMessage");
-
-        if(reactionMsg)
-        {
-            const { guild, channel, messages } = reactionMsg;
-
-            const gld = client.guilds.cache.find(g => g.id === guild);
-            gld && await gld.fetch();
-
-            const chan = gld?.channels.cache.find(c => c.id === channel) as TextBasedChannel | undefined;
-
-            if(!chan) return;
-
-            await chan.messages.fetch();
-
-            const msgs = chan.messages.cache.filter(m => messages.map(ms => ms.id).includes(m.id));
-
-            if(msgs)
-            {
-                const msgArr = msgs.reduce((a, c) => { a.push(c); return a; }, [] as Message[]);
-
-                this.createCollector(roles, msgArr);
-            }
-        }
+        Array.isArray(reactionMsgs) && reactionMsgs.length > 0 && this.createCollectors(client, reactionMsgs);
     }
 
     async run(int: CommandInteraction): Promise<void>
@@ -92,7 +66,7 @@ export class ReactionRoles extends Command
         await guild.fetch();
         await guild.channels.fetch();
 
-        const messages: Required<PersistentData>["reactionMessage"]["messages"] = [];
+        const messages: Required<PersistentData>["reactionMessages"] = [];
 
         const sentMsgs = [];
         for await(const ebd of embeds)
@@ -110,9 +84,9 @@ export class ReactionRoles extends Command
             }
         }
 
-        this.createCollector(roles, sentMsgs);
+        this.createCollectors(int.client, reactionMsgs);
 
-        await persistentData.set("reactionMessage", {
+        await persistentData.set("reactionMessages", {
             guild: sentMsgs[0].guild?.id ?? int.guild?.id ?? "unknown guild",
             channel: sentMsgs[0].channel.id,
             messages,
@@ -128,7 +102,11 @@ export class ReactionRoles extends Command
         const msgs: EmbedMsg[] = [];
 
 
-        const roleList = (roles: ReactionRole[]) => roles.reduce((acc, c) => acc += `${c.emoji} <@&${c.id}>\n`, "");
+        const roleList = (roles: ReactionRole[]): EmbedFieldData => ({
+            name: "Roles",
+            value: roles.reduce((acc, c) => acc += `${c.emoji} <@&${c.id}>\n`, ""),
+            inline: true,
+        });
 
         const ebdRoles = roles;
         let pageNbr = 0;
@@ -148,10 +126,7 @@ export class ReactionRoles extends Command
                 embed: new MessageEmbed()
                     .setTitle(`Manage your roles${pageDisp}`)
                     .setColor(settings.embedColors.default)
-                    .setFields([
-                        { name: "Roles", value: roleList(first), inline: true },
-                        { name: "Roles", value: roleList(second), inline: true },
-                    ]),
+                    .setFields([ roleList(first), roleList(second) ]),
                 emojis: eRoles,
             });
         }
@@ -159,18 +134,19 @@ export class ReactionRoles extends Command
         return msgs;
     }
 
-    /**
-     * @param emojis The reactions and their emojis that should be listened for
-     * @param message The messages the emoji reactions are attached to
-     */
-    private async createCollector(roles: ReactionRole[], messages: Message<boolean>[])
+    private async createCollectors(client: Client, messages: ReactionMsg[])
     {
-        const emojis = roles.map(r => r.emoji);
+        for(const msg of messages)
+        {
+            // TODO: listen for all messages
 
-        // TODO: listen for all messages
-        const message = messages[0];
+            const gld = client.guilds.cache.find(g => g.id === msg.guild);
+        }
+    }
 
-        const filter = (reaction: MessageReaction) => emojis.includes(reaction.emoji.name ?? "_");
+    private async createCollector(message: Message, msgEmojis: string[])
+    {
+        const filter = (reaction: MessageReaction) => msgEmojis.includes(reaction.emoji.name ?? "_");
 
         // const collector = new ReactionCollector(message, { filter, dispose: true, time: 10 * 1000 });
         const collector = new ReactionCollector(message, { filter, dispose: true, time: 24 * 60 * 60 * 1000 });
@@ -224,7 +200,7 @@ export class ReactionRoles extends Command
         collector.on("end", () => {
             !collector.ended && collector.stop();
 
-            this.createCollector(roles, messages);
+            this.createCollectors(roles, messages);
         });
     }
 }
