@@ -37,8 +37,6 @@ export class Log extends Command {
 
         const args = this.resolveArgs(int);
 
-        console.log(args);
-
         const amtRaw = parseInt(args?.amount);
         const amount = Math.min(Math.max(amtRaw, 1), 50);
 
@@ -62,6 +60,11 @@ export class Log extends Command {
                     });
                 }
 
+                const messageSet:MessageEmbed[] = [];
+
+                const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
+                let newEmbedColor: ColorResolvable = embedColors[0];
+
                 await channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
                     .then(async (messages) => {
                         
@@ -73,8 +76,6 @@ export class Log extends Command {
                             messages.delete(lastMessage.id);
                         }
 
-                        const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
-                        let newEmbedColor: ColorResolvable = embedColors[0];
 
                         if(persistentData.get("lastLogColor") == embedColors[0]) {
                             newEmbedColor = embedColors[1];
@@ -91,13 +92,44 @@ export class Log extends Command {
                             i++;
 
                             const messageDate = new Date(message.createdTimestamp);
+
+                            const messageAttachmentTypes: string[] = [];
+                            const messageAttachmentNames: string[] = [];
+
+                            message.attachments.forEach((attachment) => {
+                                if (attachment.contentType && attachment.name) {
+                                    messageAttachmentTypes.push(attachment.contentType);
+                                    messageAttachmentNames.push(attachment.name);
+                                }
+                            });
                             
-                            messageEmbedString += (`\
+                            if(messageAttachmentNames.length > 0) {
+
+                                let messageAttachmentString = "";
+
+                                for(let i = 0; i < messageAttachmentNames.length; i++) {
+                                    if(i === messageAttachmentNames.length - 1) {
+                                        messageAttachmentString += `> **[${messageAttachmentTypes[i]}]** ${messageAttachmentNames[i]}`;
+                                    } else {
+                                        messageAttachmentString += `> **[${messageAttachmentTypes[i]}]** ${messageAttachmentNames[i]}
+                                        `;
+                                    }
+                                }
+
+                                messageEmbedString += (`\
 
 
-                            <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
-                            > ${message.content}
-                            > [link](${message.url})`);
+                                <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
+                                ${messageAttachmentString}
+                                > [link](${message.url})`);
+                            } else {
+                                messageEmbedString += (`\
+
+
+                                <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
+                                > ${message.content}
+                                > [link](${message.url})`);
+                            }
 
                             if(i === 10 || (10 * setNum) + i === messages.size) {
                                 const loggedMessagesEmbed = new MessageEmbed()
@@ -106,7 +138,7 @@ export class Log extends Command {
                                     .setColor(newEmbedColor);
 
                                 if(setNum == 0) {
-                                    loggedMessagesEmbed.setTitle(`Displaying **${messages.size}** messages, logged by ${int.user.username}#${int.user.discriminator}.`);
+                                    loggedMessagesEmbed.setTitle(`Displaying **${messages.size}** ${messages.size > 1 ? "messages" : "message"}, logged by ${int.user.username}#${int.user.discriminator}.`);
                                 }
                             
                                 const embedLength = messageEmbedString.length;
@@ -117,13 +149,17 @@ export class Log extends Command {
                                 setNum++;
                                 
                                 if (embedLength < 6000) {
-                                    logChannel.send({ embeds: [loggedMessagesEmbed] });
-
-                                    persistentData.set("lastLogColor", newEmbedColor);
+                                    messageSet.push(loggedMessagesEmbed);
                                 } else {
                                     return this.reply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
                                 }
                             }
+                        });
+                    }).then(() => {
+                        messageSet.forEach((messageEmbed) => {
+                            persistentData.set("lastLogColor", newEmbedColor).then(() => {
+                                logChannel.send({ embeds: [messageEmbed] });
+                            });
                         });
                     });
                     
