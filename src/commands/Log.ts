@@ -51,7 +51,7 @@ export class Log extends Command {
             if (!isNaN(amtRaw) && channel?.type === "GUILD_TEXT" && typeof(logChannel?.send) === "function") {
 
                 if(!args.start) {
-                    await channel.messages.fetch({ limit: 1 }).then(messages => {
+                    channel.messages.fetch({ limit: 1 }).then(messages => {
                         const lastMessage = messages?.first();
 
                         if(lastMessage) {
@@ -65,7 +65,7 @@ export class Log extends Command {
                 const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
                 let newEmbedColor: ColorResolvable = embedColors[0];
 
-                await channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
+                channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
                     .then(async (messages) => {
                         
                         messages.set(startMessageID, await channel.messages.fetch(startMessageID));
