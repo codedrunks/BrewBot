@@ -4,7 +4,6 @@ import { Stringifiable } from "svcorelib";
 
 dotenv.config();
 
-
 export const settings: Settings = {
     debug: {
         /** Whether to send a bell sound in the console when the bot is ready */
@@ -40,6 +39,8 @@ export const settings: Settings = {
     warningsThreshold: 3,
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
+    guildID: "693878197107949572",
+    messageLogChannel: "976942278637666376"
 };
 
 /** Tests if the environment variable `varName` equals `value` */
@@ -66,4 +67,6 @@ interface Settings {
     }
     warningsThreshold: number;
     emojiList: string[];
+    guildID: string;
+    messageLogChannel: string;
 }

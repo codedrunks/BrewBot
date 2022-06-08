@@ -1,5 +1,6 @@
 import { Delete } from "./mod/Delete";
 import { Say } from "./mod/Say";
+import { Log } from "./Log";
 import { ReactionRoles } from "./mod/ReactionRoles";
 import { Ping } from "./util/Ping";
 import { Coinflip } from "./fun/Coinflip";
@@ -21,6 +22,7 @@ import { Steam } from "./fun/Steam";
 export const commands = [
     Delete,
     Say,
+    Log,
     ReactionRoles,
     Ping,
     Coinflip,

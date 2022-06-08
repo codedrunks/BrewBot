@@ -1,4 +1,4 @@
-import { ClientEvents, PermissionFlags } from "discord.js";
+import { ClientEvents, ColorResolvable, PermissionFlags } from "discord.js";
 
 
 //#MARKER persistent data
@@ -10,6 +10,8 @@ export interface PersistentData
     startupTime: number;
     /** Reaction roles messages and emojis */
     reactionMessages?: ReactionMsg[];
+    /** Color of previously ran log command, used to help visually separate log sets */
+    lastLogColor?: ColorResolvable;
     /** Bot logs channel */
     botLogs: {
         guild: string;
