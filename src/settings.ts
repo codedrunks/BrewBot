@@ -43,7 +43,7 @@ export const settings: Settings = {
     messageLogChannel: "976942278637666376"
 };
 
-/** Tests if the environment variable `varName` equals `value` */
+/** Tests if the environment variable `varName` equals `value` - case insensitive! */
 function envVarEquals(varName: string, value: string | Stringifiable)
 {
     return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();

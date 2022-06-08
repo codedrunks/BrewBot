@@ -265,11 +265,11 @@ export abstract class Command extends EventEmitter
     }
 
     /** Returns an object from passed buttons that can be spread onto an interaction reply */
-    protected useButtons(buttons?: MessageButton | MessageButton[])
+    protected useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
 
-        if(!actRows)
+        if(!actRows || actRows.length === 0)
             return {};
 
         const act = new MessageActionRow()

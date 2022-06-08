@@ -23,6 +23,7 @@ module.exports = {
         "semi": [ "error", "always" ],
         "eol-last": [ "error", "always" ],
         "no-async-promise-executor": "off",
+        // see https://github.com/eslint/eslint/issues/14538#issuecomment-862280037
         "indent": ["error", 4, { "ignoredNodes": ["VariableDeclaration[declarations.length=0]"] }]
     }
 };

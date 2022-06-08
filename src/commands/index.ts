@@ -1,7 +1,7 @@
 import { Delete } from "./mod/Delete";
 import { Say } from "./mod/Say";
-import { Log } from "./Log";
-import { ReactionRoles } from "./mod/ReactionRoles";
+import { Log } from "./mod/Log";
+// import { ReactionRoles } from "./mod/ReactionRoles";
 import { Ping } from "./util/Ping";
 import { Coinflip } from "./fun/Coinflip";
 import { Server } from "./util/Server";
@@ -17,13 +17,14 @@ import { Define } from "./util/Define";
 import { Fact } from "./fun/Fact";
 import { Btn } from "./mod/Btn";
 import { Steam } from "./fun/Steam";
+import { Emoji } from "./util/Emoji";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
     Delete,
     Say,
     Log,
-    ReactionRoles,
+    // ReactionRoles,
     Ping,
     Coinflip,
     Server,
@@ -39,4 +40,5 @@ export const commands = [
     Fact,
     Btn,
     Steam,
+    Emoji,
 ];
