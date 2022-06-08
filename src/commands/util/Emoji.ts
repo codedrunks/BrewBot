@@ -2,6 +2,8 @@ import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
+const maxEmojiAmt = 10;
+
 export class Emoji extends Command
 {
     constructor()
@@ -12,7 +14,7 @@ export class Emoji extends Command
             args: [
                 {
                     name: "emoji",
-                    desc: "Enter one or up to 5 custom emojis",
+                    desc: `Enter one or up to ${maxEmojiAmt} custom emojis`,
                     required: true,
                 }
             ]
@@ -34,7 +36,7 @@ export class Emoji extends Command
         if(matches)
         {
             const emojis = matches
-                .slice(0, 5)
+                .slice(0, maxEmojiAmt)
                 .map(e => {
                     const spl = e.split(":");
                     const emId = spl.at(-1);
