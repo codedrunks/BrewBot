@@ -1,6 +1,7 @@
 ## Development:
 To start normally, run `npm start`  
 To watch for file changes to automatically recompile and restart, use `npm run watch`  
+To lint the code run `npm run lint`  
   
 Commands and events have template files in their respective folders called `Template.ts`, use these to create new commands and events.  
 In order for a command or event to be initialized on startup, add it to the array of the `index.ts` file in the respective folder.  

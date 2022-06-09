@@ -1,6 +1,6 @@
 node_modules/
 out/
 .env
-test.ts
-test.js
+src/test.ts
+src/test.js
 data.json
