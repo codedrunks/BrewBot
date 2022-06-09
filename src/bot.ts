@@ -9,9 +9,6 @@ import { initRegistry, registerGuildCommands, registerEvents, getCommands } from
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 
-// TODO: figure out something better
-const firstLaunch = false;
-
 const { env, exit } = process;
 
 dotenv.config();
@@ -41,8 +38,6 @@ async function init()
             status: "dnd",
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
-
-        firstLaunch && await user.setAvatar("./assets/avatar.png");
 
 
         botLogs.init(cl);
