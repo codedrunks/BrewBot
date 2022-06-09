@@ -26,7 +26,9 @@ export class Mock extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        if(!int.channel) return;
+        const { channel } = int;
+
+        if(!channel) return;
 
         const args = this.resolveArgs(int);
 
@@ -34,12 +36,12 @@ export class Mock extends Command
         const ephemeral = (args.copy && args.copy.length > 0 && args.copy === "true") ? true : false;
 
         if(ephemeral)
-            return this.reply(int, mockified, ephemeral);
+            return await this.reply(int, mockified, ephemeral);
 
-        await this.reply(int, "Sending message...");
+        await this.reply(int, "Sending message...", true);
 
-        await int.channel.send(`<:mock:506303207400669204> ${mockified}`);
+        await channel.send(`<:mock:506303207400669204> ${mockified}`);
 
-        return int.deleteReply();
+        return await int.deleteReply();
     }
 }
