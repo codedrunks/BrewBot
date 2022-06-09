@@ -15,7 +15,6 @@ import { Reminder } from "./util/Reminder";
 import { Avatar } from "./util/Avatar";
 import { Define } from "./util/Define";
 import { Fact } from "./fun/Fact";
-import { Btn } from "./mod/Btn";
 import { Steam } from "./fun/Steam";
 import { Emoji } from "./util/Emoji";
 
@@ -38,7 +37,6 @@ export const commands = [
     Avatar,
     Define,
     Fact,
-    Btn,
     Steam,
     Emoji,
 ];

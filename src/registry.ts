@@ -10,11 +10,14 @@ import { BtnMsg } from "./BtnMsg";
 
 
 let rest: REST;
-
 let botClient: Client;
 
+/** Array of all registered Command instances */
 const cmds: Command[] = [];
+/** Array of all registered Event instances */
 const evts: Event[] = [];
+/** Map of all registered BtnMsg instances */
+const btnMsgs = new Map<string, BtnMsg>();
 
 
 export function initRegistry(client: Client)
@@ -26,16 +29,16 @@ export function initRegistry(client: Client)
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
 
+
 //#MARKER commands
+
 
 export function getCommands()
 {
     return cmds;
 }
 
-/**
- * Registers all slash commands for the specified guild or guilds
- */
+/** Registers all slash commands for the specified guild or guilds */
 export async function registerGuildCommands(guildID: string[]): Promise<void>
 export async function registerGuildCommands(guildID: string): Promise<void>
 export async function registerGuildCommands(...guildIDs: (string|string[])[]): Promise<void>
@@ -75,7 +78,9 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     }
 }
 
+
 //#MARKER events
+
 
 export function getEvents()
 {
@@ -106,16 +111,29 @@ export function registerEvents()
     return evts;
 }
 
+
 //#MARKER buttons
 
-const btnMsgs: BtnMsg[] = [];
 
+export function getBtnMsgs()
+{
+    return btnMsgs;
+}
+
+/**
+ * Registers a `BtnMsg` instance - this is done automatically in its constructor, don't run this function yourself!
+ * @private
+ */
 export function registerBtnMsg(btnMsg: BtnMsg)
 {
     console.log("TODO:");
+
+    btnMsgs.set(btnMsg.id, btnMsg);
 }
 
-export function btnPressed(int: ButtonInteraction)
+function btnPressed(int: ButtonInteraction)
 {
     console.log("TODO: emit 'press' event on the correct btnMsg");
+
+    const msg = btnMsgs.get(int.customId);
 }
