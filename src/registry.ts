@@ -6,7 +6,7 @@ import { Command } from "./Command";
 import { Event } from "./Event";
 import { commands } from "./commands";
 import { events } from "./events";
-import { ButtonMessage } from "./ButtonMessage";
+import { BtnMsg } from "./BtnMsg";
 
 
 let rest: REST;
@@ -108,9 +108,9 @@ export function registerEvents()
 
 //#MARKER buttons
 
-const btnMsgs: ButtonMessage[] = [];
+const btnMsgs: BtnMsg[] = [];
 
-export function registerBtnMsg(btnMsg: ButtonMessage)
+export function registerBtnMsg(btnMsg: BtnMsg)
 {
     console.log("TODO:");
 }
