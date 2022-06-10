@@ -5,7 +5,7 @@
     "start": "tsc && node out/bot.js",
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
-    "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start",
+    "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
     "clearCommands": "ts-node src/tools/clearCommands.ts"
   },
   "repository": {

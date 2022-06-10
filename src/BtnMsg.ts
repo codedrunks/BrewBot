@@ -7,7 +7,7 @@ import { registerBtnMsg } from "./registry";
 
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
-    on(event: "press", listener: (int: ButtonInteraction) => void): this;
+    on(event: "press", listener: (btn: MessageButton, int: ButtonInteraction) => void): this;
 }
 
 /**
@@ -16,23 +16,28 @@ export interface BtnMsg {
  */
 export class BtnMsg extends EventEmitter
 {
-    /** Custom ID */
-    readonly id: string;
+    readonly id: string = randomUUID({ disableEntropyCache: true });
 
-    private btns: MessageButton[];
-    private msg: string | MessageEmbed[];
+    readonly btns: MessageButton[];
+    readonly msg: string | MessageEmbed[];
 
+    /**
+     * Wrapper for discord.js' `MessageButton`  
+     * Contains convenience methods for easier creation of messages with attached buttons  
+     * Use `.on("press")` to listen for button presses
+     * @param message The message or reply content
+     * @param buttons One or up to 5 MessageButton instances
+     */
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[])
     {
         super();
 
-        this.id = randomUUID({ disableEntropyCache: true });
-
         this.msg = message instanceof MessageEmbed ? [message] : message;
         this.btns = Array.isArray(buttons) ? buttons : [buttons];
 
-        this.btns = this.btns.map(b => {
-            b.customId = this.id;
+        this.btns = this.btns.map((b, i) => {
+            if(!b.url)
+                b.customId = `${this.id}@${i}`;
             return b;
         });
 
@@ -40,10 +45,23 @@ export class BtnMsg extends EventEmitter
     }
 
     /**
-     * Returns message options that can be passed to any `reply()` or `send()` function
-     * @example `await int.reply(new ButtonMessage("yo", new MessageButton()).getMsgOpts())`
+     * Returns reply options that can be passed to the `CommandInteraction.reply()` function
+     * @example ```ts
+     * await int.reply(new BtnMsg("yo", new MessageButton()).getReplyOpts())
+     * ```
      */
-    public getMsgOpts(): MessageOptions | InteractionReplyOptions
+    public getReplyOpts(): InteractionReplyOptions
+    {
+        return this.getMsgOpts() as InteractionReplyOptions;
+    }
+
+    /**
+     * Returns message options that can be passed to the `Message.send()` function
+     * @example ```ts
+     * await int.channel?.send(new BtnMsg("yo", new MessageButton()).getMsgOpts())
+     * ```
+     */
+    public getMsgOpts(): MessageOptions
     {
         const btns: Partial<MessageOptions> = { components: [ this.toMessageActionRow() ]};
 
@@ -65,6 +83,6 @@ export class BtnMsg extends EventEmitter
     protected toMessageActionRow(): MessageActionRow
     {
         return new MessageActionRow()
-            .setComponents(...this.btns);
+            .addComponents(this.btns);
     }
 }

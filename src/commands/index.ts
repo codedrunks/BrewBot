@@ -17,6 +17,7 @@ import { Define } from "./util/Define";
 import { Fact } from "./fun/Fact";
 import { Steam } from "./fun/Steam";
 import { Emoji } from "./util/Emoji";
+import { Btn } from "./Btn";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -39,4 +40,5 @@ export const commands = [
     Fact,
     Steam,
     Emoji,
+    Btn,
 ];

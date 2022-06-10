@@ -126,14 +126,27 @@ export function getBtnMsgs()
  */
 export function registerBtnMsg(btnMsg: BtnMsg)
 {
-    console.log("TODO:");
+    const btIds = btnMsg.btns
+        .map(b => b.style !== "LINK" ? b.customId : undefined)
+        .filter(v => typeof v !== "undefined");
 
-    btnMsgs.set(btnMsg.id, btnMsg);
+    for(const id of btIds)
+    {
+        if(!id) continue;
+
+        btnMsgs.set(id, btnMsg);
+    }
+
 }
 
-function btnPressed(int: ButtonInteraction)
+export async function btnPressed(int: ButtonInteraction)
 {
-    console.log("TODO: emit 'press' event on the correct btnMsg");
+    const bm = btnMsgs.get(int.customId);
+    const idx = parseInt(String(int.customId.split("@").at(-1)));
 
-    const msg = btnMsgs.get(int.customId);
+    if(bm && !isNaN(idx))
+    {
+        const btn = bm.btns.find(b => b.customId?.endsWith(String(idx)));
+        btn && bm.emit("press", btn, int);
+    }
 }

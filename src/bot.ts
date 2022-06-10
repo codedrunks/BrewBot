@@ -1,11 +1,11 @@
 import { Client } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
-import { allOfType, Stringifiable } from "svcorelib";
+import { allOfType, pause, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands } from "./registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed } from "./registry";
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 
@@ -64,6 +64,8 @@ async function init()
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 
         settings.debug.bellOnReady && console.log("\u0007");
+
+        process.stdin.isTTY && awaitKeypress();
     });
 
     client.on("error", err => {
@@ -81,6 +83,19 @@ async function init()
 
         exit(0);
     }));
+}
+
+async function awaitKeypress()
+{
+    const key = await pause(`Actions: E${k.red("[x]")}it`);
+
+    switch(key)
+    {
+    case "x":
+        return process.exit(0);
+    }
+
+    awaitKeypress();
 }
 
 /**
@@ -130,9 +145,7 @@ async function registerCommands(client: Client)
                 await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
             else if(int.isButton())
-            {
-                console.log();
-            }
+                await btnPressed(int);
         });
     }
     catch(err: unknown)
