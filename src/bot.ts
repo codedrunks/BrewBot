@@ -76,7 +76,7 @@ async function init()
     ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, async () => {
         console.log("Shutting down...");
 
-        await client.user?.setPresence({
+        client.user?.setPresence({
             status: "dnd",
             activities: [{ type: "PLAYING", name: "shutting down..." }]
         });

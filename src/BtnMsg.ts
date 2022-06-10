@@ -5,6 +5,12 @@ import EventEmitter from "events";
 import { registerBtnMsg } from "./registry";
 
 
+interface BtnMsgOpts {
+    /** In milliseconds - set to -1 to disable */
+    timeout: number;
+}
+
+
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: MessageButton, int: ButtonInteraction) => void): this;
@@ -21,6 +27,8 @@ export class BtnMsg extends EventEmitter
     readonly btns: MessageButton[];
     readonly msg: string | MessageEmbed[];
 
+    private opts: BtnMsgOpts;
+
     /**
      * Wrapper for discord.js' `MessageButton`  
      * Contains convenience methods for easier creation of messages with attached buttons  
@@ -28,7 +36,7 @@ export class BtnMsg extends EventEmitter
      * @param message The message or reply content
      * @param buttons One or up to 5 MessageButton instances
      */
-    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[])
+    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
         super();
 
@@ -41,7 +49,23 @@ export class BtnMsg extends EventEmitter
             return b;
         });
 
+        const defaultOpts: BtnMsgOpts = {
+            timeout: -1,
+        };
+
+        this.opts = { ...defaultOpts, ...options };
+
         registerBtnMsg(this);
+    }
+
+    public destroy()
+    {
+        this.removeAllListeners("press");
+    }
+
+    public getBtn(customId: string)
+    {
+        return this.btns.find(b => b.customId === customId);
     }
 
     /**

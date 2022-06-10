@@ -139,6 +139,15 @@ export function registerBtnMsg(btnMsg: BtnMsg)
 
 }
 
+/**
+ * Deletes a previously registered `BtnMsg` instance
+ * @private
+ */
+export function deleteBtnMsg(btnMsg: BtnMsg)
+{
+    return btnMsgs.delete(btnMsg.id);
+}
+
 export async function btnPressed(int: ButtonInteraction)
 {
     const bm = btnMsgs.get(int.customId);

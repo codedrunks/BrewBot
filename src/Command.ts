@@ -215,7 +215,20 @@ export abstract class Command extends EventEmitter
     /** Resolves a flat object of command arguments from an interaction */
     protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
-        return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
+        if(!Array.isArray(options.data))
+            return {};
+
+        const map = options.data.map(o => o.type === "SUB_COMMAND" ? o.options as CommandInteraction["options"] ?? undefined : o);
+        const filt = map.filter(v => typeof v !== "undefined");
+        const red = filt.reduce((acc, r) => {
+            if(!r) return acc;
+            const { name, value } = r;
+            return {...acc, [name]: value};
+        }, {});
+
+        console.log();
+
+        return red;
     }
 
     /**
