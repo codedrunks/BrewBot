@@ -24,6 +24,8 @@ export class Delete extends Command {
 
     async run(int: CommandInteraction): Promise<void>
     {
+        await this.deferReply(int, true);
+
         const { channel } = int;
         const args = this.resolveArgs(int);
         const amtRaw = parseInt(args?.amount);
@@ -47,10 +49,10 @@ export class Delete extends Command {
                 if(!isNaN(amtRaw))
                 {
                     await channel.bulkDelete(amount);
-                    await this.reply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`, true);
+                    await this.editReply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`);
                 }
                 else
-                    await this.reply(int, "Couldn't bulk delete messages", true);
+                    await this.editReply(int, "Couldn't bulk delete messages");
                 return;
             case "link":
             {
@@ -66,17 +68,19 @@ export class Delete extends Command {
 
             if(isNaN(amount))
             {
-                const emptyMsgArr: Message[] = [];
-
-                // TODO: check all the fucky wucky shit
-
-                const msgs = channel.messages.cache.reduce((acc, cur) => ([ ...acc, cur ]), emptyMsgArr).sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 0 : 1);
+                const msgs = channel.messages.cache
+                    .reduce((acc, cur) => ([ ...acc, cur ]), [] as Message[])
+                    .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 0 : 1);
 
                 let cutoffIdx = 0;
 
                 msgs.find((m, i) => {
                     if(m.id === untilId)
+                    {
                         cutoffIdx = i;
+                        return true;
+                    }
+                    return false;
                 });
 
                 for(let i = 0; i < cutoffIdx; i++)
@@ -87,11 +91,11 @@ export class Delete extends Command {
                 return;
             }
 
-            await channel.bulkDelete(msgColl);
+            await channel.bulkDelete(msgColl, true);
         }
         catch (err)
         {
-            await this.reply(int, "Couldn't bulk delete messages", true);
+            await this.editReply(int, "Couldn't bulk delete messages");
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
         }
     }

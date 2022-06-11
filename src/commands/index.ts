@@ -1,44 +1,52 @@
+import { Cat } from "./fun/Cat";
+import { Cheese } from "./fun/Cheese";
+import { Coinflip } from "./fun/Coinflip";
+import { Fact } from "./fun/Fact";
+import { Ferret } from "./fun/Ferret";
+import { Joke } from "./fun/Joke";
+import { Mock } from "./fun/Mock";
+import { Steam } from "./fun/Steam";
+
 import { Delete } from "./mod/Delete";
-import { Say } from "./mod/Say";
 import { Log } from "./mod/Log";
 // import { ReactionRoles } from "./mod/ReactionRoles";
-import { Ping } from "./util/Ping";
-import { Coinflip } from "./fun/Coinflip";
-import { Server } from "./util/Server";
+import { Say } from "./mod/Say";
 import { Warn } from "./mod/Warn";
-import { Joke } from "./fun/Joke";
-import { Ferret } from "./fun/Ferret";
-import { Mock } from "./fun/Mock";
-import { Cheese } from "./fun/Cheese";
-import { Cat } from "./fun/Cat";
-import { Reminder } from "./util/Reminder";
+
 import { Avatar } from "./util/Avatar";
 import { Define } from "./util/Define";
-import { Fact } from "./fun/Fact";
-import { Steam } from "./fun/Steam";
 import { Emoji } from "./util/Emoji";
+import { Ping } from "./util/Ping";
+import { Reminder } from "./util/Reminder";
+import { Server } from "./util/Server";
 import { Btn } from "./Btn";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
+    // fun
+    Cat,
+    Cheese,
+    Coinflip,
+    Fact,
+    Ferret,
+    Joke,
+    Mock,
+    Steam,
+
+    // mod
     Delete,
-    Say,
     Log,
     // ReactionRoles,
-    Ping,
-    Coinflip,
-    Server,
+    Say,
     Warn,
-    Joke,
-    Ferret,
-    Mock,
-    Cheese,
-    Cat,
-    Reminder,
+
+    // util
     Avatar,
     Define,
-    Fact,
-    Steam,
     Emoji,
-    Btn,
+    Ping,
+    Reminder,
+    Server,
+
+    Btn, //#DEBUG
 ];

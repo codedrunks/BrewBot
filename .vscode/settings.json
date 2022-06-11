@@ -23,7 +23,7 @@
             "color": "white",
             "overviewRulerColor": "#44f"
         },
-        "(#DEBUG#?)": { // #DEBUG# or #DEBUG
+        "(#?(DEBUG|DBG)#?)": { // #DEBUG or DEBUG or #DBG or #DBG#
             "backgroundColor": "#ff0",
             "color": "blue",
             "overviewRulerColor": "#ff0"
