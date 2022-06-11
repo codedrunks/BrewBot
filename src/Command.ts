@@ -226,8 +226,6 @@ export abstract class Command extends EventEmitter
             return {...acc, [name]: value};
         }, {});
 
-        console.log();
-
         return red;
     }
 

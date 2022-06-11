@@ -27,10 +27,6 @@ export function initRegistry(client: Client)
     rest = new REST({
         version: "9"
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
-
-    setInterval(() => {
-        console.log(`[Reg] BtnMsgs (${btnMsgs.size}):       ${String(Date.now()).substring(8)}\n${btnMsgs.reduce((acc, _bm, key) => acc + (acc.length === 0 ? "" : ", ") + key, "")}\n`);
-    }, 2000);
 }
 
 
