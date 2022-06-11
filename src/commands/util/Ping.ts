@@ -1,5 +1,5 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../Command";
+import { Command } from "../../Command";
 
 export class Ping extends Command {
     constructor()
@@ -12,6 +12,6 @@ export class Ping extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        await this.reply(int, "Pong!");
+        await this.reply(int, "Pong!", true);
     }
 }

@@ -1,10 +1,11 @@
 {
   "name": "bot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "start": "tsc && node out/bot.js",
-    "test": "ts-node test.ts",
-    "watch": "nodemon --watch \"src/**/*\" -e ts --exec npm start",
+    "test": "ts-node src/test.ts",
+    "lint": "tsc --noEmit && eslint .",
+    "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
     "clearCommands": "ts-node src/tools/clearCommands.ts"
   },
   "repository": {
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^17.0.23",
+    "@types/steamapi": "^2.2.2",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13.0",
@@ -35,6 +37,7 @@
     "fs-extra": "^10.1.0",
     "kleur": "^4.1.4",
     "parse-relative-time": "^1.1.0",
+    "steamapi": "^2.2.0",
     "svcorelib": "^1.14.2"
   },
   "nodemonConfig": {

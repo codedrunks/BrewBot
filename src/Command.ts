@@ -1,21 +1,28 @@
-import { ApplicationCommandDataResolvable, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
+import EventEmitter from "events";
+import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
 
 
-/** Base class for all bot commands */
-export abstract class Command
+export interface Command {
+    on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
+}
+
+/** Base class for all slash commands */
+export abstract class Command extends EventEmitter
 {
     readonly meta: CommandMeta | SubcommandMeta;
     protected slashCmdJson: ApplicationCommandDataResolvable;
-    /** Set to false to disable this event */
+    /** Set to false to disable this command */
     public enabled = true;
 
     //#SECTION constructor
 
-    /** Base class for all bot commands */
+    /** Base class for all slash commands */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
+        super();
+
         const data = new SlashCommandBuilder();
 
         if(Command.isCommandMeta(cmdMeta))
@@ -109,13 +116,13 @@ export abstract class Command
                                 return opt;
                             });
                         else if(arg.type === "boolean")
-                            data.addBooleanOption(opt =>
+                            sc.addBooleanOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
                         else if(arg.type === "channel")
-                            data.addChannelOption(opt =>
+                            sc.addChannelOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
@@ -151,12 +158,34 @@ export abstract class Command
         return this.slashCmdJson;
     }
 
+    /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
+    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
+    {
+        try
+        {
+            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
+                return await this.run(interaction, opt);
+            else if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: "You don't have permission to run this command.", ephemeral: true });
+
+            return null;
+        }
+        catch(err)
+        {
+            if(typeof interaction.reply === "function")
+                return await interaction.reply({ content: `Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, ephemeral: true });
+            return null;
+        }
+    }
+
+    //#SECTION protected
+
     /**
      * Checks if the GuildMember of a CommandInteraction has the permission to run this command.
      * @param subcommandName Needs to be provided if this command has subcommands
      * @returns Returns null if the subcommand name is invalid
      */
-    public hasPerm(int: CommandInteraction, subcommandName?: string): boolean | null
+    protected hasPerm(int: CommandInteraction, subcommandName?: string): boolean | null
     {
         const { memberPermissions } = int;
 
@@ -183,32 +212,23 @@ export abstract class Command
         return null;
     }
 
-    /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
-    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
-    {
-        try
-        {
-            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
-                return await this.run(interaction, opt);
-            else if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: "You don't have the necessary permissions to run this command!", ephemeral: true });
-
-            return null;
-        }
-        catch(err)
-        {
-            if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: `Couldn't run the command due to an error: ${String(err)}`, ephemeral: true });
-            return null;
-        }
-    }
-
-    //#SECTION protected
-
     /** Resolves a flat object of command arguments from an interaction */
     protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
-        return options?.data?.reduce((acc, { name, value }) => ({...acc, [name]: value}), {}) ?? {};
+        if(!Array.isArray(options.data))
+            return {};
+
+        const map = options.data.map(o => o.type === "SUB_COMMAND" ? o.options as CommandInteraction["options"] ?? undefined : o);
+        const filt = map.filter(v => typeof v !== "undefined");
+        const red = filt.reduce((acc, r) => {
+            if(!r) return acc;
+            const { name, value } = r;
+            return {...acc, [name]: value};
+        }, {});
+
+        console.log();
+
+        return red;
     }
 
     /**
@@ -216,37 +236,59 @@ export abstract class Command
      * Has to be called within 3 seconds, otherwise the reply times out. Alternatively, use `deferReply()` and `editReply()` for 15 minutes.
      * @param int The CommandInteraction to reply to
      * @param content Can be a string or a single or multiple MessageEmbed instances
-     * @param ephemeral Set to false to make the reply publicly visible. Defaults to true (only visible for the author).
+     * @param ephemeral Set to true to make the command reply only visible to the author. Defaults to false (publicly visible).
+     * @param actions An action or an array of actions to attach to the reply
      */
-    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = true)
+    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral });
+            await int.reply({ content, ephemeral, ...this.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.reply({ embeds: Array.isArray(content) ? content : [content] });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...this.useButtons(actions) });
     }
 
     /**
      * Defers a CommandInteraction and displays a "bot is thinking..." message, so it can be responded to after a maximum of 15 minutes
      * @param int The CommandInteraction to reply to
-     * @param ephemeral Set to false to make the "bot is thinking..." message and reply publicly visible. Defaults to true (only visible for the author).
+     * @param ephemeral Set to true to make both the "bot is thinking..." message and command reply only visible to the author. Defaults to false (publicly visible).
      */
-    protected async deferReply(int: CommandInteraction, ephemeral = true)
+    protected async deferReply(int: CommandInteraction, ephemeral = false)
     {
         return await int.deferReply({ ephemeral });
     }
 
     /**
-     * Edits the reply of a CommandInteraction
+     * Edits the reply of a CommandInteraction or sends a new reply when used after `deferReply()`
      * @param int The CommandInteraction to edit the reply of
      * @param content Can be a string or a single or multiple MessageEmbed instances
+     * @param actions An action or an array of actions to attach to the reply
      */
-    protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[])
+    protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content });
+            await int.editReply({ content, ...this.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content] });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...this.useButtons(actions) });
+    }
+
+    /** Deletes the reply of a CommandInteraction */
+    protected async deleteReply(int: CommandInteraction)
+    {
+        int.replied && await int.deleteReply();
+    }
+
+    /** Returns an object from passed buttons that can be spread onto an interaction reply */
+    protected useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
+    {
+        const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
+
+        if(!actRows || actRows.length === 0)
+            return {};
+
+        const act = new MessageActionRow()
+            .addComponents(actRows);
+
+        return actRows ? { components: [act] } : {};
     }
 
     //#SECTION static
@@ -254,13 +296,13 @@ export abstract class Command
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isCommandMeta(meta: any): meta is CommandMeta
     {
-        return typeof meta === "object" && meta?.name && meta?.desc && !Array.isArray(meta?.subcommands);
+        return typeof meta === "object" && meta.name && meta.desc && !Array.isArray(meta?.subcommands);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isSubcommandMeta(meta: any): meta is SubcommandMeta
     {
-        return typeof meta === "object" && meta?.name && meta?.desc && Array.isArray(meta?.subcommands);
+        return typeof meta === "object" && meta.name && meta.desc && Array.isArray(meta?.subcommands);
     }
 
     //#SECTION abstract

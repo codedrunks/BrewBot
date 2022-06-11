@@ -19,10 +19,14 @@ let persistentData: Partial<PersistentData> = defaultData;
 
 export async function init()
 {
+    const t = Date.now();
+
     if(await filesystem.exists(dataFilePath))
         persistentData = await readPersistentData();
     else
         await writePersistentData(defaultData);
+
+    await set("startupTime", t);
 
     watch(dataFilePath, async () => {
         persistentData = await readPersistentData();
@@ -42,6 +46,12 @@ export function get<T extends DataKey>(key: T): PersistentData[T] | null
     return persistentData?.[key] ?? null;
 }
 
+/** Reloads the persistent data stored in memory with the content of `./data.json` */
+export async function reload()
+{
+    persistentData = await readPersistentData();
+}
+
 async function writePersistentData(data: PersistentData | Partial<PersistentData>)
 {
     return await writeFile(dataFilePath, JSON.stringify(data, undefined, 4));
@@ -56,4 +66,5 @@ export default {
     init,
     get,
     set,
+    reload,
 };

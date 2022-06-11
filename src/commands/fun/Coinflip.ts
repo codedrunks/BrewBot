@@ -1,7 +1,7 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randRange } from "svcorelib";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 // idx 0: heads, idx 1: tails - TODO: make some sexy emoji for this specifically maybe?
 const coins = ["🇭","🇹"];
@@ -33,7 +33,7 @@ export class Coinflip extends Command {
 
             if(isNaN(amount) || amount < 1 || amount > 50)
             {
-                await this.reply(int, "Please enter a valid amount between 1 and 50");
+                await this.reply(int, "Please enter a valid amount between 1 and 50", true);
                 return;
             }
 
@@ -50,6 +50,6 @@ export class Coinflip extends Command {
             .setColor(settings.embedColors.default)
             .setDescription(replyText);
 
-        await this.reply(int, embed, false);
+        await this.reply(int, embed);
     }
 }

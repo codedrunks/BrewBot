@@ -1,32 +1,52 @@
-import { Remove } from "./Remove";
-import { Say } from "./Say";
-import { Log } from "./Log";
-import { ReactionRoles } from "./ReactionRoles";
-import { Ping } from "./Ping";
-import { Coinflip } from "./Coinflip";
-import { Server } from "./Server";
-import { Warn } from "./Warn";
-import { Joke } from "./Joke";
-import { Ferret } from "./Ferret";
-import { Mock } from "./Mock";
-import { Cheese } from "./Cheese";
-import { Cat } from "./Cat";
-import { Reminder } from "./Reminder";
+import { Cat } from "./fun/Cat";
+import { Cheese } from "./fun/Cheese";
+import { Coinflip } from "./fun/Coinflip";
+import { Fact } from "./fun/Fact";
+import { Ferret } from "./fun/Ferret";
+import { Joke } from "./fun/Joke";
+import { Mock } from "./fun/Mock";
+import { Steam } from "./fun/Steam";
+
+import { Delete } from "./mod/Delete";
+import { Log } from "./mod/Log";
+// import { ReactionRoles } from "./mod/ReactionRoles";
+import { Say } from "./mod/Say";
+import { Warn } from "./mod/Warn";
+
+import { Avatar } from "./util/Avatar";
+import { Define } from "./util/Define";
+import { Emoji } from "./util/Emoji";
+import { Ping } from "./util/Ping";
+import { Reminder } from "./util/Reminder";
+import { Server } from "./util/Server";
+import { Btn } from "./Btn";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
-    Remove,
-    Say,
-    Log,
-    ReactionRoles,
-    Ping,
-    Coinflip,
-    Server,
-    Warn,
-    Joke,
-    Ferret,
-    Mock,
-    Cheese,
+    // fun
     Cat,
+    Cheese,
+    Coinflip,
+    Fact,
+    Ferret,
+    Joke,
+    Mock,
+    Steam,
+
+    // mod
+    Delete,
+    Log,
+    // ReactionRoles,
+    Say,
+    Warn,
+
+    // util
+    Avatar,
+    Define,
+    Emoji,
+    Ping,
     Reminder,
+    Server,
+
+    Btn, //#DEBUG
 ];

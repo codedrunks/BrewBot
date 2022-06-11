@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randomItem } from "svcorelib";
 import axios from "axios";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 const apiInfo = {
     illusion: {
@@ -48,7 +48,7 @@ export class Cat extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await int.deferReply();
+        await this.deferReply(int);
 
         const args = this.resolveArgs(int);
         let api = args.api as "illusion" | "thatcopy";
@@ -60,7 +60,7 @@ export class Cat extends Command
 
         if(status < 200 || status >= 300)
         {
-            await int.editReply(`${apiInfo[api]} is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+            await this.editReply(int, `${apiInfo[api]} is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
             return;
         }
 
@@ -72,10 +72,10 @@ export class Cat extends Command
                 .setFooter({ text: apiInfo[api].embedFooter })
                 .setImage(data.webpurl ?? data.compressed_url);
 
-            await int.editReply({ embeds: [embed] });
+            await this.editReply(int, embed);
             return;
         }
         else
-            await int.editReply({ content: `Couldn't fetch an image from ${apiInfo[api].name}. Please try again later.` });
+            await this.editReply(int, `Couldn't fetch an image from ${apiInfo[api].name}. Please try again later.`);
     }
 }

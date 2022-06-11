@@ -1,13 +1,14 @@
 import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import parseRelativeTime from "parse-relative-time";
 import { readableArray } from "svcorelib";
-import { Command } from "../Command";
-import persistentData from "../persistentData";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import persistentData from "../../persistentData";
+import { settings } from "../../settings";
+import { CommandMeta } from "../../types";
 
 export class Reminder extends Command
 {
-    constructor(client: Client)
+    constructor(client: Client | CommandMeta)
     {
         super({
             name: "reminder",
@@ -63,9 +64,12 @@ export class Reminder extends Command
             ]
         });
 
-        // since the constructor is called exactly once at startup, this should work just fine
-        this.checkReminders(client);
-        setInterval(() => this.checkReminders(client), 1000);
+        if(!Command.isCommandMeta(client))
+        {
+            // since the constructor is called exactly once at startup, this should work just fine
+            this.checkReminders(client);
+            setInterval(() => this.checkReminders(client), 1000);
+        }
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
@@ -89,18 +93,18 @@ export class Reminder extends Command
             const dueTimestamp = Date.now() + dueInMs;
 
             const reminders = persistentData.get("reminders");
-            reminders?.push({ memberId: member.user.id, guildId: guild.id, name, dueTimestamp });
+            reminders?.push({ member: member.user.id, guild: guild.id, name, dueTimestamp });
             reminders && await persistentData.set("reminders", reminders);
 
-            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``);
+            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``, true);
         }
         case "list":
         {
             const reminders = persistentData.get("reminders");
-            const ownReminders = reminders?.filter(rem => rem.memberId === int.member?.user.id);
+            const ownReminders = reminders?.filter(rem => rem.member === int.member?.user.id);
 
             if(!ownReminders || ownReminders.length === 0)
-                return await this.reply(int, "You don't have any set reminders. Create a new one with `/reminder set`");
+                return await this.reply(int, "You don't have any set reminders. Create a new one with `/reminder set`", true);
 
             const remList = ownReminders.reduce((acc, cur) => acc += `\n**${cur.name}**\n${new Date(cur.dueTimestamp).toUTCString()}\n`, "");
 
@@ -114,14 +118,12 @@ export class Reminder extends Command
             if(avatar)
                 embed.setThumbnail(avatar);
 
-            return await this.reply(int, embed);
+            return await this.reply(int, embed, true);
         }
         case "delete":
         {
             break;
         }
-        default:
-            return await this.reply(int, "Unrecognized subcommand.");
         }
     }
 
@@ -140,8 +142,8 @@ export class Reminder extends Command
             {
                 atLeastOneDue = true;
 
-                const guild = client.guilds.cache.find(g => g.id === rem.guildId);
-                const member = guild?.members.cache.find(m => m.id === rem.memberId);
+                const guild = client.guilds.cache.find(g => g.id === rem.guild);
+                const member = guild?.members.cache.find(m => m.id === rem.member);
 
                 if(member)
                 {

@@ -1,6 +1,7 @@
 ## Development:
 To start normally, run `npm start`  
 To watch for file changes to automatically recompile and restart, use `npm run watch`  
+To lint the code run `npm run lint`  
   
 Commands and events have template files in their respective folders called `Template.ts`, use these to create new commands and events.  
 In order for a command or event to be initialized on startup, add it to the array of the `index.ts` file in the respective folder.  
@@ -20,3 +21,19 @@ Install these VS Code extensions for code auto-fix on save and special text high
 - `fabiospampinato.vscode-highlight`
 
 <!-- mr bot invite: https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands -->
+
+<br><br>
+
+> ### `BtnMsg()` class
+> To use the new message buttons, this class handles the communication between the `bot.ts` event listener and the slash command's scope.  
+>   
+> #### It has three constructor arguments:
+> - `message` which is the message to attach the buttons to, in form of a string, MessageEmbed or an array of MessageEmbed's  
+> - `buttons`, a single MessageButton instance or an array of them. **Don't set a customId** as the registry assigns own IDs automatically  
+> - `options` where you can set a `timeout` in milliseconds, after which the `timeout` event gets emitted  
+>   
+> #### These are the emitted events:
+> Use `BtnMsg.on("name", (args) => {})` to subscribe to them
+> - `press` is emitted whenever the button is pressed by a user and gets passed the MessageButton and ButtonInteraction instances  
+> - `timeout` is emitted when the timeout of the BtnMsg, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically > called  
+> - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of > `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive evetns again.  

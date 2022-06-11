@@ -1,5 +1,5 @@
 import { CommandInteraction, TextBasedChannel } from "discord.js";
-import { Command } from "../Command";
+import { Command } from "../../Command";
 
 export class Say extends Command
 {
@@ -26,7 +26,7 @@ export class Say extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await int.deferReply({ ephemeral: true });
+        await this.deferReply(int, true);
 
         const args = this.resolveArgs(int);
 
@@ -41,19 +41,12 @@ export class Say extends Command
             if(typeof sendChannel?.send === "function")
             {
                 await sendChannel.send({ content: args.message });
-                await int.editReply(`Successfully sent the message${args.channel ? ` in <#${sendChannel.id}>` : ""}`);
-                return;
+                return await this.editReply(int, `Successfully sent the message${args.channel ? ` in <#${sendChannel.id}>` : ""}`);
             }
             else
-            {
-                await int.editReply("Couldn't find a channel with that name");
-                return;
-            }
+                return await this.editReply(int, "Couldn't find a channel with that name");
         }
         else
-        {
-            await int.editReply("Please enter a message to send");
-            return;
-        }
+            return await this.editReply(int, "Please enter a message to send");
     }
 }

@@ -3,10 +3,15 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": true,
     },
-    "eslint.validate": ["javascript", "typescript"],
+    "eslint.validate": ["typescript"],
 
     // extension: fabiospampinato.vscode-highlight
     "highlight.regexes": {
+        "(TODO(\\((\\s|\\d|\\w|[,.-_+*&])+\\))?:?)": { // TODO: or TODO or TODO(xy): but not todo or todo:
+            "backgroundColor": "#ed0",
+            "color": "black",
+            "overviewRulerColor": "#ed0"
+        },
         "(#MARKER)": { // #MARKER test
             "backgroundColor": "#f41",
             "color": "#fff",
@@ -18,7 +23,7 @@
             "color": "white",
             "overviewRulerColor": "#44f"
         },
-        "(#DEBUG#?)": { // #DEBUG# or #DEBUG
+        "(#?(DEBUG|DBG)#?)": { // #DEBUG or DEBUG or #DBG or #DBG#
             "backgroundColor": "#ff0",
             "color": "blue",
             "overviewRulerColor": "#ff0"
@@ -27,8 +32,7 @@
             "backgroundColor": "#a22",
             "color": "#fff"
         },
-        "(FIXME:)": // FIXME:
-        {
+        "(FIXME:)": { // FIXME:
             "backgroundColor": "#a22",
             "color": "#fff",
             "overviewRulerColor": "#752020"
@@ -39,4 +43,8 @@
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features",
     },
+    "files.exclude": {
+        "**/.env": true,
+        "out/**": true,
+    }
 }

@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import axios from "axios";
 import { randomItem } from "svcorelib";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 const titles = [
     "Look at this cutie",
@@ -24,12 +24,12 @@ export class Ferret extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await int.deferReply();
+        await this.deferReply(int);
 
         const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
 
         if(status < 200 || status >= 300 || !data.file)
-            return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+            return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, true);
 
         const embed = new MessageEmbed()
             .setTitle(randomItem(titles))
@@ -37,6 +37,6 @@ export class Ferret extends Command
             .setFooter({ text: "https://ferret.canarado.xyz" })
             .setImage(data.file);
 
-        await int.editReply({ embeds: [embed] });
+        await this.editReply(int, embed);
     }
 }

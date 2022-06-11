@@ -1,20 +1,72 @@
-import { ColorResolvable } from "discord.js";
+import { ColorResolvable, IntentsString } from "discord.js";
+import dotenv from "dotenv";
+import { Stringifiable } from "svcorelib";
 
-interface Settings {
-    embedColors: {
-        default: ColorResolvable;
-    }
-    warningsThreshold: number;
-    guildID: string,
-    messageLogChannel: string;
-}
+dotenv.config();
 
 export const settings: Settings = {
-    embedColors: {
-        default: "LUMINOUS_VIVID_PINK"
+    debug: {
+        /** Whether to send a bell sound in the console when the bot is ready */
+        bellOnReady: envVarEquals("BELL_ON_READY", true),
     },
-    /** When reached, sends a message to the moderators */
+    moderation: {
+        /** How many reaction votes are needed to ban someone */
+        votesToBan: 2,
+    },
+    client: {
+        /**
+         * List of intents the client requests from the gateway.  
+         * Intents are like events the client needs to explicitly subscribe to or it will not receive the events from the API.  
+         * As long as the bot is in < 100 guilds, it will get granted any intent. After 100 guilds, it needs to be verified by Discord to get the intents granted.
+         */
+        intents: [
+            "GUILDS",
+            "GUILD_MEMBERS",
+            "GUILD_INTEGRATIONS",
+            "GUILD_INVITES",
+            "GUILD_PRESENCES",
+            "GUILD_MESSAGES",
+            "GUILD_MESSAGE_REACTIONS",
+            "DIRECT_MESSAGES",
+        ],
+    },
+    embedColors: {
+        default: "FUCHSIA",
+        warning: "ORANGE",
+        error: "DARK_RED",
+    },
+    /** When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,
+    /** Incremental list of emojis used in reactions */
+    emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
     guildID: "693878197107949572",
     messageLogChannel: "976942278637666376"
 };
+
+/** Tests if the environment variable `varName` equals `value` - case insensitive! */
+function envVarEquals(varName: string, value: string | Stringifiable)
+{
+    return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
+}
+
+
+interface Settings {
+    debug: {
+        bellOnReady: boolean;
+    }
+    moderation: {
+        votesToBan: number;
+    }
+    client: {
+        intents: IntentsString[];
+    }
+    embedColors: {
+        default: ColorResolvable;
+        warning: ColorResolvable;
+        error: ColorResolvable;
+    }
+    warningsThreshold: number;
+    emojiList: string[];
+    guildID: string;
+    messageLogChannel: string;
+}

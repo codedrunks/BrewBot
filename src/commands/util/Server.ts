@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 export class Server extends Command
 {
@@ -25,6 +25,10 @@ export class Server extends Command
                 {
                     name: "splash",
                     desc: "Shows the server's splash image (invite background)",
+                },
+                {
+                    name: "invite",
+                    desc: "Gives you the server's invite link",
                 },
             ]
         });
@@ -86,28 +90,28 @@ export class Server extends Command
             const iconUrl = guild.iconURL({ format: "png", size: 1024 });
             iconUrl && embed.setThumbnail(iconUrl);
 
-            return await this.reply(int, embed, false);
+            return await this.reply(int, embed);
         }
         case "banner":
         {
             const bannerUrl = guild.bannerURL({ format: "png", size: 4096 });
 
             if(!bannerUrl)
-                return await this.reply(int, "This server doesn't have a banner.");
+                return await this.reply(int, "This server doesn't have a banner.", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - banner:`)
                 .setColor(settings.embedColors.default)
                 .setImage(bannerUrl);
 
-            return await this.reply(int, embed, false);
+            return await this.reply(int, embed);
         }
         case "icon":
         {
             const iconUrl = guild.iconURL({ format: "png", size: 4096 });
 
             if(!iconUrl)
-                return await this.reply(int, "This server doesn't have an icon.");
+                return await this.reply(int, "This server doesn't have an icon.", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - icon:`)
@@ -121,7 +125,7 @@ export class Server extends Command
             const splashUrl = guild.splashURL({ format: "png", size: 4096 });
 
             if(!splashUrl)
-                return await this.reply(int, "This server doesn't have a splash image (invite background).");
+                return await this.reply(int, "This server doesn't have a splash image (invite background).", true);
 
             const embed = new MessageEmbed()
                 .setTitle(`**${guild.name}** - splash image:`)
@@ -130,8 +134,31 @@ export class Server extends Command
 
             return await this.reply(int, embed, false);
         }
-        default:
-            return await this.reply(int, "Unrecognized subcommand.");
+        case "invite":
+        {
+            await guild.invites.fetch();
+
+            const ivts = guild.invites.cache.filter(iv => iv.maxAge === 0);
+
+            const vanityUrl = guild.vanityURLCode ? `https://discord.gg/${guild.vanityURLCode}` : undefined;
+            const mostUsedIvts = ivts.sort((a, b) => a.uses && b.uses && a.uses > b.uses ? 1 : -1);
+
+            const iv = mostUsedIvts.at(0);
+
+            if(!vanityUrl && !iv)
+                return await this.reply(int, "Couldn't find an invite. Please create a new one or ask the moderators to create one.", true);
+
+            const link = vanityUrl ? vanityUrl : iv?.url;
+            const chan = iv?.channel.id ? `\nChannel: <#${iv.channel.id}>` : undefined;
+            const uses = iv?.uses ? `\nUses: ${iv.uses}${typeof iv.maxUses === "number" && iv.maxUses > 0 ? ` / ${iv.maxUses}` : ""}` : undefined;
+
+            const embed = new MessageEmbed()
+                .setTitle(`**${guild.name}** - invite:`)
+                .setColor(settings.embedColors.default)
+                .setDescription(`**[${link}](${link})**${chan || uses ? "\n" : ""}${chan}${uses}`);
+
+            return await this.reply(int, embed, true);
+        }
         }
     }
 }

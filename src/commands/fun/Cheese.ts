@@ -1,7 +1,7 @@
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { Command } from "../Command";
-import { settings } from "../settings";
+import { Command } from "../../Command";
+import { settings } from "../../settings";
 
 export class Cheese extends Command
 {
@@ -26,7 +26,7 @@ export class Cheese extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
-        await int.deferReply();
+        await this.deferReply(int);
 
         let urlPath = "";
         switch(opt.name)
@@ -42,10 +42,7 @@ export class Cheese extends Command
         const { data, status, statusText } = await axios.get(`https://api.illusionman1212.tech/cheese${urlPath}`, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
-        {
-            await int.editReply(`Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
-            return;
-        }
+            return await this.editReply(int, `Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
 
         if(data.failed === false)
         {
@@ -56,16 +53,19 @@ export class Cheese extends Command
                 .setColor(settings.embedColors.default)
                 .setThumbnail(cheese.image)
                 .setFooter({ text: "https://github.com/IllusionMan1212/say-cheese" })
-                .addField("Description", cheese.description, false)
-                .addField(`Countr${cheese.attributes.countries.length != 1 ? "ies" : "y"}`, cheese.attributes.countries.join(", "), true)
-                .addField(`Type${cheese.attributes.types.length != 1 ? "s" : ""}`, cheese.attributes.types.join(", "), true)
-                .addField(`Milk${cheese.milks.length != 1 ? "s" : ""}`, cheese.milks.join(", "), true)
-                .addField(`Flavor${cheese.attributes.flavors.length != 1 ? "s" : ""}`, cheese.attributes.flavors.join(", "), true)
-                .addField(`Texture${cheese.attributes.textures.length != 1 ? "s" : ""}`, cheese.attributes.textures.join(", "), true)
-                .addField("Vegetarian", cheese.attributes.vegetarian ? "yes" : "no", true);
+                .setDescription(cheese.description);
 
-            await int.editReply({ embeds: [embed] });
-            return;
+            const { countries, types, flavors, textures, vegetarian } = cheese.attributes;
+            const milks = cheese.milks;
+
+            Array.isArray(countries) && countries.length > 0 && embed.addField(`Countr${countries.length != 1 ? "ies" : "y"}`, countries.join(", "), true);
+            Array.isArray(types) && types.length > 0 && embed.addField(`Type${types.length != 1 ? "s" : ""}`, types.join(", "), true);
+            Array.isArray(milks) && milks.length > 0 && embed.addField(`Milk${cheese.milks.length != 1 ? "s" : ""}`, cheese.milks.join(", "), true);
+            Array.isArray(flavors) && flavors.length > 0 && embed.addField(`Flavor${flavors.length != 1 ? "s" : ""}`, flavors.join(", "), true);
+            Array.isArray(textures) && textures.length > 0 && embed.addField(`Texture${textures.length != 1 ? "s" : ""}`, textures.join(", "), true);
+            typeof vegetarian === "boolean" && embed.addField("Vegetarian", vegetarian ? "yes" : "no", true);
+
+            return await this.editReply(int, embed);
         }
     }
 }
