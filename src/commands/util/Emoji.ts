@@ -66,7 +66,24 @@ export class Emoji extends Command
             }
         }
 
-        if(embeds.length > 0)
+        if(embeds.length > 5)
+        {
+            const halves = <T>(arr: T[]) => {
+                const half = Math.ceil(arr.length / 2);
+                const first = arr.slice(0, half);
+                const second = arr.slice((arr.length - half) * -1);
+
+                return [first, second];
+            };
+
+            await this.reply(int, halves(embeds)[0], false, halves(btns)[0]);
+
+            await int.channel?.send({
+                ...Command.useButtons(halves(btns)[1]),
+                embeds: halves(embeds)[1],
+            });
+        }
+        else if(embeds.length > 0)
             await this.reply(int, embeds, false, btns);
         else
             await this.reply(int, "Couldn't find the emoji(s) you provided. Note that I can only find custom emojis.", true, btns);
