@@ -29,11 +29,11 @@ Install these VS Code extensions for code auto-fix on save and special text high
 >   
 > #### It has three constructor arguments:
 > - `message` which is the message to attach the buttons to, in form of a string, MessageEmbed or an array of MessageEmbed's  
-> - `buttons`, a single MessageButton instance or an array of them. **Don't set a customId** as the registry assigns own IDs automatically  
+> - `buttons`, a single MessageButton instance or an array of them. **Don't set a `customId`** as the registry assigns own IDs automatically  
 > - `options` where you can set a `timeout` in milliseconds, after which the `timeout` event gets emitted  
 >   
 > #### These are the emitted events:
 > Use `BtnMsg.on("name", (args) => {})` to subscribe to them
 > - `press` is emitted whenever the button is pressed by a user and gets passed the MessageButton and ButtonInteraction instances  
-> - `timeout` is emitted when the timeout of the BtnMsg, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically > called  
-> - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of > `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive evetns again.  
+> - `timeout` is emitted when the timeout of the BtnMsg, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called  
+> - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive evetns again.  
