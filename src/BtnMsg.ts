@@ -15,7 +15,7 @@ export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: MessageButton, int: ButtonInteraction) => void): this;
     /** Gets emitted when this BtnMsg times out */
-    on(event: "timeout", listener: (btn: MessageButton) => void): this;
+    on(event: "timeout", listener: () => void): this;
     /** Gets emitted when this BtnMsg was destroyed and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
 }

@@ -142,7 +142,7 @@ export function registerBtnMsg(btnMsg: BtnMsg)
     }
 
     btnMsg.opts.timeout > -1 && setTimeout(() => {
-        btnMsg.emit("timeout", btnMsg);
+        btnMsg.emit("timeout");
         btnMsg.destroy();
     }, btnMsg.opts.timeout);
 
