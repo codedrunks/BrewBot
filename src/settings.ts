@@ -32,6 +32,8 @@ export const settings: Settings = {
     },
     embedColors: {
         default: "FUCHSIA",
+        gameWon: "GREEN",
+        gameLost: "GREY",
         warning: "ORANGE",
         error: "DARK_RED",
     },
@@ -62,6 +64,8 @@ interface Settings {
     }
     embedColors: {
         default: ColorResolvable;
+        gameWon: ColorResolvable;
+        gameLost: ColorResolvable;
         warning: ColorResolvable;
         error: ColorResolvable;
     }
