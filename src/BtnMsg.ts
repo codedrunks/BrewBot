@@ -14,6 +14,10 @@ interface BtnMsgOpts {
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: MessageButton, int: ButtonInteraction) => void): this;
+    /** Gets emitted when this BtnMsg times out */
+    on(event: "timeout", listener: (btn: MessageButton) => void): this;
+    /** Gets emitted when this BtnMsg was destroyed and needs to be deleted from the registry */
+    on(event: "destroy", listener: (btnIds: string[]) => void): this;
 }
 
 /**
@@ -27,7 +31,7 @@ export class BtnMsg extends EventEmitter
     readonly btns: MessageButton[];
     readonly msg: string | MessageEmbed[];
 
-    private opts: BtnMsgOpts;
+    readonly opts: BtnMsgOpts;
 
     /**
      * Wrapper for discord.js' `MessageButton`  
@@ -58,9 +62,14 @@ export class BtnMsg extends EventEmitter
         registerBtnMsg(this);
     }
 
+    /** Removes all listeners and triggers the registry to delete its reference to this instance */
     public destroy()
     {
+        this.emit("destroy", this.btns.map(b => b.customId));
+
         this.removeAllListeners("press");
+        this.removeAllListeners("timeout");
+        this.removeAllListeners("destroy");
     }
 
     public getBtn(customId: string)

@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
-import type { ButtonInteraction, Client } from "discord.js";
+import { ButtonInteraction, Client, Collection } from "discord.js";
 
 import { Command } from "./Command";
 import { Event } from "./Event";
@@ -17,7 +17,7 @@ const cmds: Command[] = [];
 /** Array of all registered Event instances */
 const evts: Event[] = [];
 /** Map of all registered BtnMsg instances */
-const btnMsgs = new Map<string, BtnMsg>();
+const btnMsgs = new Collection<string, BtnMsg>();
 
 
 export function initRegistry(client: Client)
@@ -27,6 +27,10 @@ export function initRegistry(client: Client)
     rest = new REST({
         version: "9"
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
+
+    setInterval(() => {
+        console.log(`[Reg] BtnMsgs (${btnMsgs.size}):       ${String(Date.now()).substring(8)}\n${btnMsgs.reduce((acc, _bm, key) => acc + (acc.length === 0 ? "" : ", ") + key, "")}\n`);
+    }, 2000);
 }
 
 
@@ -137,6 +141,14 @@ export function registerBtnMsg(btnMsg: BtnMsg)
         btnMsgs.set(id, btnMsg);
     }
 
+    btnMsg.opts.timeout > -1 && setTimeout(() => {
+        btnMsg.emit("timeout", btnMsg);
+        btnMsg.destroy();
+    }, btnMsg.opts.timeout);
+
+    btnMsg.on("destroy", ids => {
+        ids.forEach(id => btnMsgs.delete(id));
+    });
 }
 
 /**
