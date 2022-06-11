@@ -240,9 +240,9 @@ export abstract class Command extends EventEmitter
     protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral, ...this.useButtons(actions) });
+            await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...this.useButtons(actions) });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /**
@@ -264,9 +264,9 @@ export abstract class Command extends EventEmitter
     protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content, ...this.useButtons(actions) });
+            await int.editReply({ content, ...Command.useButtons(actions) });
         else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...this.useButtons(actions) });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
     /** Deletes the reply of a CommandInteraction */
@@ -275,8 +275,10 @@ export abstract class Command extends EventEmitter
         int.replied && await int.deleteReply();
     }
 
+    //#SECTION static
+
     /** Returns an object from passed buttons that can be spread onto an interaction reply */
-    protected useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
+    public static useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
 
@@ -288,8 +290,6 @@ export abstract class Command extends EventEmitter
 
         return actRows ? { components: [act] } : {};
     }
-
-    //#SECTION static
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isCommandMeta(meta: any): meta is CommandMeta
