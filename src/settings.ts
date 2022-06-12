@@ -12,6 +12,8 @@ export const settings: Settings = {
     moderation: {
         /** How many reaction votes are needed to ban someone */
         votesToBan: 2,
+        /** How many warnings are needed until a notice is sent in the bot-logs channel */
+        warningsUntilNotice: 3,
     },
     client: {
         /**
@@ -58,6 +60,7 @@ interface Settings {
     }
     moderation: {
         votesToBan: number;
+        warningsUntilNotice: number;
     }
     client: {
         intents: IntentsString[];
