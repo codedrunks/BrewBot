@@ -1,6 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
 import { createNewUser } from "../../database";
+import { embedify } from "../../util";
 
 export class OpenAccount extends Command {
     constructor() {
@@ -16,6 +17,6 @@ export class OpenAccount extends Command {
 
         await createNewUser(userid);
 
-        return this.reply(int, `Created or updated an account for ${int.user.username}.`);
+        return this.reply(int, embedify(`Created or updated an account for ${int.user.username}.`));
     }
 }

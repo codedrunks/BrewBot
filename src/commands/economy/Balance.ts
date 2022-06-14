@@ -1,6 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
 import { getCoins } from "../../database";
+import { embedify } from "../../util";
 
 export class Balance extends Command {
     constructor() {
@@ -16,8 +17,8 @@ export class Balance extends Command {
 
         let coins = await getCoins(userid);
         
-        if(!coins && coins != 0) return this.reply(int, "Don't have an account? Open one today with `/openaccount`!");
+        if(!coins && coins != 0) return this.reply(int, embedify("Don't have an account? Open one today with `/openaccount`!"));
 
-        return this.reply(int, `You have ${coins} coins`);
+        return this.reply(int, embedify(`You have ${coins} coins`));
     }
 }
