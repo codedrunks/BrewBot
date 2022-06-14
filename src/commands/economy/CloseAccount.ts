@@ -16,10 +16,10 @@ export class CloseAccount extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
         
-        if(!settings.devs.includes(userid)) return this.reply(int, "You do not have permission to do this.");
+        if(!devs.includes(userid)) return this.reply(int, "You do not have permission to do this.");
 
         await deleteUser(userid);
 
-        return this.reply("Done")
+        return this.reply(int, "Done");
     }
 }

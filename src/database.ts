@@ -13,6 +13,7 @@ export async function getUser(userId: string): Promise<User | null> {
     return user;
 }
 
+/** Remove user from the database */
 export async function deleteUser(userId: string) {
     await prisma.user.delete({
         where: {
@@ -35,6 +36,22 @@ export async function createNewUser(userId: string) {
     });
 }
 
+/** Add new user if they do not exist, and give them a balance */
+export async function createNewUserWithCoins(userId: string, coins: number) {
+    await prisma.user.upsert({
+        where: {
+            id: userId
+        },
+        update: {
+            coins: coins
+        },
+        create: {
+            id: userId,
+            coins: coins
+        }
+    });
+}
+
 /** get coins from a user */
 export async function getCoins(userId: string): Promise<number | undefined> {
     let coins = await prisma.user.findUnique({
@@ -47,6 +64,18 @@ export async function getCoins(userId: string): Promise<number | undefined> {
     });
 
     return coins?.coins;
+}
+
+/** Set coins to x amount */
+export async function setCoins(userId: string, coins: number) {
+    await prisma.user.update({
+        where: {
+            id: userId
+        },
+        data: {
+            coins: coins
+        }
+    });
 }
 
 /** Increment user coin amount by x amount */
