@@ -128,6 +128,7 @@ export async function subCoinsSafe(userId: string, coins: number) {
     });
 }
 
+/** Gets last daily timestamp */
 export async function getLastDaily(userId: string): Promise<number | null | undefined> {
     let lastDaily = await prisma.bonus.findUnique({
         where: {
@@ -141,6 +142,7 @@ export async function getLastDaily(userId: string): Promise<number | null | unde
     return lastDaily?.lastdaily;
 }
 
+/** Sets last daily timestamp */
 export async function setLastDaily(userId: string) {
     await prisma.bonus.upsert({
         where: {
@@ -156,6 +158,7 @@ export async function setLastDaily(userId: string) {
     });
 }
 
+/** Gets last work timestamp */
 export async function getLastWork(userId: string): Promise<number | null | undefined> {
     let lastWork = await prisma.bonus.findUnique({
         where: {
@@ -169,6 +172,7 @@ export async function getLastWork(userId: string): Promise<number | null | undef
     return lastWork?.lastwork;
 }
 
+/** Sets last work timestamp */
 export async function setLastWork(userId: string) {
     await prisma.bonus.upsert({
         where: {
@@ -184,6 +188,7 @@ export async function setLastWork(userId: string) {
     });
 }
 
+/** Get total amount of times a user has worked */
 export async function getTotalWorks(userId: string): Promise<number | null | undefined> {
     let totalworks = await prisma.bonus.findUnique({
         where: {
@@ -197,6 +202,7 @@ export async function getTotalWorks(userId: string): Promise<number | null | und
     return totalworks?.totalworks;
 }
 
+/** Add to the total amount of times a user has worked */
 export async function incrementTotalWorks(userId: string, by?: number) {
     await prisma.bonus.update({
         where: {

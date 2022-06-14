@@ -28,10 +28,10 @@ export class Daily extends Command {
             return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
 
-        let timeleft = lastdaily - now;
+        let timeleft = now - lastdaily;
 
         if(timeleft <= secs24hours) {
-            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
+            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
         } else {
             await addCoins(userid, dailyCoinsAward);
 

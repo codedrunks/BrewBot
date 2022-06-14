@@ -4,6 +4,7 @@ import { embedify, formatSeconds, nowInSeconds, randomFromArray } from "../../ut
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "../../database";
 
 const baseAward = 50;
+const secs4hours = 28800;
 
 interface ILevel {
     [key: number]: {
@@ -13,7 +14,6 @@ interface ILevel {
     }
 }
 
-// You got ${coins} by + randomphrase
 const Levels: ILevel = {
     1: {
         name: "Beggar",
@@ -108,8 +108,6 @@ const totalWorksToLevel = (works: number): number => {
     else return 1;
 }
 
-const secs8hours = 28800;
-
 export class Work extends Command {
     constructor() {
         super({
@@ -140,10 +138,10 @@ export class Work extends Command {
             return this.reply(int, embedify(`You got ${payout} coins by ${randomFromArray(job.phrases)}`));
         }
 
-        let timeleft = lastwork - now;
+        let timeleft = now - lastwork;
 
-        if(timeleft <= secs8hours) {
-            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
+        if(timeleft <= secs4hours) {
+            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
         } else {
             let jobidx = totalWorksToLevel(totalworks);
             let job = Levels[jobidx as keyof typeof Levels];

@@ -29,7 +29,6 @@ model Reminder {
 model Bonus {
   userId     String @id
   lastdaily  Int?
-  last2hour  Int?
   lastwork   Int?
   totalworks Int    @default(0)
   User       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
