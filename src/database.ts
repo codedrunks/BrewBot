@@ -155,3 +155,55 @@ export async function setLastDaily(userId: string) {
         }
     });
 }
+
+export async function getLastWork(userId: string): Promise<number | null | undefined> {
+    let lastWork = await prisma.bonus.findUnique({
+        where: {
+            userId
+        },
+        select: {
+            lastwork: true
+        }
+    });
+
+    return lastWork?.lastwork;
+}
+
+export async function setLastWork(userId: string) {
+    await prisma.bonus.upsert({
+        where: {
+            userId
+        },
+        create: {
+            userId,
+            lastwork: nowInSeconds()
+        },
+        update: {
+            lastwork: nowInSeconds()
+        }
+    });
+}
+
+export async function getTotalWorks(userId: string): Promise<number | null | undefined> {
+    let totalworks = await prisma.bonus.findUnique({
+        where: {
+            userId
+        },
+        select: {
+            totalworks: true
+        }
+    });
+
+    return totalworks?.totalworks;
+}
+
+export async function incrementTotalWorks(userId: string, by?: number) {
+    await prisma.bonus.update({
+        where: {
+            userId
+        },
+        data: {
+            totalworks: { increment: by ?? 1 }
+        }
+    });
+}

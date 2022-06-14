@@ -4,7 +4,7 @@ import { embedify, formatSeconds, nowInSeconds } from "../../util";
 import { addCoins, getLastDaily, setLastDaily } from "../../database";
 
 const secs24hours = 86400;
-const dailyCoinsAward = 300;
+const dailyCoinsAward = 100;
 
 export class Daily extends Command {
     constructor() {
@@ -31,7 +31,7 @@ export class Daily extends Command {
         let timeleft = lastdaily - now;
 
         if(timeleft <= secs24hours) {
-            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``))
+            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
         } else {
             await addCoins(userid, dailyCoinsAward);
 
