@@ -14,12 +14,22 @@ model User {
   id        String     @id
   coins     Int        @default(0)
   reminders Reminder[]
+  bonus     Bonus[]
 }
 
 model Reminder {
   guild        String
   name         String
   dueTimestamp Int
-  User         User?   @relation(fields: [userId], references: [id])
-  userId       String  @id
+  User         User?  @relation(fields: [userId], references: [id])
+  userId       String @id
+}
+
+// cooldowns for economy, this is how coins are 'minted'
+model Bonus {
+  userId    String  @id
+  lastdaily Int?
+  last2hour Int?
+  lastwork  Int?
+  User      User    @relation(fields: [userId], references: [id])
 }

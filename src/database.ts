@@ -1,4 +1,5 @@
 import { PrismaClient, User } from "@prisma/client";
+import { nowInSeconds } from "./util";
 
 let prisma: PrismaClient = new PrismaClient();
 
@@ -80,13 +81,20 @@ export async function setCoins(userId: string, coins: number) {
 
 /** Increment user coin amount by x amount */
 export async function addCoins(userId: string, coins: number) {
-    await prisma.user.update({
+    await prisma.user.upsert({
         where: {
             id: userId
         },
-        data: {
+        update: {
             coins: { increment: coins }
+        },
+        create: {
+            id: userId,
+            coins: coins
         }
+        // data: {
+        //     coins: { increment: coins }
+        // }
     });
 }
 
@@ -116,6 +124,34 @@ export async function subCoinsSafe(userId: string, coins: number) {
         },
         data: {
             coins: { decrement: coins }
+        }
+    });
+}
+
+export async function getLastDaily(userId: string): Promise<number | null | undefined> {
+    let lastDaily = await prisma.bonus.findUnique({
+        where: {
+            userId
+        },
+        select: {
+            lastdaily: true
+        }
+    });
+
+    return lastDaily?.lastdaily;
+}
+
+export async function setLastDaily(userId: string) {
+    await prisma.bonus.upsert({
+        where: {
+            userId
+        },
+        create: {
+            userId,
+            lastdaily: nowInSeconds()
+        },
+        update: {
+            lastdaily: nowInSeconds()
         }
     });
 }

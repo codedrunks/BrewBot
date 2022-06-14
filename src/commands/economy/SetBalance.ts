@@ -34,7 +34,7 @@ export class SetBalance extends Command {
 
         if(!devs.includes(userid)) return this.reply(int, embedify("Only devs can use this command."));
         
-        if(!args.amount) return this.reply(int, embedify("Please choose an amount to set the balance to."))
+        if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."))
 
         if(!args.user) {
             await setCoins(userid, parseInt(args.amount));

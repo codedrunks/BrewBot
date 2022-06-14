@@ -25,6 +25,7 @@ import { Balance } from "./economy/Balance"
 import { OpenAccount } from "./economy/OpenAccount";
 import { CloseAccount } from "./economy/CloseAccount";
 import { SetBalance } from "./economy/SetBalance";
+import { Daily } from "./economy/Daily";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -58,6 +59,7 @@ export const commands = [
     OpenAccount,
     CloseAccount,
     SetBalance,
+    Daily,
 
     Btn, //#DEBUG
 ];
