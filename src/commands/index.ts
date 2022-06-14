@@ -21,6 +21,10 @@ import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
 import { Btn } from "./Btn";
 
+import { Balance } from "./economy/Balance"
+import { OpenAccount } from "./economy/OpenAccount";
+import { CloseAccount } from "./economy/CloseAccount";
+
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
     // fun
@@ -47,6 +51,11 @@ export const commands = [
     Ping,
     Reminder,
     Server,
+
+    // Economy
+    Balance,
+    OpenAccount,
+    CloseAccount,
 
     Btn, //#DEBUG
 ];
