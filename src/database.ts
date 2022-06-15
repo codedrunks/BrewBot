@@ -20,7 +20,7 @@ export async function deleteUser(userId: string) {
         where: {
             id: userId
         }
-    });
+    }).catch(); // this will be updated once prisma implements a doesNotExist thing
 }
 
 /** Add new user to the database if they do not exist already */
