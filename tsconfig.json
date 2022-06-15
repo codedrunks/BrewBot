@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
+        "target": "es2022",
         "module": "CommonJS",
         "rootDir": "./src/",
         "outDir": "./out/",
