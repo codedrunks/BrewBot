@@ -1,7 +1,6 @@
 import axios from "axios";
-import { Client, CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageButton, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageButton, MessageEmbed } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
-import { sendLogMsg } from "../../botLogs";
 import { BtnMsg } from "../../BtnMsg";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
@@ -10,7 +9,7 @@ export class Steam extends Command
 {
     private api: SteamAPI;
 
-    constructor(client: Client)
+    constructor()
     {
         super({
             name: "steam",
@@ -40,9 +39,6 @@ export class Steam extends Command
                 }
             ]
         });
-
-        if(!process.env.STEAM_TOKEN)
-            sendLogMsg(`Client ${client.user?.username} with ID ${client.user?.id} doesn't have a STEAM_TOKEN env var set`);
 
         this.api = new SteamAPI(process.env.STEAM_TOKEN ?? "ERR_NO_ENV");
     }
