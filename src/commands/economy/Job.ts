@@ -16,7 +16,11 @@ export class Job extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
-        let totalworks = await getTotalWorks(userid);
+        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+
+        let guildid = int.guild.id;
+
+        let totalworks = await getTotalWorks(userid, guildid);
 
         if(!totalworks && totalworks != 0) return this.reply(int, embedify(`We have no job records for you, do you have an account? Use \`/openaccount\` if not!`));
 

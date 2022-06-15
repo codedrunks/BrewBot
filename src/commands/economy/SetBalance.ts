@@ -32,16 +32,20 @@ export class SetBalance extends Command {
 
         const args = this.resolveArgs(int);
 
+        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+
+        let guildid = int.guild.id;
+
         if(!devs.includes(userid)) return this.reply(int, embedify("Only devs can use this command."));
         
         if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."))
 
         if(!args.user) {
-            await setCoins(userid, parseInt(args.amount));
+            await setCoins(userid, guildid, parseInt(args.amount));
 
             return this.reply(int, embedify(`Your balance has been set to ${args.amount}`));
         } else {
-            await createNewUserWithCoins(args.user, parseInt(args.amount));
+            await createNewUserWithCoins(args.user, guildid, parseInt(args.amount));
 
             let username = int.guild?.members.cache.get(args.user)?.user.username;
 

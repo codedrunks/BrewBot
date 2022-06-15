@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id        String     @id
-  coins     Int        @default(0)
+  coins     Coins[]
   reminders Reminder[]
   bonus     Bonus[]
 }
@@ -27,9 +27,21 @@ model Reminder {
 
 // cooldowns for economy, this is how coins are 'minted'
 model Bonus {
-  userId     String @id
+  guildId    String
+  userId     String
   lastdaily  Int?
   lastwork   Int?
   totalworks Int    @default(0)
   User       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, userId])
+}
+
+model Coins {
+  guildId String
+  userId  String
+  amount  Int    @default(0)
+  User    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, userId])
 }

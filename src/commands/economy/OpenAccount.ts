@@ -15,7 +15,11 @@ export class OpenAccount extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
-        await createNewUser(userid);
+        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+
+        let guildid = int.guild.id;
+
+        await createNewUser(userid, guildid);
 
         return this.reply(int, embedify(`Created or updated an account for ${int.user.username}.`));
     }

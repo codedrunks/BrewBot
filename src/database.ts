@@ -24,7 +24,7 @@ export async function deleteUser(userId: string) {
 }
 
 /** Add new user to the database if they do not exist already */
-export async function createNewUser(userId: string) {
+export async function createNewUser(userId: string, guildId: string) {
     await prisma.user.upsert({
         where: {
             id: userId
@@ -32,107 +32,132 @@ export async function createNewUser(userId: string) {
         update: {},
         create: {
             id: userId,
-            coins: 0
-        }
+            coins: {
+                create: {
+                    guildId,
+                    amount: 0
+                }
+            }
+        },
     });
 }
 
 /** Add new user if they do not exist, and give them a balance */
-export async function createNewUserWithCoins(userId: string, coins: number) {
+export async function createNewUserWithCoins(userId: string, guildId: string, coins: number) {
     await prisma.user.upsert({
         where: {
             id: userId
         },
-        update: {
-            coins: coins
-        },
+        update: {},
         create: {
             id: userId,
-            coins: coins
+            coins: {
+                create: {
+                    amount: coins,
+                    guildId,
+                }
+            }
         }
     });
 }
 
 /** get coins from a user */
-export async function getCoins(userId: string): Promise<number | undefined> {
-    let coins = await prisma.user.findUnique({
+export async function getCoins(userId: string, guildId: string): Promise<number | undefined> {
+    let amount = await prisma.coins.findUnique({
         where: {
-            id: userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         select: {
-            coins: true
+            amount: true
         }
     });
 
-    return coins?.coins;
+    return amount?.amount;
 }
 
 /** Set coins to x amount */
-export async function setCoins(userId: string, coins: number) {
-    await prisma.user.update({
+export async function setCoins(userId: string, guildId: string, coins: number) {
+    await prisma.coins.update({
         where: {
-            id: userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         data: {
-            coins: coins
+            amount: coins
         }
     });
 }
 
 /** Increment user coin amount by x amount */
-export async function addCoins(userId: string, coins: number) {
-    await prisma.user.upsert({
+export async function addCoins(userId: string, guildId: string, coins: number) {
+    await prisma.coins.upsert({
         where: {
-            id: userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         update: {
-            coins: { increment: coins }
+            amount: { increment: coins }
         },
         create: {
-            id: userId,
-            coins: coins
+            amount: coins,
+            guildId
         }
-        // data: {
-        //     coins: { increment: coins }
-        // }
     });
 }
 
 /** Decrement user coin amount by x amount, use subCoinsSafe for non-zero op */
-export async function subCoins(userId: string, coins: number) {
-    await prisma.user.update({
+export async function subCoins(userId: string, guildId: string, coins: number) {
+    await prisma.coins.update({
         where: {
-            id: userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         data: {
-            coins: { decrement: coins }
+            amount: {
+                decrement: coins
+            }
         }
     });
 }
 
 /** Decrement user coin amount without going to a negative value */
-export async function subCoinsSafe(userId: string, coins: number) {
-    let currentCoinAmount = await getCoins(userId);
+export async function subCoinsSafe(userId: string, guildId: string, coins: number) {
+    let currentCoinAmount = await getCoins(userId, guildId);
 
     if(!currentCoinAmount) return;
 
     if(coins > currentCoinAmount) coins = currentCoinAmount;
 
-    await prisma.user.update({
+    await prisma.coins.update({
         where: {
-            id: userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         data: {
-            coins: { decrement: coins }
+            amount: { decrement: coins }
         }
     });
 }
 
 /** Gets last daily timestamp */
-export async function getLastDaily(userId: string): Promise<number | null | undefined> {
+export async function getLastDaily(userId: string, guildId: string): Promise<number | null | undefined> {
     let lastDaily = await prisma.bonus.findUnique({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         select: {
             lastdaily: true
@@ -143,13 +168,17 @@ export async function getLastDaily(userId: string): Promise<number | null | unde
 }
 
 /** Sets last daily timestamp */
-export async function setLastDaily(userId: string) {
+export async function setLastDaily(userId: string, guildId: string) {
     await prisma.bonus.upsert({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         create: {
             userId,
+            guildId,
             lastdaily: nowInSeconds()
         },
         update: {
@@ -159,10 +188,13 @@ export async function setLastDaily(userId: string) {
 }
 
 /** Gets last work timestamp */
-export async function getLastWork(userId: string): Promise<number | null | undefined> {
+export async function getLastWork(userId: string, guildId: string): Promise<number | null | undefined> {
     let lastWork = await prisma.bonus.findUnique({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         select: {
             lastwork: true
@@ -173,13 +205,17 @@ export async function getLastWork(userId: string): Promise<number | null | undef
 }
 
 /** Sets last work timestamp */
-export async function setLastWork(userId: string) {
+export async function setLastWork(userId: string, guildId: string) {
     await prisma.bonus.upsert({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         create: {
             userId,
+            guildId,
             lastwork: nowInSeconds()
         },
         update: {
@@ -189,10 +225,13 @@ export async function setLastWork(userId: string) {
 }
 
 /** Get total amount of times a user has worked */
-export async function getTotalWorks(userId: string): Promise<number | null | undefined> {
+export async function getTotalWorks(userId: string, guildId: string): Promise<number | null | undefined> {
     let totalworks = await prisma.bonus.findUnique({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         select: {
             totalworks: true
@@ -203,10 +242,13 @@ export async function getTotalWorks(userId: string): Promise<number | null | und
 }
 
 /** Add to the total amount of times a user has worked */
-export async function incrementTotalWorks(userId: string, by?: number) {
+export async function incrementTotalWorks(userId: string, guildId: string, by?: number) {
     await prisma.bonus.update({
         where: {
-            userId
+            guildId_userId: {
+                guildId,
+                userId
+            }
         },
         data: {
             totalworks: { increment: by ?? 1 }

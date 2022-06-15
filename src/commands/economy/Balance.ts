@@ -15,7 +15,9 @@ export class Balance extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
-        let coins = await getCoins(userid);
+        if(!int.guild) return this.reply(int, embedify("This command cannot be used in DM's"));
+
+        let coins = await getCoins(userid, int.guild.id);
         
         if(!coins && coins != 0) return this.reply(int, embedify("Don't have an account? Open one today with `/openaccount`!"));
 

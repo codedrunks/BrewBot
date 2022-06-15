@@ -17,23 +17,27 @@ export class Work extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
+        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+
+        let guildid = int.guild.id;
+
         let now = nowInSeconds();
 
-        let lastwork = await getLastWork(userid);
+        let lastwork = await getLastWork(userid, guildid);
 
-        let totalworks = await getTotalWorks(userid) ?? 0;
+        let totalworks = await getTotalWorks(userid, guildid) ?? 0;
 
         if(!lastwork) {
-            await setLastWork(userid);
+            await setLastWork(userid, guildid);
             
             let jobidx = totalWorksToLevel(totalworks);
             let job = Levels[jobidx as keyof typeof Levels];
 
             let payout = Math.round(job.multiplier * baseAward);
 
-            await addCoins(userid, payout);
+            await addCoins(userid, guildid, payout);
 
-            await incrementTotalWorks(userid);
+            await incrementTotalWorks(userid, guildid);
 
             return this.reply(int, embedify(`You got ${payout} coins by ${randomFromArray(job.phrases)}`));
         }
@@ -48,9 +52,9 @@ export class Work extends Command {
 
             let payout = Math.round(job.multiplier * baseAward);
 
-            await addCoins(userid, payout);
+            await addCoins(userid, guildid, payout);
 
-            await incrementTotalWorks(userid);
+            await incrementTotalWorks(userid, guildid);
 
             return this.reply(int, embedify(`You got ${payout} coins by ${randomFromArray(job.phrases)}`));
         }

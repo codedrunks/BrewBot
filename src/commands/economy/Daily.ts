@@ -17,13 +17,19 @@ export class Daily extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
+        console.log(userid);
+
         let now = nowInSeconds();
 
-        let lastdaily = await getLastDaily(userid);
+        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+
+        let guildid = int.guild.id;
+
+        let lastdaily = await getLastDaily(userid, int.guild.id);
 
         if(!lastdaily) {
-            await setLastDaily(userid);
-            await addCoins(userid, dailyCoinsAward);
+            await setLastDaily(userid, guildid);
+            await addCoins(userid, guildid, dailyCoinsAward);
 
             return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
@@ -33,7 +39,7 @@ export class Daily extends Command {
         if(timeleft <= secs24hours) {
             return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
         } else {
-            await addCoins(userid, dailyCoinsAward);
+            await addCoins(userid, guildid, dailyCoinsAward);
 
             return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
