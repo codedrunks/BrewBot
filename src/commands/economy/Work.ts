@@ -1,8 +1,9 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
-import { embedify, formatSeconds, nowInSeconds, randomFromArray } from "../../util";
+import { embedify, formatSeconds, nowInSeconds } from "../../util";
 import { addCoins, getLastWork, getTotalWorks, getUser, incrementTotalWorks, setLastWork } from "../../database";
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
+import { randomItem } from "svcorelib";
 
 const secs4hours = 14400;
 
@@ -25,7 +26,7 @@ export class Work extends Command {
 
         let userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`));
+        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`), true);
 
         let lastwork = await getLastWork(userid, guildid);
 
@@ -43,13 +44,13 @@ export class Work extends Command {
 
             await incrementTotalWorks(userid, guildid);
 
-            return this.reply(int, embedify(`You got ${payout} coins by ${randomFromArray(job.phrases)}`));
+            return this.reply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
         }
 
         let timeleft = now - lastwork;
 
         if(timeleft <= secs4hours) {
-            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
+            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``), true);
         } else {
             let jobidx = totalWorksToLevel(totalworks);
             let job = Levels[jobidx as keyof typeof Levels];
@@ -60,7 +61,7 @@ export class Work extends Command {
 
             await incrementTotalWorks(userid, guildid);
 
-            return this.reply(int, embedify(`You got ${payout} coins by ${randomFromArray(job.phrases)}`));
+            return this.reply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
         }
     }
 }

@@ -19,7 +19,7 @@ export class Balance extends Command {
 
         let coins = await getCoins(userid, int.guild.id);
         
-        if(!coins && coins != 0) return this.reply(int, embedify("Don't have an account? Open one today with `/openaccount`!"));
+        if(!coins && coins != 0) return this.reply(int, embedify("Don't have an account? Open one today with `/openaccount`!"), true);
 
         return this.reply(int, embedify(`You have ${coins} coins`));
     }

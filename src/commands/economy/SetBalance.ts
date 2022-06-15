@@ -36,14 +36,14 @@ export class SetBalance extends Command {
 
         let guildid = int.guild.id;
 
-        if(!devs.includes(userid)) return this.reply(int, embedify("Only devs can use this command."));
+        if(!devs.includes(userid)) return this.reply(int, embedify("Only devs can use this command."), true);
         
-        if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."))
+        if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."), true)
 
         if(!args.user) {
             await setCoins(userid, guildid, parseInt(args.amount));
 
-            return this.reply(int, embedify(`Your balance has been set to ${args.amount}`));
+            return this.reply(int, embedify(`Your balance has been set to ${args.amount}`), true);
         } else {
             await createNewUserWithCoins(args.user, guildid, parseInt(args.amount));
 

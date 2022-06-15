@@ -25,7 +25,7 @@ export class Daily extends Command {
 
         let userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`));
+        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`), true);
 
         let lastdaily = await getLastDaily(userid, int.guild.id);
 
@@ -39,7 +39,7 @@ export class Daily extends Command {
         let timeleft = now - lastdaily;
 
         if(timeleft <= secs24hours) {
-            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``));
+            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``), true);
         } else {
             await addCoins(userid, guildid, dailyCoinsAward);
 

@@ -18,7 +18,3 @@ export function formatSeconds(seconds: number): string {
 export function nowInSeconds(): number {
     return Math.round(new Date().getTime() / 1000);
 }
-
-export function randomFromArray(arr: any[]): any {
-    return arr[Math.floor(Math.random() * arr.length)];
-}

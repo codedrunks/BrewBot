@@ -22,16 +22,18 @@ export class Job extends Command {
 
         let totalworks = await getTotalWorks(userid, guildid);
 
-        if(!totalworks && totalworks != 0) return this.reply(int, embedify(`We have no job records for you, do you have an account? Use \`/openaccount\` if not!`));
+        if(!totalworks && totalworks != 0) return this.reply(int, embedify(`We have no job records for you, do you have an account? Use \`/openaccount\` if not!`), true);
 
         let jobidx = totalWorksToLevel(totalworks);
         let job = Levels[jobidx as keyof typeof Levels];
 
         const { name, multiplier } = job;
 
+        let username = int.user.username;
+
         let embed = new MessageEmbed()
             .setColor(settings.embedColors.default)
-            .setTitle(`Current Vocation: ${name}`)
+            .setTitle(`*${username}*'s Current Vocation: ${name}`)
             .setDescription(`You currently make ${Math.round(baseAward * multiplier)} per 4 hours and have worked ${totalworks} times.`);
 
         return this.reply(int, embed);

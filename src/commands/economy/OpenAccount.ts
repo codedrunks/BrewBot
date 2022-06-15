@@ -21,6 +21,6 @@ export class OpenAccount extends Command {
 
         await createNewUser(userid, guildid);
 
-        return this.reply(int, embedify(`Created or updated an account for ${int.user.username}.`));
+        return this.reply(int, embedify(`Created or updated an account for ${int.user.username}.`), true);
     }
 }
