@@ -39,16 +39,3 @@ export class Daily extends Command {
         }
     }
 }
-
-/**
- * program flow log
- * 
- * user uses /daily
- * 
- * check if user has used daily before, if not, create an entry, reward coins, and return success message
- * 
- * check if user is able to use daily yet (now - lastdaily <= 24hoursInMs
- * if yes, award coins and return success
- * if no, return fail message
- * 
- */

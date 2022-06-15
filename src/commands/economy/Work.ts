@@ -4,13 +4,13 @@ import { embedify, formatSeconds, nowInSeconds, randomFromArray } from "../../ut
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "../../database";
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
 
-const secs4hours = 28800;
+const secs4hours = 14400;
 
 export class Work extends Command {
     constructor() {
         super({
             name: "work",
-            desc: "Work for coins, can be used every 8 hours."
+            desc: `Work for coins, can be used every ${secs4hours / 3600} hours.`
         });
     }
 

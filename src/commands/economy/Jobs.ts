@@ -15,7 +15,8 @@ export const Levels: ILevel = {
             "selling your kidney",
             "eating a worm",
             "singing on the subway",
-            "doing drugs"
+            "doing drugs",
+            "sleeping"
         ]
     },
     2: {

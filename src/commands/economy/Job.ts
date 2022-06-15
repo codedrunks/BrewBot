@@ -5,8 +5,6 @@ import { settings } from '../../settings';
 import { embedify } from '../../util';
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
 
-
-
 export class Job extends Command {
     constructor() {
         super({
@@ -20,7 +18,7 @@ export class Job extends Command {
 
         let totalworks = await getTotalWorks(userid);
 
-        if(!totalworks && totalworks != 0) return this.reply(int, embedify(`You do not appear to have an account with us, open one today with \`/openaccount\`!`))
+        if(!totalworks && totalworks != 0) return this.reply(int, embedify(`We have no job records for you, do you have an account? Use \`/openaccount\` if not!`));
 
         let jobidx = totalWorksToLevel(totalworks);
         let job = Levels[jobidx as keyof typeof Levels];
