@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
 import { embedify, formatSeconds, nowInSeconds, randomFromArray } from "../../util";
-import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "../../database";
+import { addCoins, getLastWork, getTotalWorks, getUser, incrementTotalWorks, setLastWork } from "../../database";
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
 
 const secs4hours = 14400;
@@ -22,6 +22,10 @@ export class Work extends Command {
         let guildid = int.guild.id;
 
         let now = nowInSeconds();
+
+        let userInDB = await getUser(userid);
+
+        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`));
 
         let lastwork = await getLastWork(userid, guildid);
 

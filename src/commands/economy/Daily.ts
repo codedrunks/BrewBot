@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
 import { embedify, formatSeconds, nowInSeconds } from "../../util";
-import { addCoins, getLastDaily, setLastDaily } from "../../database";
+import { addCoins, getLastDaily, getUser, setLastDaily } from "../../database";
 
 const secs24hours = 86400;
 const dailyCoinsAward = 100;
@@ -17,13 +17,15 @@ export class Daily extends Command {
     async run(int: CommandInteraction): Promise<void> {
         let userid = int.user.id;
 
-        console.log(userid);
-
         let now = nowInSeconds();
 
         if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
 
         let guildid = int.guild.id;
+
+        let userInDB = await getUser(userid);
+
+        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`));
 
         let lastdaily = await getLastDaily(userid, int.guild.id);
 

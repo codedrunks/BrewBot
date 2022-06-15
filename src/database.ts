@@ -37,6 +37,11 @@ export async function createNewUser(userId: string, guildId: string) {
                     guildId,
                     amount: 0
                 }
+            },
+            bonus: {
+                create: {
+                    guildId,
+                }
             }
         },
     });
@@ -107,7 +112,8 @@ export async function addCoins(userId: string, guildId: string, coins: number) {
         },
         create: {
             amount: coins,
-            guildId
+            guildId,
+            userId
         }
     });
 }
