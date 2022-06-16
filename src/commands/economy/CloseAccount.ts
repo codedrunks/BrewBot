@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { Command } from "../../Command";
-import { deleteUser } from "../../database";
+import { deleteUser } from "../../database/users";
 import { settings } from "../../settings";
 import { embedify } from "../../util";
 

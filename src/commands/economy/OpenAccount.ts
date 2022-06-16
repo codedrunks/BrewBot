@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
-import { createNewUser } from "../../database";
+import { createNewUser } from "../../database/users";
 import { embedify } from "../../util";
 
 export class OpenAccount extends Command {

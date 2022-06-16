@@ -1,7 +1,8 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
 import { embedify, formatSeconds, nowInSeconds } from "../../util";
-import { addCoins, getLastWork, getTotalWorks, getUser, incrementTotalWorks, setLastWork } from "../../database";
+import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "../../database/economy";
+import { getUser } from "../../database/users";
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
 import { randomItem } from "svcorelib";
 

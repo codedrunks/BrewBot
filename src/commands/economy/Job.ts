@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from 'discord.js';
 import { Command } from '../../Command';
-import { getTotalWorks } from '../../database';
+import { getTotalWorks } from '../../database/economy';
 import { settings } from '../../settings';
 import { embedify } from '../../util';
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";

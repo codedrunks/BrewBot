@@ -1,6 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from '../../Command';
-import { createNewUserWithCoins, setCoins } from "../../database";
+import { createNewUserWithCoins } from "../../database/users";
+import { setCoins } from "../../database/economy";
 import { settings } from "../../settings";
 import { embedify } from "../../util";
 

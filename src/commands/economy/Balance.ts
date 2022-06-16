@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "../../Command";
-import { getCoins } from "../../database";
+import { getCoins } from "../../database/economy";
 import { embedify } from "../../util";
 
 export class Balance extends Command {
