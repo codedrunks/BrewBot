@@ -71,6 +71,18 @@ export abstract class Command extends EventEmitter
                             .setRequired(arg.required ?? false)
                             .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                     );
+                else if(arg.type === "role")
+                    data.addRoleOption(opt =>
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                    );
+                else if(arg.type === "attachment")
+                    data.addAttachmentOption(opt =>
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false)
+                    );
                 else
                     data.addStringOption(opt => {
                         opt.setName(arg.name)
@@ -127,6 +139,18 @@ export abstract class Command extends EventEmitter
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                                     .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
+                            );
+                        else if(arg.type === "role")
+                            data.addRoleOption(opt =>
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false)
+                            );
+                        else if(arg.type === "attachment")
+                            data.addAttachmentOption(opt =>
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false)
                             );
                         else
                             sc.addStringOption(opt => {
