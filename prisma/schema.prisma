@@ -45,3 +45,34 @@ model Coins {
 
   @@id([guildId, userId])
 }
+
+model Guild {
+  id               String    @id
+  contestRoleId    String
+  contestChannelId String
+  contests         Contest[]
+}
+
+model Contest {
+  id          Int
+  guildId     String
+  guild       Guild               @relation(fields: [guildId], references: [id])
+  name        String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  submissions ContestSubmission[]
+
+  @@id([guildId, id])
+}
+
+model ContestSubmission {
+  userId    String
+  contestId Int
+  guildId   String
+  content   String
+  contest   Contest @relation(fields: [guildId, contestId], references: [guildId, id], onDelete: Cascade)
+  votes     Int
+
+  @@id([guildId, contestId, userId])
+}

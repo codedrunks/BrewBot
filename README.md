@@ -36,6 +36,9 @@ Install these VS Code extensions for code auto-fix on save and special text high
 - `dbaeumer.vscode-eslint`
 - `fabiospampinato.vscode-highlight`
 
+## Discord API Quirks that you can't find anywhere
+- (Sub)Command names and command option names need to be lowercase only with no spaces (underscores are fine).
+
 <!-- mr bot invite: https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands -->
 
 <br><br>

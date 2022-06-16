@@ -21,6 +21,7 @@ import { Ping } from "./util/Ping";
 import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
 import { Btn } from "./Btn";
+import { Contest } from "./fun/Contest";
 
 import { Balance } from "./economy/Balance";
 import { OpenAccount } from "./economy/OpenAccount";
@@ -36,6 +37,7 @@ export const commands = [
     Cat,
     Cheese,
     Coinflip,
+    Contest,
     Fact,
     Ferret,
     HigherLower,
