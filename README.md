@@ -10,9 +10,25 @@ At the moment, `src/bot.ts` only sets guild-specific commands as these update pr
 The regular Discord client doesn't update the locally saved slash commands when the bot restarts, so it's sometimes necessary to reload the Discord app with `Ctrl+R`  
 If that still didn't work, or when you just want to remove a command or change its arguments, it's sometimes also necessary to delete them from Discord servers entirely.  
 The bot inserts a fresh copy of all commands at next startup. To clear all global commands and guild commands, use `npm run clearCommands`  
-  
-Since I didn't wanna bother with SQL, for now all the persisting data is done through the `data.json` file, which is kept up by `src/persistentData.ts`  
-Use the functions `get` and `set` of that file to get and set persistent data.  
+
+Some data persistence is still done through the `data.json` file, which is kept up by `src/persistentData.ts`. This will probably change. Prisma is the new database provider, please see usage below.
+
+## Prisma Functions & Database Utils
+There are some CLI functions for Prisma that the developer should be aware of when working with their database
+
+__CLI__
+- `npx prisma migrate dev --name "describe_change_short"` : creates a database migration and updates the local database if there is one, use this everytime you update the schema.prisma file with a change
+- `npx prisma migrate deploy` : this will deploy any changes to the local database, this is how you deploy migrations in production
+- `npx prisma migrate reset` : this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset
+- `npx prisma migrate dev --create-only` : not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file
+- `npx prisma format` : this formats the schema.prisma file and can also auto-complete foreign key association
+
+__Utils__<br />
+All database utils can be found in `/src/database`, the functions are organized in files based on what part of the database they are associated with, i.e. all user related functions such as creating a new user or deleting a user are in `/src/database/users.ts`. When creating new utils, please follow this standard accordingly.
+
+See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node client library [here](https://www.prisma.io/docs/reference).
+
+## Debugging
   
 Debugging through VS Code works just fine, including breakpoints. Just press F5 to launch the debugger.  
   

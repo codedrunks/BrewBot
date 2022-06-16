@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id
+  coins     Coins[]
+  reminders Reminder[]
+  bonus     Bonus[]
+}
+
+model Reminder {
+  guild        String
+  name         String
+  dueTimestamp Int
+  User         User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String @id
+}
+
+// cooldowns for economy, this is how coins are 'minted'
+model Bonus {
+  guildId    String
+  userId     String
+  lastdaily  Int?
+  lastwork   Int?
+  totalworks Int    @default(0)
+  User       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, userId])
+}
+
+model Coins {
+  guildId String
+  userId  String
+  amount  Int    @default(0)
+  User    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, userId])
+}
