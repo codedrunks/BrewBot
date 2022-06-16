@@ -1,5 +1,5 @@
 import { ColorResolvable, MessageEmbed } from "discord.js";
-import { settings } from './settings';
+import { settings } from "./settings";
 
 const defaultColor = settings.embedColors.default;
 
@@ -9,7 +9,7 @@ export function embedify(text: string, color?: ColorResolvable): MessageEmbed {
 }
 
 export function formatSeconds(seconds: number): string {
-    let date = new Date(1970, 0, 1);
+    const date = new Date(1970, 0, 1);
     date.setSeconds(seconds);
 
     return date.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");

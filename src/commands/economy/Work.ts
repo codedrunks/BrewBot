@@ -17,29 +17,29 @@ export class Work extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        let userid = int.user.id;
+        const userid = int.user.id;
 
-        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
-        let guildid = int.guild.id;
+        const guildid = int.guild.id;
 
-        let now = nowInSeconds();
+        const now = nowInSeconds();
 
-        let userInDB = await getUser(userid);
+        const userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`), true);
+        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/openaccount`!"), true);
 
-        let lastwork = await getLastWork(userid, guildid);
+        const lastwork = await getLastWork(userid, guildid);
 
-        let totalworks = await getTotalWorks(userid, guildid) ?? 0;
+        const totalworks = await getTotalWorks(userid, guildid) ?? 0;
 
         if(!lastwork) {
             await setLastWork(userid, guildid);
             
-            let jobidx = totalWorksToLevel(totalworks);
-            let job = Levels[jobidx as keyof typeof Levels];
+            const jobidx = totalWorksToLevel(totalworks);
+            const job = Levels[jobidx as keyof typeof Levels];
 
-            let payout = Math.round(job.multiplier * baseAward);
+            const payout = Math.round(job.multiplier * baseAward);
 
             await addCoins(userid, guildid, payout);
 
@@ -48,15 +48,15 @@ export class Work extends Command {
             return this.reply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
         }
 
-        let timeleft = now - lastwork;
+        const timeleft = now - lastwork;
 
         if(timeleft <= secs4hours) {
-            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``), true);
+            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
         } else {
-            let jobidx = totalWorksToLevel(totalworks);
-            let job = Levels[jobidx as keyof typeof Levels];
+            const jobidx = totalWorksToLevel(totalworks);
+            const job = Levels[jobidx as keyof typeof Levels];
 
-            let payout = Math.round(job.multiplier * baseAward);
+            const payout = Math.round(job.multiplier * baseAward);
 
             await addCoins(userid, guildid, payout);
 

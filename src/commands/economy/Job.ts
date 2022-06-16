@@ -1,8 +1,8 @@
-import { CommandInteraction, MessageEmbed } from 'discord.js';
-import { Command } from '../../Command';
-import { getTotalWorks } from '../../database/economy';
-import { settings } from '../../settings';
-import { embedify } from '../../util';
+import { CommandInteraction, MessageEmbed } from "discord.js";
+import { Command } from "../../Command";
+import { getTotalWorks } from "../../database/economy";
+import { settings } from "../../settings";
+import { embedify } from "../../util";
 import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
 
 export class Job extends Command {
@@ -14,24 +14,24 @@ export class Job extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        let userid = int.user.id;
+        const userid = int.user.id;
 
-        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
-        let guildid = int.guild.id;
+        const guildid = int.guild.id;
 
-        let totalworks = await getTotalWorks(userid, guildid);
+        const totalworks = await getTotalWorks(userid, guildid);
 
-        if(!totalworks && totalworks != 0) return this.reply(int, embedify(`We have no job records for you, do you have an account? Use \`/openaccount\` if not!`), true);
+        if(!totalworks && totalworks != 0) return this.reply(int, embedify("We have no job records for you, do you have an account? Use `/openaccount` if not!"), true);
 
-        let jobidx = totalWorksToLevel(totalworks);
-        let job = Levels[jobidx as keyof typeof Levels];
+        const jobidx = totalWorksToLevel(totalworks);
+        const job = Levels[jobidx as keyof typeof Levels];
 
         const { name, multiplier } = job;
 
-        let username = int.user.username;
+        const username = int.user.username;
 
-        let embed = new MessageEmbed()
+        const embed = new MessageEmbed()
             .setColor(settings.embedColors.default)
             .setTitle(`*${username}*'s Current Vocation: ${name}`)
             .setDescription(`You currently make ${Math.round(baseAward * multiplier)} per 4 hours and have worked ${totalworks} times.`);
