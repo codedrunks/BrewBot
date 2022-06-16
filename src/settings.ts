@@ -12,6 +12,8 @@ export const settings: Settings = {
     moderation: {
         /** How many reaction votes are needed to ban someone */
         votesToBan: 2,
+        /** How many warnings are needed until a notice is sent in the bot-logs channel */
+        warningsUntilNotice: 3,
     },
     client: {
         /**
@@ -32,6 +34,8 @@ export const settings: Settings = {
     },
     embedColors: {
         default: "FUCHSIA",
+        gameWon: "GREEN",
+        gameLost: "GREY",
         warning: "ORANGE",
         error: "DARK_RED",
     },
@@ -62,12 +66,15 @@ interface Settings {
     }
     moderation: {
         votesToBan: number;
+        warningsUntilNotice: number;
     }
     client: {
         intents: IntentsString[];
     }
     embedColors: {
         default: ColorResolvable;
+        gameWon: ColorResolvable;
+        gameLost: ColorResolvable;
         warning: ColorResolvable;
         error: ColorResolvable;
     }

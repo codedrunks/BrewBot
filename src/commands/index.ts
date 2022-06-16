@@ -3,6 +3,7 @@ import { Cheese } from "./fun/Cheese";
 import { Coinflip } from "./fun/Coinflip";
 import { Fact } from "./fun/Fact";
 import { Ferret } from "./fun/Ferret";
+import { HigherLower } from "./games/HigherLower";
 import { Joke } from "./fun/Joke";
 import { Mock } from "./fun/Mock";
 import { Steam } from "./fun/Steam";
@@ -21,7 +22,7 @@ import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
 import { Btn } from "./Btn";
 
-import { Balance } from "./economy/Balance"
+import { Balance } from "./economy/Balance";
 import { OpenAccount } from "./economy/OpenAccount";
 import { CloseAccount } from "./economy/CloseAccount";
 import { SetBalance } from "./economy/SetBalance";
@@ -37,6 +38,7 @@ export const commands = [
     Coinflip,
     Fact,
     Ferret,
+    HigherLower,
     Joke,
     Mock,
     Steam,
