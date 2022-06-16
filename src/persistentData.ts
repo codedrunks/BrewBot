@@ -1,4 +1,4 @@
-import { filesystem } from "svcorelib";
+import { files } from "svcorelib";
 import { readFile, watch, writeFile } from "fs-extra";
 import { PersistentData, DataKey } from "./types";
 
@@ -21,7 +21,7 @@ export async function init()
 {
     const t = Date.now();
 
-    if(await filesystem.exists(dataFilePath))
+    if(await files.exists(dataFilePath))
         persistentData = await readPersistentData();
     else
         await writePersistentData(defaultData);

@@ -54,6 +54,6 @@ export class Btn extends Command
             await int.editReply({ ...bm.getMsgOpts(), components: [] });
         });
 
-        await int.reply({ ...bm.getMsgOpts(), ephemeral: false });
+        await int.reply({ ...bm.getReplyOpts(), ephemeral: false });
     }
 }

@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
-import { allOfType, pause, Stringifiable } from "svcorelib";
+import { allOfType, system, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
@@ -87,7 +87,7 @@ async function init()
 
 async function awaitKeypress()
 {
-    const key = await pause(`Actions: E${k.red("[x]")}it`);
+    const key = await system.pause(`Actions: E${k.red("[x]")}it`);
 
     switch(key)
     {

@@ -2,7 +2,7 @@ import EventEmitter from "events";
 import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
-
+import { ChannelType } from "discord-api-types/v10";
 
 export interface Command {
     on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
@@ -69,7 +69,7 @@ export abstract class Command extends EventEmitter
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
-                            .addChannelTypes([ 0, 5, 11 ])
+                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                     );
                 else
                     data.addStringOption(opt => {
@@ -78,7 +78,7 @@ export abstract class Command extends EventEmitter
                             .setRequired(arg.required ?? false);
 
                         if(Array.isArray(arg.choices))
-                            arg.choices.forEach(ch => opt.addChoice(ch.name, ch.value));
+                            opt.addChoices(...arg.choices);
 
                         return opt;
                     });
@@ -126,7 +126,7 @@ export abstract class Command extends EventEmitter
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
-                                    .addChannelTypes([ 0, 5, 11 ])
+                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                             );
                         else
                             sc.addStringOption(opt => {
@@ -135,7 +135,7 @@ export abstract class Command extends EventEmitter
                                     .setRequired(arg.required ?? false);
 
                                 if(Array.isArray(arg.choices))
-                                    arg.choices.forEach(ch => opt.addChoice(ch.name, ch.value));
+                                    opt.addChoices(...arg.choices);
 
                                 return opt;
                             });
