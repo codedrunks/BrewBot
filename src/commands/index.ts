@@ -3,7 +3,7 @@ import { Cheese } from "./fun/Cheese";
 import { Coinflip } from "./fun/Coinflip";
 import { Fact } from "./fun/Fact";
 import { Ferret } from "./fun/Ferret";
-import { HigherLower } from "./fun/games/HigherLower";
+import { HigherLower } from "./games/HigherLower";
 import { Joke } from "./fun/Joke";
 import { Mock } from "./fun/Mock";
 import { Steam } from "./fun/Steam";
