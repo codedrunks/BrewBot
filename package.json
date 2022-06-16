@@ -38,7 +38,7 @@
     "kleur": "^4.1.4",
     "parse-relative-time": "^1.1.0",
     "steamapi": "^2.2.0",
-    "svcorelib": "^1.14.2"
+    "svcorelib": "^1.15.0"
   },
   "nodemonConfig": {
     "watch": [
