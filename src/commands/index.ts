@@ -22,7 +22,7 @@ import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
 import { Btn } from "./Btn";
 
-import { Balance } from "./economy/Balance"
+import { Balance } from "./economy/Balance";
 import { OpenAccount } from "./economy/OpenAccount";
 import { CloseAccount } from "./economy/CloseAccount";
 import { SetBalance } from "./economy/SetBalance";
