@@ -40,7 +40,13 @@ export const settings: Settings = {
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
     guildID: "693878197107949572",
-    messageLogChannel: "976942278637666376"
+    messageLogChannel: "976942278637666376",
+    devs: [
+        "427491040468140043",
+        "407351772575694879",
+        "194507254249160704",
+        "415597358752071693"
+    ]
 };
 
 /** Tests if the environment variable `varName` equals `value` - case insensitive! */
@@ -69,4 +75,5 @@ interface Settings {
     emojiList: string[];
     guildID: string;
     messageLogChannel: string;
+    devs: string[]
 }

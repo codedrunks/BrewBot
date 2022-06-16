@@ -8,6 +8,7 @@ import botLogs from "./botLogs";
 import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed } from "./registry";
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
+import { prisma } from "./database/client";
 
 const { env, exit } = process;
 
@@ -75,6 +76,8 @@ async function init()
 
     ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, async () => {
         console.log("Shutting down...");
+
+        prisma.$disconnect();
 
         client.user?.setPresence({
             status: "dnd",
