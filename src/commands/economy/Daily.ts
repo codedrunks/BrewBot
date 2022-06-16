@@ -16,19 +16,19 @@ export class Daily extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        let userid = int.user.id;
+        const userid = int.user.id;
 
-        let now = nowInSeconds();
+        const now = nowInSeconds();
 
-        if(!int.guild?.id) return this.reply(int, embedify(`This command cannot be used in DM's`));
+        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
-        let guildid = int.guild.id;
+        const guildid = int.guild.id;
 
-        let userInDB = await getUser(userid);
+        const userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify(`You don't have a bank account! Open one today with \`/openaccount\`!`), true);
+        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/openaccount`!"), true);
 
-        let lastdaily = await getLastDaily(userid, int.guild.id);
+        const lastdaily = await getLastDaily(userid, int.guild.id);
 
         if(!lastdaily) {
             await setLastDaily(userid, guildid);
@@ -37,10 +37,10 @@ export class Daily extends Command {
             return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
 
-        let timeleft = now - lastdaily;
+        const timeleft = now - lastdaily;
 
         if(timeleft <= secs24hours) {
-            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, 'h').replace(/:/, 'm')}s\``), true);
+            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
         } else {
             await addCoins(userid, guildid, dailyCoinsAward);
 
