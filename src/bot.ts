@@ -77,14 +77,12 @@ async function init()
     ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, async () => {
         console.log("Shutting down...");
 
-        prisma.$disconnect();
+        await prisma.$disconnect();
 
-        client.user?.setPresence({
-            status: "dnd",
-            activities: [{ type: "PLAYING", name: "shutting down..." }]
-        });
+        client.user?.setPresence({ status: "dnd", activities: [{ type: "PLAYING", name: "shutting down..." }] });
+        client.user?.setPresence({ status: "invisible", activities: [{ type: "PLAYING", name: "shutting down..." }] });
 
-        exit(0);
+        setTimeout(() => exit(0), 200);
     }));
 }
 
