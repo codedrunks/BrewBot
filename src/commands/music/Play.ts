@@ -50,10 +50,27 @@ export class Play extends Command {
         player.queue.add(res.tracks[0]);
         this.reply(int, `Track ${res.tracks[0].title} being queued`);
 
-        if(!player.playing && !player.paused && !player.queue.size)
-            player.play();
+        if(!res.playlist)
+            if(!player.playing && !player.paused && !player.queue.size)
+                return player.play();
+        
 
-        // if (!player.playing && !player.paused && player.queue.totalSize === res.tracks.length)
-        //     player.play();
+        if (!player.playing && !player.paused && player.queue.totalSize === res.tracks.length)
+            player.play();
     }
 }
+
+/** user uses /play "search string or url", will have options to use youtube, soundcloud, and spotify 
+ * 
+ * first get manager instance, and do type guards
+ * 
+ * then search with the users input
+ * 
+ * determine if the input was a playlist
+ * 
+ * if playlist
+ *    add songs to queue
+ *    play first song
+ * if not
+ *    play first song
+*/
