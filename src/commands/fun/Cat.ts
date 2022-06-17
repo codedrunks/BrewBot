@@ -10,11 +10,6 @@ const apiInfo = {
         url: "https://api.illusionman1212.tech/kotapi",
         embedFooter: "https://github.com/IllusionMan1212/kotAPI"
     },
-    thatcopy: {
-        name: "catAPI",
-        url: "https://thatcopyöö.pw/catapi/rest/",
-        embedFooter: "https://thatcopy.pw/catapi"
-    },
 };
 
 const embedTitles = [
@@ -34,14 +29,13 @@ export class Cat extends Command
             desc: "Shows you images of cats",
             perms: [],
             args: [
-                {
-                    name: "api",
-                    desc: "Selects which API the images should come from. Defaults to random.",
-                    choices: [
-                        { name: "illusion", value: "illusion" },
-                        { name: "thatcopy", value: "thatcopy" },
-                    ]
-                },
+                // {
+                //     name: "api",
+                //     desc: "Selects which API the images should come from. Defaults to random.",
+                //     choices: [
+                //         { name: "illusion", value: "illusion" },
+                //     ]
+                // },
             ]
         });
     }
@@ -53,14 +47,14 @@ export class Cat extends Command
             await this.deferReply(int);
 
             const args = this.resolveArgs(int);
-            let api = args.api as "illusion" | "thatcopy";
+            let api = args.api as "illusion";
 
             let allowRetry = false;
 
             if(!api || api.length === 0)
             {
                 allowRetry = true;
-                api = randomItem(Object.keys(apiInfo)) as "illusion" | "thatcopy";
+                api = randomItem(Object.keys(apiInfo)) as typeof api;
             }
 
             const triedApis: typeof api[] = [];
