@@ -1,25 +1,56 @@
 import { Client } from "discord.js";
-import { Manager } from "erela.js";
-import Spotify from "erela.js-spotify"; // eslint-disable-line: TO BE IMPLEMENTED
+import { Manager, Plugin, VoicePacket } from "erela.js";
+import Spotify from "erela.js-spotify";
 
-export function initializeManagerFromClient(client: Client): Manager {
-    return new Manager({
+let client: Client;
+const plugins: Plugin[] = [];
+let manager: Manager;
+
+const clientID = process.env.SPOTIFY_CLIENT_ID;
+const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+if(clientID && clientSecret) {
+    plugins.push(
+        new Spotify({
+            clientID,
+            clientSecret
+        })
+    );
+}
+
+export function lavaRetrieveClient(cl: Client) {
+    client = cl;
+
+    manager = initializeManagerFromClient(client);
+}
+
+export function clientReadyInitLava(cl: Client) {
+    manager.init(cl.user?.id);
+}
+
+export function clientUpdateVoiceStateLava(d: VoicePacket) {
+    manager.updateVoiceState(d);
+}
+
+function initializeManagerFromClient(cl: Client): Manager {
+    const manager = new Manager({
         nodes: [
             {
                 host: "localhost",
                 port: 2333,
-                password: "pizzacat42"
+                password: process.env.LAVALINK_PASSWORD ?? "youshallnotpass"
             }
         ],
         send(id, payload) {
-            const guild = client.guilds.cache.get(id);
-            if(guild) guild.shard.send(payload);
-        }
-    })
-        .on("nodeConnect", node => {
-            console.log(`Node ${node.options.identifier} connected`);
-        })
-        .on("nodeDisconnect", (node, error) => {
-            console.log(`Node ${node.options.identifier} had an error: ${error.reason}`);
-        });
+            const guild = cl.guilds.cache.get(id);
+            if (guild) guild.shard.send(payload);
+        },
+        plugins
+    });
+
+    return manager;
+}
+
+export function getManager(): Manager {
+    return manager;
 }
