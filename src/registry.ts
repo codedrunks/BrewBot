@@ -1,5 +1,5 @@
 import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v9";
+import { Routes } from "discord-api-types/v10";
 import { ButtonInteraction, Client, Collection } from "discord.js";
 
 import { Command } from "./Command";
@@ -25,7 +25,7 @@ export function initRegistry(client: Client)
     botClient = client;
 
     rest = new REST({
-        version: "9"
+        version: "10"
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
 
