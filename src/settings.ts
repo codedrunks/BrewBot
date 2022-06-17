@@ -33,7 +33,7 @@ export const settings: Settings = {
         ],
     },
     embedColors: {
-        default: "FUCHSIA",
+        default: "DARK_PURPLE",
         gameWon: "GREEN",
         gameLost: "GREY",
         warning: "ORANGE",
