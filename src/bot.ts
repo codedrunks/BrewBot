@@ -5,7 +5,7 @@ import { allOfType, system, Stringifiable } from "svcorelib";
 
 import persistentData from "./persistentData";
 import botLogs from "./botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed } from "./registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted } from "./registry";
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 import { prisma } from "./database/client";
@@ -147,8 +147,12 @@ async function registerCommands(client: Client)
 
                 await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
-            else if(int.isButton())
+            else if(int.isButton()) {
                 await btnPressed(int);
+            }
+            else if(int.isModalSubmit()) {
+                await modalSubmitted(int);
+            }
         });
     }
     catch(err: unknown)
