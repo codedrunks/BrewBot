@@ -3,6 +3,7 @@ import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
 import { ChannelType } from "discord-api-types/v10";
+import k from "kleur";
 
 export interface Command {
     on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
@@ -41,6 +42,9 @@ export abstract class Command extends EventEmitter
 
             // string arguments
             Array.isArray(args) && args.forEach(arg => {
+                if(arg.desc.length > 100)
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars`);
+
                 if(arg.type === "user")
                     data.addUserOption(opt =>
                         opt.setName(arg.name)
@@ -93,11 +97,18 @@ export abstract class Command extends EventEmitter
                 .setDescription(cmdMeta.desc);
 
             cmdMeta.subcommands.forEach(scmd => {
+                if(scmd.desc.length > 100)
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars`);
+
                 data.addSubcommand(sc => {
+
                     sc.setName(scmd.name)
                         .setDescription(scmd.desc);
 
                     Array.isArray(scmd.args) && scmd.args.forEach(arg => {
+                        if(arg.desc.length > 100)
+                            throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} argument ${k.yellow(arg.name)} can't be longer than 100 chars`);
+
                         if(arg.type === "user")
                             sc.addUserOption(opt =>
                                 opt.setName(arg.name)
