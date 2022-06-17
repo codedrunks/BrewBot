@@ -10,6 +10,7 @@ import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 import { prisma } from "./database/client";
 import { doContestStuff } from "./commands/fun/Contest/functions";
+import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "./lavalink/client";
 
 const { env, exit } = process;
 
@@ -29,6 +30,8 @@ async function init()
     const client = new Client({
         intents: settings.client.intents,
     });
+
+    lavaRetrieveClient(client);
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
 
@@ -62,6 +65,10 @@ async function init()
         });
 
         console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+        await doContestStuff(cl);
+        clientReadyInitLava(client);
+
+
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 
         await doContestStuff(cl);
@@ -75,6 +82,10 @@ async function init()
 
     client.on("error", err => {
         console.error(`${k.red("Client error:")}\n${err}`);
+    });
+
+    client.on("raw", (d) => {
+        clientUpdateVoiceStateLava(d);
     });
 
 

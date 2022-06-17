@@ -32,6 +32,8 @@ import { Daily } from "./economy/Daily";
 import { Work } from "./economy/Work";
 import { Job } from "./economy/Job";
 
+import { Play } from "./music/Play";
+
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
     // fun
@@ -70,6 +72,9 @@ export const commands = [
     Daily,
     Work,
     Job,
+
+    // Music
+    Play,
 
     Btn, //#DEBUG
 ];
