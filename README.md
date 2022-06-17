@@ -38,6 +38,7 @@ Install these VS Code extensions for code auto-fix on save and special text high
 
 ## Discord API Quirks that you can't find anywhere
 - (Sub)Command names and command option names need to be lowercase only with no spaces (underscores are fine).
+- If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
 
 <!-- mr bot invite: https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands -->
 
