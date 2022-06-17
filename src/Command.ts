@@ -141,13 +141,13 @@ export abstract class Command extends EventEmitter
                                     .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                             );
                         else if(arg.type === "role")
-                            data.addRoleOption(opt =>
+                            sc.addRoleOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
                         else if(arg.type === "attachment")
-                            data.addAttachmentOption(opt =>
+                            sc.addAttachmentOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
@@ -265,7 +265,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
-        else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
+        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
             await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -289,8 +289,23 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
-        else if((Array.isArray(content) && content[0] instanceof MessageEmbed) || content instanceof MessageEmbed)
+        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
             await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
+    }
+
+    /**
+     * Follows up a reply with a new reply
+     * @param int The CommandInteraction to follow up
+     * @param content Can be a string or a single or multiple MessageEmbed instances
+     * @param ephemeral Set to true to make the follow up only visible to the author. Defaults to false (publicly visible)
+     * @param actions An action or an array of actions to attach to the reply
+     */
+    protected async followUpReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
+    {
+        if(typeof content === "string")
+            await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
+        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+            await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /** Deletes the reply of a CommandInteraction */

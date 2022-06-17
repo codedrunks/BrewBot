@@ -48,8 +48,8 @@ model Coins {
 
 model Guild {
   id               String    @id
-  contestRoleId    String
-  contestChannelId String
+  contestRoleId    String?
+  contestChannelId String?
   contests         Contest[]
 }
 
@@ -72,7 +72,7 @@ model ContestSubmission {
   guildId   String
   content   String
   contest   Contest @relation(fields: [guildId, contestId], references: [guildId, id], onDelete: Cascade)
-  votes     Int
+  votes     Int @default(0)
 
   @@id([guildId, contestId, userId])
 }
