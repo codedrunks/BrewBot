@@ -49,7 +49,15 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     const gid = guildIDs[0];
     const guilds = Array.isArray(gid) ? gid : [gid];
 
-    commands.forEach(CmdClass => cmds.push(new CmdClass(botClient as Client)));
+    try
+    {
+        commands.forEach(CmdClass => cmds.push(new CmdClass(botClient as Client)));
+    }
+    catch(err)
+    {
+        console.error(err);
+        process.exit(1);
+    }
 
     const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
 
