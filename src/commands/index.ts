@@ -33,6 +33,7 @@ import { Work } from "./economy/Work";
 import { Job } from "./economy/Job";
 
 import { Play } from "./music/Play";
+import { Skip } from "./music/Skip";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -75,6 +76,7 @@ export const commands = [
 
     // Music
     Play,
+    Skip,
 
     Btn, //#DEBUG
 ];

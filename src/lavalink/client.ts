@@ -1,6 +1,8 @@
 import { Client } from "discord.js";
 import { Manager, Plugin, VoicePacket } from "erela.js";
 import Spotify from "erela.js-spotify";
+import { queueEnd } from "./lib/queueEnd";
+import { trackStart } from "./lib/trackStart";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -47,6 +49,14 @@ function initializeManagerFromClient(cl: Client): Manager {
         },
         plugins
     });
+
+    manager.on("nodeConnect", (node) => console.log(`Node ${node.options.identifier} connected.`))
+        .on("trackStart", (player, track) => {
+            trackStart(player, track, client);
+        })
+        .on("queueEnd", player => {
+            queueEnd(player, client);
+        });
 
     return manager;
 }
