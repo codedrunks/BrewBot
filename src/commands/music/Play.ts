@@ -28,7 +28,7 @@ export class Play extends Command {
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
-        if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"));
+        if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"), true);
 
         const manager = getManager();
 
@@ -37,9 +37,9 @@ export class Play extends Command {
             source: "youtube"
         }, int.user);
 
-        if(res.loadType == "LOAD_FAILED") return this.reply(int, embedify("Something went wrong loading that track"));
+        if(res.loadType == "LOAD_FAILED") return this.reply(int, embedify("Something went wrong loading that track"), true);
 
-        if(res.loadType == "NO_MATCHES") return this.reply(int, embedify("No songs were found with that title"));
+        if(res.loadType == "NO_MATCHES") return this.reply(int, embedify("No songs were found with that title"), true);
 
         const player = manager.create({
             guild: guild.id,

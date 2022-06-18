@@ -20,13 +20,13 @@ export class Skip extends Command {
 
         const player = manager.get(guild.id);
 
-        if(!player) return this.reply(int, embedify("There is no music playing in this server"));
+        if(!player) return this.reply(int, embedify("There is no music playing in this server"), true);
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
-        if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"));
+        if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"), true);
 
-        if(voice !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"));
+        if(voice !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
 
         const title = player.queue.current?.title;
 
