@@ -1,4 +1,5 @@
 import { ClientEvents, ColorResolvable, PermissionFlags } from "discord.js";
+import { PermissionFlagsBits } from "discord-api-types/v10";
 
 
 //#MARKER persistent data
@@ -79,26 +80,27 @@ interface ChannelCommandArg {
     type: "channel";
 }
 
-/** Meta information of a regular Command instance */
-export interface CommandMeta {
+interface CmdMetaBase {
     /** Name of the command (`/name` to call it in chat) */
     name: string;
     /** Description that's displayed when typing the command in chat */
     desc: string;
+    /** Additional permissions needed to run this command */
+    perms?: (keyof PermissionFlags)[];
+    /** Default member permissions needed to view and use this command */
+    memberPerms?: PermissionFlagsBits[];
+}
+
+/** Meta information of a regular Command instance */
+export interface CommandMeta extends CmdMetaBase {
     /** Optional array of arguments this command has */
     args?: CommandArg[];
-    /** Required permission(s) to run this command */
-    perms?: (keyof PermissionFlags)[];
 }
 
 /** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
-export interface SubcommandMeta {
-    /** Name of the command (`/name` to call it in chat) */
-    name: string;
-    /** Description that's displayed when typing the command in chat */
-    desc: string;
+export interface SubcommandMeta extends CmdMetaBase {
     /** Array of subcommands */
-    subcommands: CommandMeta[];
+    subcommands: Omit<CommandMeta, "memberPerms">[];
 }
 
 //#SECTION reactionroles
