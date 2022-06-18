@@ -20,7 +20,7 @@ export class NowPlaying extends Command {
 
         const player = manager.get(guild.id);
 
-        if(!player) return this.reply(int, embedify("There is no music playing in this server"));
+        if(!player) return this.reply(int, embedify("There is no music playing in this server"), true);
 
         const current = player.queue.current;
 
