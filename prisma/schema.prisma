@@ -71,8 +71,18 @@ model ContestSubmission {
   contestId Int
   guildId   String
   content   String
-  contest   Contest @relation(fields: [guildId, contestId], references: [guildId, id], onDelete: Cascade)
-  votes     Int @default(0)
+  contest   Contest          @relation(fields: [guildId, contestId], references: [guildId, id], onDelete: Cascade)
+  votes     SubmissionVote[]
 
   @@id([guildId, contestId, userId])
+}
+
+model SubmissionVote {
+  guildId      String
+  contestId    Int
+  contestantId String
+  voterId      String
+  submission   ContestSubmission @relation(fields: [guildId, contestId, contestantId], references: [guildId, contestId, userId], onDelete: Cascade)
+
+  @@id([guildId, contestId, contestantId, voterId])
 }

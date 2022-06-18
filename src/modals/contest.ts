@@ -1,10 +1,13 @@
 import { embedify } from "../util";
 import { ModalSubmitInteraction, CacheType, TextInputComponent } from "discord.js";
 import { Modal } from "../Modal";
+import { addContest } from "../database/contest";
+import { DatabaseError } from "../database/util";
 
 export class ContestModal extends Modal {
     /** Date format is: "YYYY-MM-DD HH:MM" */
     private readonly contestDateRegex = /^\d\d\d\d-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]) (00|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/;
+    private readonly SIX_MONTHS = 6 * 30 * 24 * 60 * 60 * 1000;
 
     constructor() {
         super({
@@ -24,14 +27,14 @@ export class ContestModal extends Modal {
                     .setRequired(true),
                 new TextInputComponent()
                     .setCustomId("start_date")
-                    .setLabel("Start Date and Time (UTC | YYYY-MM-DD HH:MM)")
+                    .setLabel("Start Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
                     .setStyle("SHORT")
                     .setPlaceholder("2022-10-29 13:45")
                     .setMaxLength(50)
                     .setRequired(true),
                 new TextInputComponent()
                     .setCustomId("end_date")
-                    .setLabel("End Date and Time (UTC | YYYY-MM-DD HH:MM)")
+                    .setLabel("End Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
                     .setStyle("SHORT")
                     .setPlaceholder("2022-10-29 13:45")
                     .setMaxLength(50)
@@ -41,6 +44,8 @@ export class ContestModal extends Modal {
     }
 
     async submit(int: ModalSubmitInteraction<CacheType>): Promise<void> {
+        if (!int.guild?.id) return await this.reply(int, embedify("Cannot submit a modal when not in guild"));
+
         const name = int.fields.getTextInputValue("name").trim();
         const desc = int.fields.getTextInputValue("desc").trim();
         const startDate = int.fields.getTextInputValue("start_date").trim();
@@ -50,16 +55,35 @@ export class ContestModal extends Modal {
             return await this.reply(int, embedify("Invalid start or end date format. please try again"));
         }
 
-        // TODO: check if start date is after end date
-        // TODO: only allow dates to be 6 months apart at most
-        // TODO: check if start date is in the past
-        //
-        // TODO: input validation ??
-        //
-        // TODO: parse date into an actual date object
+        const startDateTimestamp = Date.parse(startDate);
+        const endDateTimestamp = Date.parse(endDate);
 
-        // TODO: write to database. make replies ephemeral ??
+        const now = new Date().getTime();
 
-        return await this.reply(int, embedify("placeholder"));
+        if (startDateTimestamp < now) {
+            return await this.reply(int, embedify("Start date cannot be in the past"));
+        }
+
+        if (startDateTimestamp - now >= this.SIX_MONTHS) {
+            return await this.reply(int, embedify("Start date cannot more than 6 months in the future"));
+        }
+
+        if (startDateTimestamp >= endDateTimestamp) {
+            return await this.reply(int, embedify("Start date cannot be after or equal to end date"));
+        }
+
+        if (endDateTimestamp - startDateTimestamp >= this.SIX_MONTHS) {
+            return await this.reply(int, embedify("Dates cannot be more than 6 months apart"));
+        }
+
+        const startDateISO = new Date(startDateTimestamp).toISOString();
+        const endDateISO = new Date(endDateTimestamp).toISOString();
+
+        const err = await addContest(int.guild.id, name, desc, startDateISO, endDateISO);
+
+        if (err == DatabaseError.UNKNOWN)
+            return await this.reply(int, embedify("An error has occurred while adding the contest, please try again later"));
+
+        return await this.reply(int, embedify("Successfully added contest!"));
     }
 }
