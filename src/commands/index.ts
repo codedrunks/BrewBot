@@ -17,6 +17,7 @@ import { Warn } from "./mod/Warn";
 import { Avatar } from "./util/Avatar";
 import { Define } from "./util/Define";
 import { Emoji } from "./util/Emoji";
+import { Exec } from "./util/Exec";
 import { Ping } from "./util/Ping";
 import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
@@ -54,6 +55,7 @@ export const commands = [
     Avatar,
     Define,
     Emoji,
+    Exec,
     Ping,
     Reminder,
     Server,
