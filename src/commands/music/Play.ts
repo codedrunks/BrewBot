@@ -20,10 +20,6 @@ export class Play extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-
-
-        const manager = getManager();
-
         const args = this.resolveArgs(int);
 
         const guild = int.guild;
@@ -33,6 +29,8 @@ export class Play extends Command {
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
         if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"));
+
+        const manager = getManager();
 
         const res = await manager.search({
             query: args.song,
@@ -60,60 +58,9 @@ export class Play extends Command {
         } else if(res.loadType == "PLAYLIST_LOADED") {
             player.queue.add(res.tracks);
 
+            if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
 
+            return this.reply(int, embedify(`Queued playlist \`${res.playlist?.name}\` with ${res.tracks.length} tracks`));
         }
-
-        // const manager = getManager();
-
-        // const args = this.resolveArgs(int);
-
-        // if(!int.guild || !int.channel?.id) return this.reply(int, "This command cannot be used in DM's");
-
-        // const guild = int.guild;
-
-        // console.log(guild.members.cache.get(int.user.id)?.voice.channel?.id);
-
-        // const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
-
-        // if(!voice) return this.reply(int, "You must be in a voice channel to use this command!");
-
-        // const res = await manager.search({
-        //     query: args.song,
-        //     source: "youtube"
-        // }, int.user);
-
-        // const player = manager.create({
-        //     guild: guild.id,
-        //     voiceChannel: voice,
-        //     textChannel: int.channel.id
-        // });
-
-        // player.connect();
-
-        // player.queue.add(res.tracks[0]);
-        // this.reply(int, `Track ${res.tracks[0].title} being queued`);
-
-        // if(!res.playlist)
-        //     if(!player.playing && !player.paused && !player.queue.size)
-        //         return player.play();
-        
-
-        // if (!player.playing && !player.paused && player.queue.totalSize === res.tracks.length)
-        //     player.play();
     }
 }
-
-/** user uses /play "search string or url", will have options to use youtube, soundcloud, and spotify 
- * 
- * first get manager instance, and do type guards
- * 
- * then search with the users input
- * 
- * determine if the input was a playlist
- * 
- * if playlist
- *    add songs to queue
- *    play first song
- * if not
- *    play first song
-*/

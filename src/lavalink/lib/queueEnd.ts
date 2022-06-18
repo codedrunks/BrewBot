@@ -15,5 +15,7 @@ export function queueEnd(player: Player, client: Client) {
         ]
     });
 
-    player.destroy();
+    setTimeout(() => {
+        if(!player.playing && !player.paused && player.queue.size == 0) player.destroy();
+    }, 10_000);
 }

@@ -12,7 +12,7 @@ export function trackStart(player: Player, track: Track, client: Client) {
     // embedify(`Now playing: \`${track.title}\`\nRequested By: \`${(track.requester as User).tag}\``)
     (channel as TextChannel).send({
         embeds: [
-            embedify(`Now playing: \`${track.title}\`\nRequested By: \`${(track.requester as User).tag}\``)
+            embedify(`Now playing: \`${track.title}\`\nRequested By: \`${(track.requester as User).tag}\``).setThumbnail(`https://img.youtube.com/vi/${track.identifier}/mqdefault.jpg`)
         ]
     });
 }
