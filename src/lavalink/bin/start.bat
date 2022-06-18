@@ -1,0 +1,1 @@
+java13 -jar Lavalink.jar
