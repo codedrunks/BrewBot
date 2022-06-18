@@ -7,20 +7,20 @@ export class Skip extends Command {
     constructor() {
         super({
             name: "skip",
-            desc: "Skips the current song"
+            desc: "Skip the currently playing song"
         });
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const manager = getManager();
-
         const guild = int.guild;
-
+        
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
+        
+        const manager = getManager();
 
         const player = manager.get(guild.id);
 
-        if(!player) return this.reply(int, embedify("There is no music playing in this server"), true);
+        if(!player || !player.paused && !player.playing) return this.reply(int, embedify("There is no music playing in this server"), true);
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 

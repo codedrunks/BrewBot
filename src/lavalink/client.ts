@@ -64,3 +64,18 @@ function initializeManagerFromClient(cl: Client): Manager {
 export function getManager(): Manager {
     return manager;
 }
+
+// began at, duration
+
+export interface SongTimings {
+    [guildId: string]: {
+        songs: SongTiming[]
+    }
+}
+
+export interface SongTiming {
+    beganAt: number,
+    duration: number
+}
+
+export const SongTimers: SongTimings = {};
