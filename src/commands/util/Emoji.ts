@@ -59,7 +59,7 @@ export class Emoji extends Command
                 embeds.push(embd);
 
                 btns.push(new MessageButton()
-                    .setLabel(`:${trimmed(em.name)}:`)
+                    .setLabel(emojis.length === 1 ? "Open" : `:${trimmed(em.name)}:`)
                     .setStyle("LINK")
                     .setURL(em.url)
                 );
