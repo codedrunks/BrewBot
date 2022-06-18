@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
+import { ButtonInteraction, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
 import EventEmitter from "events";
+import { EmojiIdentifierResolvable } from "discord.js/typings";
 
 import { registerBtnMsg } from "./registry";
 
@@ -10,6 +11,12 @@ interface BtnMsgOpts {
     timeout: number;
 }
 
+type ButtonOpts = {
+    style?: MessageButtonStyleResolvable,
+    label?: string,
+    emoji?: EmojiIdentifierResolvable,
+    url?: string,
+}[];
 
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
@@ -41,11 +48,31 @@ export class BtnMsg extends EventEmitter
      * @param buttons One or up to 5 MessageButton instances
      */
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
+    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
+    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
         super();
 
         this.msg = message instanceof MessageEmbed ? [message] : message;
-        this.btns = Array.isArray(buttons) ? buttons : [buttons];
+
+        if(buttons instanceof MessageButton || (Array.isArray(buttons) && buttons[0] instanceof MessageButton))
+            this.btns = Array.isArray(buttons) ? buttons as MessageButton[] : [buttons];
+        else
+        {
+            const btns: MessageButton[] = [];
+
+            buttons.forEach(b => {
+                const mb = new MessageButton();
+                b.label && mb.setLabel(b.label);
+                b.style && mb.setStyle(b.style);
+                b.emoji && mb.setEmoji(b.emoji as EmojiIdentifierResolvable);
+                b.url && mb.setURL(b.url);
+
+                btns.push(mb);
+            });
+
+            this.btns = btns;
+        }
 
         this.btns = this.btns.map((b, i) => {
             if(!b.url)
