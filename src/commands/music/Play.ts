@@ -49,18 +49,20 @@ export class Play extends Command {
 
         player.connect();
 
+        const channelMention = `<#${voice}>`;
+
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT") {
             player.queue.add(res.tracks[0]);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
-            return this.reply(int, embedify(`Queued ${res.tracks[0].title}`));
+            return this.reply(int, embedify(`Queued ${res.tracks[0].title} in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
             player.queue.add(res.tracks);
 
             if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
 
-            return this.reply(int, embedify(`Queued playlist \`${res.playlist?.name}\` with ${res.tracks.length} tracks`));
+            return this.reply(int, embedify(`Queued playlist \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
         }
     }
 }

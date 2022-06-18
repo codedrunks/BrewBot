@@ -35,6 +35,9 @@ import { Job } from "./economy/Job";
 import { Play } from "./music/Play";
 import { Skip } from "./music/Skip";
 import { NowPlaying } from "./music/NowPlaying";
+import { Stop } from "./music/Stop";
+import { Resume } from "./music/Resume";
+import { Pause } from "./music/Pause";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -79,6 +82,9 @@ export const commands = [
     Play,
     Skip,
     NowPlaying,
+    Stop,
+    Resume,
+    Pause,
 
     Btn, //#DEBUG
 ];
