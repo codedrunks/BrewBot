@@ -1,10 +1,11 @@
 import { settings } from "../../settings";
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import { Command } from "../../Command";
-import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry } from "../../database/contest";
+import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "../../database/contest";
 import { embedify } from "../../util";
 import { bold, channelMention, hyperlink, userMention, inlineCode, roleMention, strikethrough, time, underscore } from "@discordjs/builders";
 import { ContestModal } from "../../modals/contest";
+import { DatabaseError } from "../../database/util";
 
 export class Contest extends Command
 {
@@ -16,11 +17,12 @@ export class Contest extends Command
             perms: [],
             subcommands: [
                 {
-                    name: "start",
-                    desc: "Starts a new contest",
+                    name: "add",
+                    desc: "Adds a new contest",
+                    perms: ["ADMINISTRATOR"]
                 },
                 {
-                    name: "get_current",
+                    name: "current",
                     desc: "Get the currently active contest in the server",
                 },
                 {
@@ -49,7 +51,8 @@ export class Contest extends Command
                             type: "channel",
                             required: true
                         }
-                    ]
+                    ],
+                    perms: ["ADMINISTRATOR"]
                 },
                 {
                     name: "set_role",
@@ -61,7 +64,8 @@ export class Contest extends Command
                             type: "role",
                             required: true,
                         }
-                    ]
+                    ],
+                    perms: ["ADMINISTRATOR"]
                 },
                 {
                     name: "submit",
@@ -78,6 +82,42 @@ export class Contest extends Command
                             desc: "The attachment you want to submit",
                             type: "attachment",
                             required: true
+                        }
+                    ]
+                },
+                {
+                    name: "vote",
+                    desc: "Vote for your favorite submission",
+                    args: [
+                        {
+                            name: "contest_id",
+                            desc: "ID of contest you want to vote on",
+                            type: "number",
+                            required: true,
+                        },
+                        {
+                            name: "contestant",
+                            desc: "Contestant you want to vote for",
+                            type: "user",
+                            required: true,
+                        }
+                    ]
+                },
+                {
+                    name: "unvote",
+                    desc: "Remove your vote from a submission",
+                    args: [
+                        {
+                            name: "contest_id",
+                            desc: "ID of contest you want to remove the vote from",
+                            type: "number",
+                            required: true,
+                        },
+                        {
+                            name: "contestant",
+                            desc: "Contestant you want to remove the vote from",
+                            type: "user",
+                            required: true,
                         }
                     ]
                 },
@@ -118,14 +158,14 @@ export class Contest extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
-        if (opt.name != "start")
+        if (opt.name != "add")
             await this.deferReply(int);
 
         switch(opt.name)
         {
-        case "start":
-            return await this.start(int);
-        case "get_current":
+        case "add":
+            return await this.add(int);
+        case "current":
             return await this.getCurrent(int);
         case "info":
             return await this.info(int);
@@ -137,6 +177,10 @@ export class Contest extends Command
             return await this.setRole(int);
         case "submit":
             return await this.submit(int);
+        case "vote":
+            return await this.vote(int);
+        case "unvote":
+            return await this.unvote(int);
         case "delete_submission":
             return await this.deleteSubmission(int);
         case "mod_delete_submission":
@@ -144,7 +188,7 @@ export class Contest extends Command
         }
     }
 
-    async start(int: CommandInteraction) {
+    async add(int: CommandInteraction) {
         const modal = new ContestModal();
 
         return await int.showModal(modal.getInternalModal());
@@ -160,7 +204,7 @@ export class Contest extends Command
             return await this.editReply(int, embedify("There's no currently active contest"));
         }
 
-        const embedDesc = `${contest.description}\n\nuse\`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new MessageEmbed()
             .setTitle(contest.name)
@@ -190,7 +234,7 @@ export class Contest extends Command
             submissions.forEach(submission => {
                 const guildMember = int.guild?.members.cache.find(user => user.id === submission.userId);
                 const linkifiedUsername = hyperlink(guildMember?.user?.username ?? "User", submission.content);
-                followUpDesc += `- ${linkifiedUsername}\n`;
+                followUpDesc += `- ${linkifiedUsername} (${submission._count.votes})\n`;
             });
 
             const submissionsEmbed = new MessageEmbed()
@@ -222,7 +266,7 @@ export class Contest extends Command
         const field1Name = didContestEnd ? "Started" : "Start";
         const field2Name = didContestEnd ? "Ended" : "End";
 
-        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse\`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new MessageEmbed()
             .setTitle(contest.name)
@@ -252,7 +296,7 @@ export class Contest extends Command
             submissions.forEach(submission => {
                 const guildMember = int.guild?.members.cache.find(user => user.id === submission.userId);
                 const linkifiedUsername = hyperlink(guildMember?.user?.username ?? "User", submission.content);
-                followUpDesc += `- ${linkifiedUsername}\n`;
+                followUpDesc += `- ${linkifiedUsername} (${submission._count.votes})\n`;
             });
 
             const submissionsEmbed = new MessageEmbed()
@@ -296,24 +340,24 @@ export class Contest extends Command
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
         const chan = int.options.getChannel("channel", true);
-        const success = await setContestChannel(int.guild.id, chan.id);
+        const err = await setContestChannel(int.guild.id, chan.id);
 
-        if (!success)
+        if (err === DatabaseError.UNKNOWN)
             return await this.editReply(int, embedify("An error has occurred while setting channel. please try again later"));
-        else
-            return await this.editReply(int, embedify(`Successfully set the contests channel to ${channelMention(chan.id)}`));
+
+        return await this.editReply(int, embedify(`Successfully set the contests channel to ${channelMention(chan.id)}`));
     }
 
     async setRole(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
         const role = int.options.getRole("role", true);
-        const success = await setContestRole(int.guild.id, role.id);
+        const err = await setContestRole(int.guild.id, role.id);
 
-        if (!success)
+        if (err === DatabaseError.UNKNOWN)
             return await this.editReply(int, embedify("An error has occurred while setting role. please try again later"));
-        else
-            return await this.editReply(int, embedify(`Successfully set the contests role to ${roleMention(role.id)}`));
+
+        return await this.editReply(int, embedify(`Successfully set the contests role to ${roleMention(role.id)}`));
     }
 
     async submit(int: CommandInteraction) {
@@ -342,12 +386,90 @@ export class Contest extends Command
         const reply = await int.fetchReply();
         const submissionLink = `https://discordapp.com/channels/${int.guild.id}/${int.channel.id}/${reply.id}`;
 
-        const success = await submitContestEntry(int.guild.id, contestId, int.user.id, submissionLink);
+        const err = await submitContestEntry(int.guild.id, contestId, int.user.id, submissionLink);
 
-        if (!success)
+        if (err === DatabaseError.UNKNOWN)
             return await this.followUpReply(int, embedify("An error has occurred while submitting your entry, please try again"));
 
         return await this.followUpReply(int, embedify("Successfully submitted your entry!"));
+    }
+
+    async vote(int: CommandInteraction) {
+        if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
+
+        const contestId = int.options.getNumber("contest_id", true);
+        const user = int.options.getUser("contestant", true);
+
+        const now = new Date().getTime();
+
+        const contest = await getContestById(int.guild.id, contestId);
+
+        if (!contest) {
+            return await this.editReply(int, embedify("There's no contest with that id"));
+        }
+
+        if (contest.startDate.getTime() > now) {
+            return await this.editReply(int, embedify("This contest hasn't started yet"));
+        }
+
+        if (now >= contest.startDate.getTime() && now < contest.endDate.getTime()) {
+            return await this.editReply(int, embedify("The voting period for this contest hasn't started yet"));
+        }
+
+        if (now >= contest.endDate.getTime() + 24 * 3600 * 1000) {
+            return await this.editReply(int, embedify("The voting period for this contest has ended"));
+        }
+
+        const err = await voteContest(int.guild.id, contestId, user.id, int.user.id);
+
+        switch (err) {
+        case DatabaseError.DUPLICATE:
+            return await this.editReply(int, embedify("You already voted for this person. use `/contest unvote` to remove your vote"));
+        case DatabaseError.NO_CONTEST_SUBMISSION:
+            return await this.editReply(int, embedify("This user doesn't have a submission in this contest"));
+        case DatabaseError.UNKNOWN:
+            return await this.editReply(int, embedify("An error has occurred while registering your vote, please try again later"));
+        }
+
+        return await this.editReply(int, embedify(`Successfully voted for ${userMention(user.id)}`));
+    }
+
+    async unvote(int: CommandInteraction) {
+        if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
+
+        const contestId = int.options.getNumber("contest_id", true);
+        const user = int.options.getUser("contestant", true);
+
+        const now = new Date().getTime();
+
+        const contest = await getContestById(int.guild.id, contestId);
+
+        if (!contest) {
+            return await this.editReply(int, embedify("There's no contest with that id"));
+        }
+
+        if (contest.startDate.getTime() > now) {
+            return await this.editReply(int, embedify("This contest hasn't started yet"));
+        }
+
+        if (now >= contest.startDate.getTime() && now < contest.endDate.getTime()) {
+            return await this.editReply(int, embedify("The voting period for this contest hasn't started yet"));
+        }
+
+        if (now >= contest.endDate.getTime() + 24 * 3600 * 1000) {
+            return await this.editReply(int, embedify("The voting period for this contest has ended"));
+        }
+
+        const err = await unvoteContest(int.guild.id, contestId, user.id, int.user.id);
+
+        switch (err) {
+        case DatabaseError.OPERATION_DEPENDS_ON_REQUIRED_RECORD_THAT_WAS_NOT_FOUND:
+            return await this.editReply(int, embedify("You haven't voted for this person before."));
+        case DatabaseError.UNKNOWN:
+            return await this.editReply(int, embedify("An error has occurred while removing your vote, please try again later"));
+        }
+
+        return await this.editReply(int, embedify("Successfully removed vote"));
     }
 
     async deleteSubmission(int: CommandInteraction) {
