@@ -38,6 +38,8 @@ import { NowPlaying } from "./music/NowPlaying";
 import { Stop } from "./music/Stop";
 import { Resume } from "./music/Resume";
 import { Pause } from "./music/Pause";
+import { Search } from "./music/Search";
+import { Queue } from "./music/Queue";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -85,6 +87,8 @@ export const commands = [
     Stop,
     Resume,
     Pause,
+    Search,
+    Queue,
 
     Btn, //#DEBUG
 ];
