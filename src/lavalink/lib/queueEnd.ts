@@ -11,11 +11,11 @@ export function queueEnd(player: Player, client: Client) {
 
     (channel as TextChannel).send({
         embeds: [
-            embedify("Queue ended")
+            embedify("Queue ended, leaving in 1 minute")
         ]
     });
 
     setTimeout(() => {
         if(!player.playing && !player.paused && player.queue.size == 0) player.destroy();
-    }, 45_000);
+    }, 55_000);
 }
