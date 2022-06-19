@@ -24,9 +24,11 @@ export class NowPlaying extends Command {
 
         const current = player.queue.current;
 
-        const embed = embedify(`Requested by: <@${(current?.requester as User).id}>`)
+        const embed = embedify(`${current?.author}\n\nRequested by: <@${(current?.requester as User).id}>`)
             .setThumbnail(`https://img.youtube.com/vi/${current?.identifier}/mqdefault.jpg`)
-            .setTitle(`${current?.title}\n${current?.author}`);
+            .setTitle(`${current?.title}`);
+
+        if(current?.uri) embed.setURL(current.uri);
 
         return this.reply(int, embed);
     }
