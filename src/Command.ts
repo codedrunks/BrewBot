@@ -19,7 +19,10 @@ export abstract class Command extends EventEmitter
 
     //#SECTION constructor
 
-    /** Base class for all slash commands */
+    /**
+     * Base class for all slash commands
+     * @param cmdMeta Meta object that describes this command
+     */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
         super();

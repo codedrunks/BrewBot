@@ -22,6 +22,8 @@ export class Exec extends Command
             perms: [ "ADMINISTRATOR" ],
             memberPerms: [ PermissionFlagsBits.Administrator ]
         });
+
+        this.enabled = settings.commands.execEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void>
