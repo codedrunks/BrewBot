@@ -27,8 +27,9 @@ export abstract class Command extends EventEmitter
     {
         super();
 
-        const data = new SlashCommandBuilder()
-            .setDefaultMemberPermissions(cmdMeta.memberPerms?.reduce((acc, cur) => acc | cur, 0n) ?? 0n);
+        const data = new SlashCommandBuilder();
+
+        cmdMeta.memberPerms && data.setDefaultMemberPermissions(cmdMeta.memberPerms.reduce((acc, cur) => acc | cur, 0n));
 
         if(Command.isCommandMeta(cmdMeta))
         {

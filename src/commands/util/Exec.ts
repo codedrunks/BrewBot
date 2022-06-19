@@ -18,6 +18,11 @@ export class Exec extends Command
                     desc: "code",
                     required: true,
                 },
+                {
+                    name: "ephemeral",
+                    desc: "ephemeral",
+                    type: "boolean",
+                }
             ],
             perms: [ "ADMINISTRATOR" ],
             memberPerms: [ PermissionFlagsBits.Administrator ]
@@ -30,8 +35,6 @@ export class Exec extends Command
     {
         // TODO: use modal here
 
-        await this.deferReply(int, true);
-
         const { channel, user, guild, client } = int;
 
         unused(
@@ -40,9 +43,11 @@ export class Exec extends Command
         );
 
         if(!settings.devs.includes(int.user.id))
-            return await this.editReply(int, "You can't use this command.");
+            return await this.reply(int, "You can't use this command.");
 
-        const { code } = this.resolveArgs(int);
+        const { code, ephemeral } = this.resolveArgs<string | boolean>(int);
+
+        await this.deferReply(int, ephemeral as boolean ?? true);
 
         let result, error;
         try

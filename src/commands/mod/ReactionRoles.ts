@@ -46,6 +46,7 @@
 //             name: "reactionroles",
 //             desc: "Sends a reaction role list in the current channel",
 //             perms: [ "MANAGE_ROLES", "MANAGE_MESSAGES" ],
+//             memberPerms: [ PermissionFlagsBits.ManageRoles, PermissionFlagsBits.ManageMessages ],
 //         });
 
 //         const reactionMsgs = persistentData.get("reactionMessages");

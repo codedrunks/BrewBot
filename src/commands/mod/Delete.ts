@@ -1,6 +1,9 @@
+import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Collection, CommandInteraction, Message } from "discord.js";
 import k from "kleur";
 import { Command } from "../../Command";
+
+const delMaxAmt = 50;
 
 export class Delete extends Command {
     constructor()
@@ -11,14 +14,15 @@ export class Delete extends Command {
             args: [
                 {
                     name: "amount",
-                    desc: "How many messages to delete. Must be between 1 and 50.",
+                    desc: `How many messages to delete. Must be between 1 and ${delMaxAmt}.`,
                 },
                 {
                     name: "up_until",
-                    desc: "Deletes from the bottom until this ID or link is reached.\nIf amount is set, deletes downwards",
+                    desc: "Deletes from the bottom until and including the message with this ID or link.",
                 },
             ],
             perms: [ "MANAGE_MESSAGES" ],
+            memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }
 
@@ -28,8 +32,12 @@ export class Delete extends Command {
 
         const { channel } = int;
         const args = this.resolveArgs(int);
-        const amtRaw = parseInt(args?.amount);
-        const amount = Math.min(Math.max(amtRaw, 1), 50);
+        const amtRaw = parseInt(args.amount);
+
+        if(!args.up_until && isNaN(amtRaw))
+            return await this.editReply(int, `Please enter the amount of messages to delete, between 1 and ${delMaxAmt}`);
+
+        const amount = Math.min(Math.max(amtRaw, 1), delMaxAmt);
 
         if(!channel || channel?.type === "DM")
             return;
@@ -39,7 +47,7 @@ export class Delete extends Command {
             await channel.messages.fetch();
 
             const until = String(args.up_until ?? "_");
-            const untilType = until.match(/\/[0-9]+$/) ? "link" : (until.match(/^[0-9]+$/) ? "id" : undefined);
+            const untilType = until.match(/\/[0-9]+$/) ? "link" : (until.match(/^[0-9]+(-[0-9]+)?$/) ? "id" : undefined);
 
             let untilId = "";
 
@@ -60,38 +68,33 @@ export class Delete extends Command {
                 break;
             }
             case "id":
-                untilId = until.trim();
+                untilId = (until.includes("-") ? until.split("-")[1] : until).trim();
                 break;
             }
 
             const msgColl = new Collection<string, Message>();
 
-            if(isNaN(amount))
-            {
-                const msgs = channel.messages.cache
-                    .reduce((acc, cur) => ([ ...acc, cur ]), [] as Message[])
-                    .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 0 : 1);
+            const msgs = channel.messages.cache
+                .reduce((acc, cur) => ([ ...acc, cur ]), [] as Message[])
+                .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 0 : 1);
 
-                let cutoffIdx = 0;
+            let cutoffIdx = 0;
 
-                msgs.find((m, i) => {
-                    if(m.id === untilId)
-                    {
-                        cutoffIdx = i;
-                        return true;
-                    }
-                    return false;
-                });
+            msgs.find((m, i) => {
+                if(m.id === untilId)
+                {
+                    cutoffIdx = i + 1;
+                    return true;
+                }
+                return false;
+            });
 
-                for(let i = 0; i < cutoffIdx; i++)
-                    msgColl.set(msgs[i].id, msgs[i]);
-            }
-            else
-            {
-                return;
-            }
+            for(let i = 0; i < cutoffIdx; i++)
+                msgColl.set(msgs[i].id, msgs[i]);
 
             await channel.bulkDelete(msgColl, true);
+
+            await this.editReply(int, `Successfully deleted ${msgColl.size} messages`);
         }
         catch (err)
         {
