@@ -45,7 +45,7 @@ export class Search extends Command {
 
         if(res.loadType == "SEARCH_RESULT") {
 
-            const player = manager.create({
+            const player = manager.get(guild.id) ?? manager.create({
                 guild: guild.id,
                 voiceChannel: voice,
                 textChannel: int.channel.id
@@ -69,7 +69,7 @@ export class Search extends Command {
 
                     const track = res.tracks[index];
 
-                    player.connect();
+                    if(player.state !== "CONNECTED") player.connect();
                     const channelMention = `<#${voice}>`;
 
                     player.queue.add(track);

@@ -51,13 +51,13 @@ export class Play extends Command {
 
         if(res.loadType == "NO_MATCHES") return this.reply(int, embedify("No songs were found with that title"), true);
 
-        const player = manager.create({
+        const player = manager.get(guild.id) ?? manager.create({
             guild: guild.id,
             voiceChannel: voice,
             textChannel: int.channel.id
         });
 
-        player.connect();
+        if(player.state !== "CONNECTED") player.connect();
 
         const channelMention = `<#${voice}>`;
 
