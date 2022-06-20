@@ -21,7 +21,7 @@ import { Ping } from "./util/Ping";
 import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
 import { Btn } from "./Btn";
-import { Contest } from "./fun/Contest";
+import { Contest } from "./fun/Contest/Contest";
 
 import { Balance } from "./economy/Balance";
 import { OpenAccount } from "./economy/OpenAccount";

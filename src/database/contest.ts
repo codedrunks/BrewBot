@@ -50,6 +50,9 @@ export async function getAllContestsInGuild(guildId: string): Promise<Contest[]>
     const contests = await prisma.contest.findMany({
         where: {
             guildId: guildId,
+        },
+        orderBy: {
+            id: "asc"
         }
     });
 
@@ -295,7 +298,6 @@ export async function getContestWinners(guildId: string, contestId: number): Pro
                 }
             }
         },
-        take: 3,
         orderBy: {
             votes: {
                 _count: "desc"
