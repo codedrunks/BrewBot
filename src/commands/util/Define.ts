@@ -1,7 +1,7 @@
 import axios from "axios";
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
 
 type WikiArticle = {
     title: string;

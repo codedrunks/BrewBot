@@ -3,14 +3,14 @@ import dotenv from "dotenv";
 import k from "kleur";
 import { allOfType, system, Stringifiable } from "svcorelib";
 
-import persistentData from "./persistentData";
-import botLogs from "./botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted } from "./registry";
-import { commands as slashCmds } from "./commands";
-import { settings } from "./settings";
-import { prisma } from "./database/client";
-import { doContestStuff } from "./commands/fun/Contest/functions";
-import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "./lavalink/client";
+import persistentData from "@src/persistentData";
+import botLogs from "@src/botLogs";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted } from "@src/registry";
+import { commands as slashCmds } from "@src/commands";
+import { settings } from "@src/settings";
+import { prisma } from "@database/client";
+import { doContestStuff } from "@commands/fun/Contest/functions";
+import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
 
 const { env, exit } = process;
 

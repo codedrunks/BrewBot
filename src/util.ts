@@ -1,6 +1,6 @@
 import { ColorResolvable, CommandInteraction, MessageEmbed } from "discord.js";
 import { ParseDurationResult } from "svcorelib";
-import { settings } from "./settings";
+import { settings } from "@src/settings";
 
 const defaultColor = settings.embedColors.default;
 

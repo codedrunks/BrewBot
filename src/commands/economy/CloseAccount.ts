@@ -1,8 +1,8 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../../Command";
-import { deleteUser } from "../../database/users";
-import { settings } from "../../settings";
-import { embedify } from "../../util";
+import { Command } from "@src/Command";
+import { deleteUser } from "@database/users";
+import { settings } from "@src/settings";
+import { embedify } from "@src/util";
 
 const devs = settings.devs;
 

@@ -2,12 +2,12 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { ButtonInteraction, Client, Collection, ModalSubmitInteraction } from "discord.js";
 
-import { Command } from "./Command";
-import { Event } from "./Event";
-import { commands } from "./commands";
-import { events } from "./events";
-import { BtnMsg } from "./BtnMsg";
-import { Modal } from "./Modal";
+import { Command } from "@src/Command";
+import { Event } from "@src/Event";
+import { commands } from "@src/commands";
+import { events } from "@src/events";
+import { BtnMsg } from "@src/BtnMsg";
+import { Modal } from "@src/Modal";
 
 import { initHelp } from "./commands/util/Help";
 

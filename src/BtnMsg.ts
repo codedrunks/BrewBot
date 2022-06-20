@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
 import EventEmitter from "events";
 
-import { registerBtnMsg } from "./registry";
+import { registerBtnMsg } from "@src/registry";
 
 
 interface BtnMsgOpts {

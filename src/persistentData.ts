@@ -1,6 +1,6 @@
 import { files } from "svcorelib";
 import { readFile, watch, writeFile } from "fs-extra";
-import { PersistentData, DataKey } from "./types";
+import { PersistentData, DataKey } from "@src/types";
 
 
 const defaultData: Partial<PersistentData> = {

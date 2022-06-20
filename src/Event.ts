@@ -1,4 +1,4 @@
-import { EventName } from "./types";
+import { EventName } from "@src/types";
 
 /** Base class for all client events */
 export abstract class Event {

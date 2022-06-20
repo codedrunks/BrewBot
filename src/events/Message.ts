@@ -1,5 +1,5 @@
 import { Message as DjsMessage, PartialMessage } from "discord.js";
-import { Event } from "../Event";
+import { Event } from "@src/Event";
 
 
 export class Message extends Event

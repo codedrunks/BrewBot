@@ -1,9 +1,9 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../../Command";
-import { embedify, formatSeconds, nowInSeconds } from "../../util";
-import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "../../database/economy";
-import { getUser } from "../../database/users";
-import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
+import { Command } from "@src/Command";
+import { embedify, formatSeconds, nowInSeconds } from "@src/util";
+import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
+import { getUser } from "@database/users";
+import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
 import { randomItem } from "svcorelib";
 
 const secs4hours = 14400;

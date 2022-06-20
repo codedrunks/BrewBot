@@ -1,8 +1,8 @@
 import EventEmitter from "events";
 import { MessageActionRow, TextInputComponent, Modal as DjsModal, ModalSubmitInteraction, MessageEmbed, MessageButton } from "discord.js";
 import { randomUUID } from "crypto";
-import { registerModal } from "./registry";
-import { Command } from "./Command";
+import { registerModal } from "@src/registry";
+import { Command } from "@src/Command";
 
 interface ModalConstructor {
     title: string;

@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { Command } from "../../Command";
+import { Command } from "@src/Command";
 import { settings } from "../../settings";
 
 export class Cheese extends Command

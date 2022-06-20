@@ -1,8 +1,8 @@
 // import { Client, CommandInteraction, Message, MessageReaction, ReactionCollector, MessageEmbed, EmbedFieldData } from "discord.js";
-// import { PersistentData, ReactionMsg, ReactionRole } from "../../types";
-// import { Command } from "../../Command";
-// import persistentData from "../../persistentData";
-// import { settings } from "../../settings";
+// import { PersistentData, ReactionMsg, ReactionRole } from "@src/types";
+// import { Command } from "@src/Command";
+// import persistentData from "@src/persistentData";
+// import { settings } from "@src/settings";
 
 
 // type EmbedMsg = {
