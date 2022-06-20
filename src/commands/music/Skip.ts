@@ -31,6 +31,6 @@ export class Skip extends Command {
         const title = player.queue.current?.title;
 
         player.stop();
-        return this.reply(int, embedify(`${title} was skipped`));
+        return this.reply(int, embedify(`\`${title}\` was skipped`));
     }
 }
