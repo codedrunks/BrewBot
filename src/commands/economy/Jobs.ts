@@ -87,7 +87,7 @@ export const Levels: ILevel = {
             "watching over your fellow rich folk on Mars"
         ]
     }
-}
+};
 
 export const totalWorksToLevel = (works: number): number => {
     // let worksMap = [0, 10, 25, 50, 100, 200, 300, 500];
@@ -99,6 +99,6 @@ export const totalWorksToLevel = (works: number): number => {
     else if(works >= 25) return 3;
     else if(works >= 10) return 2;
     else return 1;
-}
+};
 
 export const baseAward = 50;

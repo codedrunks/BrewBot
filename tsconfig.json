@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "baseUrl": ".",
         "target": "es2022",
         "module": "CommonJS",
         "rootDir": "./src/",
@@ -17,7 +18,11 @@
         "typeRoots": [
             "node_modules/@types"
         ],
-        "sourceMap": true
+        "sourceMap": true,
+        "paths": {
+            "@src/*": ["src/*"],
+            "@commands/*": ["src/commands/*"]
+        }
     },
     "files": [
         "src/bot.ts"

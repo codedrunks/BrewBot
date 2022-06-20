@@ -38,6 +38,7 @@ export const settings: Settings = {
         gameLost: "GREY",
         warning: "ORANGE",
         error: "DARK_RED",
+        contestWinner: "GOLD",
     },
     /** When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,
@@ -80,6 +81,7 @@ interface Settings {
         gameLost: ColorResolvable;
         warning: ColorResolvable;
         error: ColorResolvable;
+        contestWinner: ColorResolvable;
     }
     warningsThreshold: number;
     emojiList: string[];

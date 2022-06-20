@@ -1,12 +1,13 @@
 import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v9";
-import { ButtonInteraction, Client, Collection } from "discord.js";
+import { Routes } from "discord-api-types/v10";
+import { ButtonInteraction, Client, Collection, ModalSubmitInteraction } from "discord.js";
 
 import { Command } from "./Command";
 import { Event } from "./Event";
 import { commands } from "./commands";
 import { events } from "./events";
 import { BtnMsg } from "./BtnMsg";
+import { Modal } from "./Modal";
 
 
 let rest: REST;
@@ -18,6 +19,8 @@ const cmds: Command[] = [];
 const evts: Event[] = [];
 /** Map of all registered BtnMsg instances */
 const btnMsgs = new Collection<string, BtnMsg>();
+/** Map of all registered Modal instances */
+const modals = new Collection<string, Modal>();
 
 
 export function initRegistry(client: Client)
@@ -25,7 +28,7 @@ export function initRegistry(client: Client)
     botClient = client;
 
     rest = new REST({
-        version: "9"
+        version: "10"
     }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
 
@@ -173,5 +176,35 @@ export async function btnPressed(int: ButtonInteraction)
     {
         const btn = bm.btns.find(b => b.customId?.endsWith(String(idx)));
         btn && bm.emit("press", btn, int);
+    }
+}
+
+
+//#MARKER modals
+
+
+/**
+ * Registers a `Modal` instance - this is done automatically in its constructor, don't run this function yourself!
+ * @private
+ */
+export function registerModal(modal: Modal)
+{
+    modals.set(modal.id, modal);
+
+    modal.on("destroy", () => {
+        modals.delete(modal.id);
+    });
+}
+
+/**
+ * Runs the submission method of the submitted modal
+ */
+export async function modalSubmitted(int: ModalSubmitInteraction)
+{
+    const modal = modals.get(int.customId);
+
+    if(modal)
+    {
+        await modal.trySubmit(int);
     }
 }

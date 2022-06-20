@@ -22,6 +22,7 @@ __CLI__
 - `npx prisma migrate reset` : this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset
 - `npx prisma migrate dev --create-only` : not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file
 - `npx prisma format` : this formats the schema.prisma file and can also auto-complete foreign key association
+- `npx prisma db seed` : this command seeds the database according to `prisma/seed.ts`
 
 __Utils__<br />
 All database utils can be found in `/src/database`, the functions are organized in files based on what part of the database they are associated with, i.e. all user related functions such as creating a new user or deleting a user are in `/src/database/users.ts`. When creating new utils, please follow this standard accordingly.
@@ -35,6 +36,10 @@ Debugging through VS Code works just fine, including breakpoints. Just press F5 
 Install these VS Code extensions for code auto-fix on save and special text highlighting:  
 - `dbaeumer.vscode-eslint`
 - `fabiospampinato.vscode-highlight`
+
+## Discord API Quirks that you can't find anywhere
+- (Sub)Command names and command option names need to be lowercase only with no spaces (underscores are fine).
+- If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
 
 <!-- mr bot invite: https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands -->
 

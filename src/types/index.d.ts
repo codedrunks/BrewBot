@@ -43,7 +43,7 @@ export type DataKey = keyof PersistentData;
 //#MARKER commands
 
 /** A single argument of a slash command */
-type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg);
+type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);
 
 interface BaseCommandArg {
     name: string;
@@ -78,6 +78,14 @@ interface UserCommandArg {
 
 interface ChannelCommandArg {
     type: "channel";
+}
+
+interface RoleCommandArg {
+    type: "role";
+}
+
+interface AttachmentCommandArg {
+    type: "attachment";
 }
 
 interface CmdMetaBase {
