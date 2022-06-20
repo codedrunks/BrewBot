@@ -23,21 +23,21 @@ export class ContestModal extends Modal {
                     .setCustomId("desc")
                     .setLabel("Contest Description")
                     .setStyle("PARAGRAPH")
-                    .setMaxLength(1500)
+                    .setMaxLength(2048)
                     .setRequired(true),
                 new TextInputComponent()
                     .setCustomId("start_date")
                     .setLabel("Start Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
                     .setStyle("SHORT")
                     .setPlaceholder("2022-10-29 13:45")
-                    .setMaxLength(50)
+                    .setMaxLength(16)
                     .setRequired(true),
                 new TextInputComponent()
                     .setCustomId("end_date")
                     .setLabel("End Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
                     .setStyle("SHORT")
                     .setPlaceholder("2022-10-29 13:45")
-                    .setMaxLength(50)
+                    .setMaxLength(16)
                     .setRequired(true)
             ]
         });

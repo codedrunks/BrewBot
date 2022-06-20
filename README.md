@@ -22,6 +22,7 @@ __CLI__
 - `npx prisma migrate reset` : this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset
 - `npx prisma migrate dev --create-only` : not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file
 - `npx prisma format` : this formats the schema.prisma file and can also auto-complete foreign key association
+- `npx prisma db seed` : this command seeds the database according to `prisma/seed.ts`
 
 __Utils__<br />
 All database utils can be found in `/src/database`, the functions are organized in files based on what part of the database they are associated with, i.e. all user related functions such as creating a new user or deleting a user are in `/src/database/users.ts`. When creating new utils, please follow this standard accordingly.

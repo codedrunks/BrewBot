@@ -1,14 +1,16 @@
-import { settings } from "../../settings";
+import { settings } from "../../../settings";
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
-import { Command } from "../../Command";
-import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "../../database/contest";
-import { embedify } from "../../util";
+import { Command } from "../../../Command";
+import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "../../../database/contest";
+import { embedify } from "../../../util";
 import { bold, channelMention, hyperlink, userMention, inlineCode, roleMention, strikethrough, time, underscore } from "@discordjs/builders";
-import { ContestModal } from "../../modals/contest";
-import { DatabaseError } from "../../database/util";
+import { ContestModal } from "../../../modals/contest";
+import { DatabaseError } from "../../../database/util";
 
 export class Contest extends Command
 {
+    private readonly embedFieldsLimit = 25;
+    private readonly fieldValueLimit = 1024;
     constructor()
     {
         super({
@@ -291,19 +293,57 @@ export class Contest extends Command
         const submissions = await getSubmissionsOfContest(int.guild.id, contest.id);
 
         if (submissions.length) {
-            let followUpDesc = "Click on the names to see the submission\n\n";
+            let submissionsDesc = "";
 
-            submissions.forEach(submission => {
-                const guildMember = int.guild?.members.cache.find(user => user.id === submission.userId);
-                const linkifiedUsername = hyperlink(guildMember?.user?.username ?? "User", submission.content);
-                followUpDesc += `- ${linkifiedUsername} (${submission._count.votes})\n`;
+            submissions.forEach((submission, i) => {
+                const linkifiedUsername = hyperlink(userMention(submission.userId), submission.content);
+                submissionsDesc += `- ${linkifiedUsername} (${submission._count.votes})`;
+                if (i !== submissions.length - 1) submissionsDesc += "\n";
             });
 
-            const submissionsEmbed = new MessageEmbed()
-                .setTitle("Submissions")
-                .setDescription(followUpDesc)
-                .setColor(settings.embedColors.default);
-            embeds.push(submissionsEmbed);
+            const submissionsEmbeds = [];
+
+            if (submissionsDesc.length > 2048) {
+                const submissionsArr = submissionsDesc.split("\n");
+                let field = "";
+                const fields = [];
+                while (submissionsArr.length) {
+                    const submission = submissionsArr.splice(0, 1)[0];
+                    if ((field.length + submission.length + "\n".length) > this.fieldValueLimit) {
+                        fields.push(field);
+                        field = "";
+                    }
+                    field += submission + "\n";
+
+                    if (!submissionsArr.length) {
+                        fields.push(field);
+                    }
+                }
+
+                const numOfEmbeds = Math.floor(fields.length / this.embedFieldsLimit) + 1;
+
+                for (let i = 0; i < numOfEmbeds; i++) {
+                    const newEmbed = new MessageEmbed()
+                        .setTitle("Submissions")
+                        .setColor(settings.embedColors.default)
+                        .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}` });
+
+                    for (let i = 0; i < fields.length; i++) {
+                        console.log(fields[i]);
+                        newEmbed.addField("\u200b", fields[i], true);
+                    }
+
+                    submissionsEmbeds.push(newEmbed);
+                }
+
+                embeds.push(...submissionsEmbeds);
+            } else {
+                const submissionsEmbed = new MessageEmbed()
+                    .setTitle("Submissions")
+                    .setDescription(submissionsDesc)
+                    .setColor(settings.embedColors.default);
+                embeds.push(submissionsEmbed);
+            }
         }
 
         return await this.editReply(int, embeds);
@@ -313,6 +353,8 @@ export class Contest extends Command
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
         const contests = await getAllContestsInGuild(int.guild.id);
+
+        const embeds: MessageEmbed[] = [];
 
         let embedDesc = "use `/contest info` to get more information\n\n\n\n";
 
@@ -328,12 +370,53 @@ export class Contest extends Command
             embedDesc += `${id} | ${name}\n`;
         });
 
-        const embed = new MessageEmbed()
-            .setTitle("Contests")
-            .setColor(settings.embedColors.default)
-            .setDescription(embedDesc);
+        if (embedDesc.length > 2048) {
+            const contestsEmbeds = [];
 
-        return await this.editReply(int, embed);
+            const [desc, contestEntriesStr] = embedDesc.split("\n\n\n\n");
+            const contestEntries = contestEntriesStr.split("\n");
+            let field = "";
+            const fields = [];
+            while (contestEntries.length) {
+                const entry = contestEntries.splice(0, 1)[0];
+                if ((field.length + entry.length + "\n".length) > this.fieldValueLimit) {
+                    fields.push(field);
+                    field = "";
+                }
+                field += entry + "\n";
+
+                if (!contestEntries.length) {
+                    fields.push(field);
+                }
+            }
+
+            const numOfEmbeds = Math.floor(fields.length / this.embedFieldsLimit) + 1;
+
+            for (let i = 0; i < numOfEmbeds; i++) {
+                const newEmbed = new MessageEmbed()
+                    .setTitle("Contests")
+                    .setDescription(desc)
+                    .setColor(settings.embedColors.default)
+                    .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}` });
+
+                for (let i = 0; i < fields.length; i++) {
+                    console.log(fields[i]);
+                    newEmbed.addField("\u200b", fields[i], true);
+                }
+
+                contestsEmbeds.push(newEmbed);
+            }
+
+            embeds.push(...contestsEmbeds);
+        } else {
+            const embed = new MessageEmbed()
+                .setTitle("Contests")
+                .setColor(settings.embedColors.default)
+                .setDescription(embedDesc);
+            embeds.push(embed);
+        }
+
+        return await this.editReply(int, embeds);
     }
 
     async setChannel(int: CommandInteraction) {

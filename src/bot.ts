@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
+import { Client } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
 import { allOfType, system, Stringifiable } from "svcorelib";
@@ -9,9 +9,7 @@ import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPr
 import { commands as slashCmds } from "./commands";
 import { settings } from "./settings";
 import { prisma } from "./database/client";
-import { checkContestTimes, getContestWinners } from "./database/contest";
-import { Contest, ContestSubmission, Guild } from "@prisma/client";
-import { hyperlink, roleMention, time, userMention } from "@discordjs/builders";
+import { doContestStuff } from "./commands/fun/Contest/functions";
 
 const { env, exit } = process;
 
@@ -180,121 +178,6 @@ function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
     }
 
     console.log(msg);
-}
-
-async function doContestStuff(cl: Client) {
-    console.log("checking contest stuff");
-    const { starting, ending } = await checkContestTimes();
-
-    runStartingContestsJobs(cl, starting);
-    runEndingContestsJobs(cl, ending);
-
-    setInterval(async () => {
-        console.log("checking contest stuff");
-        const { starting, ending } = await checkContestTimes();
-
-        console.log(starting);
-        console.log(ending);
-
-        runStartingContestsJobs(cl, starting);
-        runEndingContestsJobs(cl, ending);
-    }, 3600000);
-}
-
-function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild })[]) {
-    starting.forEach(contest => {
-        console.log("getting ready to start contest: " + contest.id);
-        const timeTillStart = contest.startDate.getTime() - new Date().getTime();
-
-        const description = `${contest.description}\n\n\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
-
-        const embed = new MessageEmbed()
-            .setAuthor({ name: "Contest Started!" })
-            .setTitle(contest.name)
-            .setDescription(description)
-            .setColor(settings.embedColors.default)
-            .addField("Start", time(contest.startDate), true)
-            .addField("End", time(contest.endDate), true)
-            .setFooter({ text: `Contest ID: ${contest.id}` });
-
-        setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "New Contest"),
-                embeds: [embed]
-            });
-        }, timeTillStart);
-    });
-}
-
-function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[]) {
-    ending.forEach(contest => {
-        console.log("getting ready to end contest: " + contest.id);
-        const timeTillEnd = contest.endDate.getTime() - new Date().getTime();
-
-        const votingEnd = new Date(contest.endDate.setDate(contest.endDate.getDate() + 1));
-        const description = `${contest.description}\n\nYou have 24 hours to vote. You can vote with \`/contest vote\`\nVoting will end at ${time(votingEnd)}`;
-
-        let submissions = "";
-
-        if (!contest.submissions.length) {
-            submissions = "No submissions :(";
-        }
-
-        contest.submissions.forEach(submission => {
-            const user = cl.guilds.cache.get(submission.guildId)?.members.cache.get(submission.userId)?.user;
-
-            const link = hyperlink(user?.username ?? userMention(submission.userId), submission.content);
-
-            submissions += `- ${link}\n`;
-        });
-
-
-        const votingEmbed = new MessageEmbed()
-            .setAuthor({ name: "Voting Time!" })
-            .setTitle(contest.name)
-            .setDescription(description)
-            .setColor(settings.embedColors.default)
-            .addField("Submissions", submissions)
-            .setFooter({ text: `Contest ID: ${contest.id}` });
-
-
-        setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Voting Started"),
-                embeds: [votingEmbed]
-            });
-        }, timeTillEnd);
-
-        setTimeout(async () => {
-            const winners = await getContestWinners(contest.guildId, contest.id);
-
-            const authorText = winners.length ? "We have a winner!" : "We have no winners :(";
-
-            let winnersResult = "";
-
-            if (!winners.length) {
-                winnersResult = "No winners";
-            }
-
-            winners.forEach((winner, i) => {
-                const pos = i == 0 ? "1st" : i == 1 ? "2nd" : "3rd";
-                winnersResult += `${pos}: ${hyperlink(userMention(winner.userId), winner.content)} (${winner._count.votes})\n`;
-            });
-
-            const winnerEmbed = new MessageEmbed()
-                .setAuthor({ name: authorText })
-                .setTitle(contest.name)
-                .setDescription(contest.description)
-                .setColor(settings.embedColors.default)
-                .addField("Result", winnersResult)
-                .setFooter({ text: `Contest ID: ${contest.id}` });
-
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Winner Announcement"),
-                embeds: [winnerEmbed]
-            });
-        }, 24 * 3600 * 1000);
-    });
 }
 
 init();

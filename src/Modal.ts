@@ -2,6 +2,7 @@ import EventEmitter from "events";
 import { MessageActionRow, TextInputComponent, Modal as DjsModal, ModalSubmitInteraction, MessageEmbed, MessageButton } from "discord.js";
 import { randomUUID } from "crypto";
 import { registerModal } from "./registry";
+import { Command } from "./Command";
 
 interface ModalConstructor {
     title: string;
@@ -59,9 +60,9 @@ export abstract class Modal extends EventEmitter {
     protected async reply(int: ModalSubmitInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral, ...Modal.useButtons(actions) });
+            await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
-            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Modal.useButtons(actions) });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /**
@@ -83,9 +84,9 @@ export abstract class Modal extends EventEmitter {
     protected async editReply(int: ModalSubmitInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content, ...Modal.useButtons(actions) });
+            await int.editReply({ content, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Modal.useButtons(actions) });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
     /**
@@ -98,29 +99,15 @@ export abstract class Modal extends EventEmitter {
     protected async followUpReply(int: ModalSubmitInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.followUp({ content, ephemeral, ...Modal.useButtons(actions) });
+            await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
-            await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Modal.useButtons(actions) });
+            await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /** Deletes the reply of a ModalSubmitInteraction */
     protected async deleteReply(int: ModalSubmitInteraction)
     {
         int.replied && await int.deleteReply();
-    }
-
-    /** Returns an object from passed buttons that can be spread onto an interaction reply */
-    public static useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
-    {
-        const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
-
-        if(!actRows || actRows.length === 0)
-            return {};
-
-        const act = new MessageActionRow()
-            .addComponents(actRows);
-
-        return actRows ? { components: [act] } : {};
     }
 
     /**
