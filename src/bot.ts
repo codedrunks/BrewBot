@@ -61,15 +61,15 @@ async function init()
             activities: [{ type: "WATCHING", name: "ur mom" }],
         });
 
-        await doContestStuff(cl);
-
-        console.log(`• ${user.username} is listening for commands and events in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
-
+        console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 
-        settings.debug.bellOnReady && console.log("\u0007");
+        await doContestStuff(cl);
 
         process.stdin.isTTY && awaitKeypress();
+
+        console.log(k.green(`\n${user.username} is ready.\n`));
+        settings.debug.bellOnReady && console.log("\u0007");
     });
 
     client.on("error", err => {
