@@ -50,6 +50,8 @@ model Guild {
   id               String    @id
   contestRoleId    String?
   contestChannelId String?
+  djRoleIds        String[]
+  djOnly           Boolean?
   contests         Contest[]
 }
 

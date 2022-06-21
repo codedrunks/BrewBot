@@ -45,7 +45,7 @@ export class Queue extends Command {
 
             if(!tracks.length && !player.queue.current) return this.editReply(int, embedify("No tracks in the queue"));
 
-            const embed = embedify(`Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
+            const embed = embedify(`Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`).setTitle("Current Queue");
 
             if(player.queue.current.thumbnail) embed.setThumbnail(player.queue.current.thumbnail);
 
@@ -63,22 +63,24 @@ export class Queue extends Command {
 
                     if(!player || !player.queue.current) return;
 
+                    const maxPage = Math.ceil(player.queue.length / multiple);
+
                     if(b.label == "Previous") {
                         if(page !== 1) page--;
+                        else page = maxPage;
 
                         tracks = paginateTracks(page, player.queue, multiple);
 
-                        embed.setDescription(`Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
+                        embed.setDescription(`${page == 1 ? `Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n` : ""}${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
 
                         int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
                     } else if(b.label == "Next") {
-                        const maxPage = Math.ceil(player.queue.length / multiple);
                         if(page < maxPage) page++;
-                        // if(page * multiple > player.queue.length) page--;
+                        else page = 1;
 
                         tracks = paginateTracks(page, player.queue, multiple);
 
-                        embed.setDescription(`Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
+                        embed.setDescription(`${page == 1 ? `Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n` : ""}${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
 
                         int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
                     }

@@ -63,7 +63,7 @@ export class Search extends Command {
 
             const idxs = [...res.tracks.map((_, i) => i + 1)];
 
-            collector.on("collect", m => {
+            collector.on("collect", async m => {
                 if(idxs.includes(parseInt(m.content))) {
                     const index = Number(m.content) - 1;
 
@@ -75,6 +75,8 @@ export class Search extends Command {
                     player.queue.add(track);
 
                     if(!player.playing && !player.paused && !player.queue.size) player.play();
+
+                    await m.delete();
 
                     this.editReply(int, embedify(`Queued \`${track.title}\` in ${channelMention}`));
 
@@ -88,6 +90,5 @@ export class Search extends Command {
                 if(player && !player.queue.current) player.destroy();
             });
         }
-
     }
 }
