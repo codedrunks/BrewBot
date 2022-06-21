@@ -7,11 +7,29 @@ export class Skip extends Command {
     constructor() {
         super({
             name: "skip",
-            desc: "Skip the currently playing song"
+            desc: "Skip the currently playing song",
+            args: [
+                {
+                    name: "amount",
+                    desc: "amount of songs to skip, including current song"
+                },
+                {
+                    name: "to",
+                    desc: "song to skip to in queue"
+                }
+            ]
         });
     }
 
     async run(int: CommandInteraction): Promise<void> {
+        const args = this.resolveArgs(int);
+
+        const amount = args.amount ? Number(args.amount) : 1;
+
+        const to = args.to ? Number(args.to) : 0;
+
+        const total = amount + to;
+
         const guild = int.guild;
         
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
@@ -30,7 +48,7 @@ export class Skip extends Command {
 
         const title = player.queue.current?.title;
 
-        player.stop();
-        return this.reply(int, embedify(`\`${title}\` was skipped`));
+        player.stop(args.to ? total - 1 : total);
+        return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${total} tracks were skipped`));
     }
 }

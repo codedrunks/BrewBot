@@ -2,6 +2,7 @@ import { CommandInteraction, User } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
+import { formatDuration } from "svcorelib";
 
 export class NowPlaying extends Command {
     constructor() {
@@ -20,11 +21,11 @@ export class NowPlaying extends Command {
 
         const player = manager.get(guild.id);
 
-        if(!player) return this.reply(int, embedify("There is no music playing in this server"), true);
+        const current = player?.queue.current;
 
-        const current = player.queue.current;
+        if(!player || !current) return this.reply(int, embedify("There is no music playing in this server"), true);
 
-        const embed = embedify(`Artist: \`${current?.author}\`\n\nRequested by: <@${(current?.requester as User).id}>`)
+        const embed = embedify(`Artist: \`${current?.author}\`\n\n\`${formatDuration(player.position, "%m:%s")}/${formatDuration(current?.duration as number, "%m:%s")}\`\n/Requested by: <@${(current?.requester as User).id}>`)
             .setThumbnail(`https://img.youtube.com/vi/${current?.identifier}/mqdefault.jpg`)
             .setTitle(`${current?.title}`);
 
