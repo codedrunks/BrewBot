@@ -29,16 +29,17 @@ export abstract class Command extends EventEmitter
 
         const data = new SlashCommandBuilder();
 
-        cmdMeta.memberPerms && data.setDefaultMemberPermissions(cmdMeta.memberPerms.reduce((acc, cur) => acc | cur, 0n));
+        cmdMeta.memberPerms && data
+            .setDefaultMemberPermissions(cmdMeta.memberPerms.reduce((acc, cur) => acc | cur, 0n));
+
+        const fallbackMeta = {
+            perms: [],
+            args: [],
+        };
 
         if(Command.isCommandMeta(cmdMeta))
         {
             // regular command
-            const fallbackMeta = {
-                perms: [],
-                args: [],
-            };
-
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
@@ -108,7 +109,7 @@ export abstract class Command extends EventEmitter
         else
         {
             // subcommands
-            this.meta = cmdMeta;
+            this.meta = { ...fallbackMeta, ...cmdMeta };
 
             data.setName(cmdMeta.name)
                 .setDescription(cmdMeta.desc);
@@ -281,7 +282,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -305,7 +306,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
@@ -320,7 +321,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
