@@ -42,13 +42,13 @@ export class Repeat extends Command {
 
             player.setQueueRepeat(!player.queueRepeat);
 
-            return this.reply(int, embedify(`Queue is ${player.queueRepeat ? "repeating": "not repeating"}`));
+            return this.reply(int, embedify(`Queue is ${player.queueRepeat ? "repeating": "no longer repeating"}`));
         }
 
         if(player.queueRepeat) player.setQueueRepeat(!player.queueRepeat);
 
         player.setTrackRepeat(!player.trackRepeat);
 
-        return this.reply(int, embedify(`Track is ${player.trackRepeat ? "repeating" : "not repeating"}`));
+        return this.reply(int, embedify(`\`${player.queue.current.title}\` is ${player.trackRepeat ? "repeating" : "no longer repeating"}`));
     }
 }
