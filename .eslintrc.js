@@ -19,8 +19,6 @@ module.exports = {
         "out/**"
     ],
     rules: {
-        "quotes": [ "error", "double" ],
-        "semi": [ "error", "always" ],
         "eol-last": [ "error", "always" ],
         "no-async-promise-executor": "off",
         // see https://github.com/eslint/eslint/issues/14538#issuecomment-862280037
