@@ -25,7 +25,7 @@ export class NowPlaying extends Command {
 
         if(!player || !current) return this.reply(int, embedify("There is no music playing in this server"), true);
 
-        const embed = embedify(`Artist: \`${current?.author}\`\n\n\`${formatDuration(player.position, "%m:%s")}/${formatDuration(current?.duration as number, "%m:%s")}\`\n/Requested by: <@${(current?.requester as User).id}>`)
+        const embed = embedify(`Artist: \`${current?.author}\`\n\n\`${formatDuration(player.position, "%m:%s")}/${formatDuration(current?.duration as number, "%m:%s")}\`\nRequested by: <@${(current?.requester as User).id}>`)
             .setThumbnail(`https://img.youtube.com/vi/${current?.identifier}/mqdefault.jpg`)
             .setTitle(`${current?.title}`);
 
