@@ -5,6 +5,8 @@ import { embedify } from "../../util";
 export function trackStart(player: Player, track: Track, client: Client) {
     if(!player.textChannel) return;
 
+    if(player.trackRepeat) return;
+
     const channel = client.channels.cache.get(player.textChannel);
 
     if(!channel) return;
