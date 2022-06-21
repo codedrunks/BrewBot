@@ -23,19 +23,20 @@ export class Queue extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
+
+        const guild = int.guild;
+
+        if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
+
+        const manager = getManager();
+
+        const player = manager.get(guild.id);
+
+        if(!player || !player.queue.current) return this.reply(int, embedify("There is no music playing this server"));
+
         try {
 
             await this.deferReply(int);
-
-            const guild = int.guild;
-
-            if(!guild) return this.editReply(int, embedify("This command cannot be used in DM's"));
-
-            const manager = getManager();
-
-            const player = manager.get(guild.id);
-
-            if(!player || !player.queue.current) return this.editReply(int, embedify("There is no music playing this server"));
 
             pages[int.user.id] = 1;
 

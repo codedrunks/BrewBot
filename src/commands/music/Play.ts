@@ -20,8 +20,18 @@ export class Play extends Command {
                     name: "source",
                     type: "string",
                     desc: "Source for the music to be searched from"
+                },
+                {
+                    name: "now",
+                    desc: "Flag to skip current song and play requested song(s)",
+                    type: "boolean"
+                },
+                {
+                    name: "next",
+                    desc: "Flag to play requested song(s) next",
+                    type: "boolean"
                 }
-            ]
+            ],
         });
     }
 
@@ -61,13 +71,41 @@ export class Play extends Command {
 
         const channelMention = `<#${voice}>`;
 
+        const [now, next] = [Boolean(args.now) ?? false, Boolean(args.next) ?? false];
+
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT") {
+            if(now && !next) {
+                this.reply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
+                player.queue.add(res.tracks[0], 0);
+                
+                setTimeout(() => {player.stop();}, 200); //find golden timing
+
+                return;
+            } else if(next && !now) {
+                player.queue.add(res.tracks[0], 0);
+
+                return this.reply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
+            }
+
             player.queue.add(res.tracks[0]);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
             return this.reply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
+            if(now && !next) {
+                this.reply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+                player.queue.add(res.tracks, 0);
+
+                player.stop();
+
+                return;
+            } else if(next && !now) {
+                player.queue.add(res.tracks, 0);
+
+                return this.reply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+            }
+
             player.queue.add(res.tracks);
 
             if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
