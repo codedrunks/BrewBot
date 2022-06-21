@@ -55,7 +55,7 @@ export class Queue extends Command {
                     new MessageButton().setEmoji("➡️").setLabel("Next").setStyle("PRIMARY")
                 ];
 
-                const button = new BtnMsg(embed, btns, { timeout: 20_000 });
+                const button = new BtnMsg(embed, btns, { timeout: 60_000 });
 
                 button.on("press", async (b, i) => { // eslint-disable-line
 
