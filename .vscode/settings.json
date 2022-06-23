@@ -45,7 +45,7 @@
     },
     "files.exclude": {
         "**/.env": true,
-        "out/**": true,
+        "out/**": false,
     },
     "git.branchPrefix": "feat/",
     "git.branchProtection": [ "main" ],

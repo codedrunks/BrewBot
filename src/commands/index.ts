@@ -6,6 +6,7 @@ import { Ferret } from "./fun/Ferret";
 import { Joke } from "./fun/Joke";
 import { Mock } from "./fun/Mock";
 import { Steam } from "./fun/Steam";
+import { Chess } from "./fun/Chess";
 
 import { Delete } from "./mod/Delete";
 import { Log } from "./mod/Log";
@@ -32,6 +33,7 @@ export const commands = [
     Joke,
     Mock,
     Steam,
+    Chess,
 
     // mod
     Delete,
