@@ -49,6 +49,6 @@ export class Skip extends Command {
         const title = player.queue.current?.title;
 
         player.stop(args.to ? total - 1 : total);
-        return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${total} tracks were skipped`));
+        return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${args.to ? total - 1 : total} tracks were skipped`));
     }
 }
