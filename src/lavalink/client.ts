@@ -1,5 +1,5 @@
 import { Client } from "discord.js";
-import { Manager, Plugin, VoicePacket } from "erela.js";
+import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
 import Spotify from "erela.js-spotify";
 import { queueEnd } from "./lib/queueEnd";
 import { trackStart } from "./lib/trackStart";
@@ -20,6 +20,17 @@ if(clientID && clientSecret) {
     );
 }
 
+const nodes: NodeOptions[] = [];
+
+process.env.LAVALINK_HOST?.split(",").map((v) => {
+    nodes.push({
+        host: v,
+        port: 2333,
+        password: process.env.LAVALINK_PASSWORD
+    });
+});
+
+
 export function lavaRetrieveClient(cl: Client) {
     client = cl;
 
@@ -36,13 +47,7 @@ export function clientUpdateVoiceStateLava(d: VoicePacket) {
 
 function initializeManagerFromClient(cl: Client): Manager {
     const manager = new Manager({
-        nodes: [
-            {
-                host: "localhost",
-                port: 2333,
-                password: process.env.LAVALINK_PASSWORD ?? "youshallnotpass"
-            }
-        ],
+        nodes,
         send(id, payload) {
             const guild = cl.guilds.cache.get(id);
             if (guild) guild.shard.send(payload);
@@ -50,7 +55,7 @@ function initializeManagerFromClient(cl: Client): Manager {
         plugins
     });
 
-    manager.on("nodeConnect", (node) => console.log(`Node ${node.options.identifier} connected.`))
+    manager.on("nodeConnect", (node) => console.log(`\nNode ${node.options.identifier} connected.`))
         .on("trackStart", (player, track) => {
             trackStart(player, track, client);
         })
@@ -64,18 +69,3 @@ function initializeManagerFromClient(cl: Client): Manager {
 export function getManager(): Manager {
     return manager;
 }
-
-// began at, duration
-
-export interface SongTimings {
-    [guildId: string]: {
-        songs: SongTiming[]
-    }
-}
-
-export interface SongTiming {
-    beganAt: number,
-    duration: number
-}
-
-export const SongTimers: SongTimings = {};

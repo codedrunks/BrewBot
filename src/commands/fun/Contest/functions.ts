@@ -15,9 +15,6 @@ export async function doContestStuff(cl: Client) {
         console.log("checking contest stuff");
         const { starting, ending } = await checkContestTimes();
 
-        console.log(starting);
-        console.log(ending);
-
         runStartingContestsJobs(cl, starting);
         runEndingContestsJobs(cl, ending);
     }, 3600000);
