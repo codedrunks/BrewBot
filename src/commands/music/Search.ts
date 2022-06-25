@@ -3,6 +3,8 @@ import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
 
+const activeSearches: Set<string> = new Set();
+
 export class Search extends Command {
     constructor() {
         super({
@@ -26,6 +28,8 @@ export class Search extends Command {
         const args = this.resolveArgs(int);
 
         const guild = int.guild;
+
+        if(activeSearches.has(int.user.id)) return this.editReply(int, embedify("Cancel or select from previous search before searching again"));
 
         if(!guild || !int.channel) return this.editReply(int, embedify("This command cannot be used in DM's"));
 
@@ -53,7 +57,7 @@ export class Search extends Command {
 
             if(res.tracks.length > 10) res.tracks.length = 10;
 
-            const embed = embedify(`${res.tracks.map((v, i) => `${i + 1}: \`${v.title}\``).join("\n")}\n\n\`Type a number to make your selection\``).setTitle("**Search Results**");
+            const embed = embedify(`${res.tracks.map((v, i) => `${i + 1}: \`${v.title}\``).join("\n")}\n\n\`Type a number to make your selection or type cancel to cancel\``).setTitle("**Search Results**");
 
             this.editReply(int, embed);
 
@@ -63,7 +67,20 @@ export class Search extends Command {
 
             const idxs = [...res.tracks.map((_, i) => i + 1)];
 
+            activeSearches.add(int.user.id);
+
             collector.on("collect", async m => {
+
+                if(m.content == "cancel") {
+                    await m.delete();
+
+                    collector.stop();
+
+                    if(activeSearches.has(int.user.id)) activeSearches.delete(int.user.id);
+                    
+                    return this.editReply(int, embedify("Canceled search"));
+                }
+
                 if(idxs.includes(parseInt(m.content))) {
                     const index = Number(m.content) - 1;
 
@@ -79,6 +96,8 @@ export class Search extends Command {
                     await m.delete();
 
                     this.editReply(int, embedify(`Queued \`${track.title}\` in ${channelMention}`));
+                    
+                    if(activeSearches.has(int.user.id)) activeSearches.delete(int.user.id);
 
                     collector.stop();
                 }
@@ -86,6 +105,8 @@ export class Search extends Command {
 
             collector.on("end", c => {
                 if(c.size == 0) this.editReply(int, embedify("No selection was made"));
+
+                if(activeSearches.has(int.user.id)) activeSearches.delete(int.user.id);
 
                 if(player && !player.queue.current) player.destroy();
             });
