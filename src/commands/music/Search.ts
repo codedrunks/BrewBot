@@ -63,7 +63,7 @@ export class Search extends Command {
 
             const collector = int.channel.createMessageCollector({ filter: (m) => {
                 return m.author.id == int.user.id;
-            }, time: 15_000});
+            }, time: 20_000});
 
             const idxs = [...res.tracks.map((_, i) => i + 1)];
 
