@@ -41,9 +41,10 @@ export class Play extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const args = this.resolveArgs(int);
 
         await this.deferReply(int);
+        
+        const args = this.resolveArgs(int);
 
         const sources = ["youtube", "soundcloud"];
 
@@ -78,7 +79,6 @@ export class Play extends Command {
 
         const channelMention = `<#${voice}>`;
 
-        // const [now, next] = [Boolean(args.now) ?? false, Boolean(args.next) ?? false];
         const position = args.position || null;
 
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT") {
@@ -86,7 +86,7 @@ export class Play extends Command {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
                 player.queue.add(res.tracks[0], 0);
                 
-                setTimeout(() => {player.stop();}, 200); //find golden timing
+                setTimeout(() => { if(player.queue.totalSize > 1) player.stop(); }, 200); //find golden timing
 
                 return;
             } else if(position == "next") {
