@@ -66,10 +66,11 @@ async function init()
 
         await doContestStuff(cl);
 
+        console.log(k.green(`\n${user.username} is ready.\n`));
+
         process.stdin.isTTY && awaitKeypress();
 
-        console.log(k.green(`\n${user.username} is ready.\n`));
-        settings.debug.bellOnReady && console.log("\u0007");
+        ringBell();
     });
 
     client.on("error", err => {
@@ -85,7 +86,7 @@ async function init()
         client.user?.setPresence({ status: "dnd", activities: [{ type: "PLAYING", name: "shutting down..." }] });
         client.user?.setPresence({ status: "invisible", activities: [{ type: "PLAYING", name: "shutting down..." }] });
 
-        setTimeout(() => exit(0), 200);
+        setTimeout(() => exit(0), 100);
     }));
 }
 
@@ -176,6 +177,12 @@ function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
     }
 
     console.log(msg);
+}
+
+/** Triggers the console bell sound */
+function ringBell()
+{
+    settings.debug.bellOnReady && process.stdout.write("\u0007");
 }
 
 init();
