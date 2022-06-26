@@ -1,4 +1,5 @@
-import { CommandInteraction } from "discord.js";
+import { isDJOnlyandhasDJRole } from "../../database/music";
+import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
@@ -19,6 +20,10 @@ export class Pause extends Command {
         const manager = getManager();
 
         const player = manager.get(guild.id);
+
+        const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
+
+        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
 
         if(!player || !player.paused && !player.playing) return this.reply(int, embedify("There is no music playing in this server"));
 

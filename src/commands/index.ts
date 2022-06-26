@@ -43,6 +43,7 @@ import { Queue } from "./music/Queue";
 import { Shuffle } from "./music/Shuffle";
 import { Repeat } from "./music/Repeat";
 import { Volume } from "./music/Volume";
+import { DJ } from "./music/Dj";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -95,6 +96,7 @@ export const commands = [
     Shuffle,
     Repeat,
     Volume,
+    DJ,
 
     Btn, //#DEBUG
 ];

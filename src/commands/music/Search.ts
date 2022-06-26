@@ -1,7 +1,8 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, MessageEmbed, GuildMemberRoleManager } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
+import { isDJOnlyandhasDJRole } from "../../database/music";
 
 const activeSearches: Set<string> = new Set();
 
@@ -47,6 +48,10 @@ export class Search extends Command {
         if(activeSearches.has(int.user.id)) return this.editReply(int, embedify("Cancel or select from previous search before searching again"));
 
         if(!guild || !int.channel) return this.editReply(int, embedify("This command cannot be used in DM's"));
+
+        const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
+
+        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
