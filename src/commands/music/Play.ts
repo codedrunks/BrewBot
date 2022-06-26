@@ -22,14 +22,19 @@ export class Play extends Command {
                     desc: "Source for the music to be searched from"
                 },
                 {
-                    name: "now",
-                    desc: "Flag to skip current song and play requested song(s)",
-                    type: "boolean"
-                },
-                {
-                    name: "next",
-                    desc: "Flag to play requested song(s) next",
-                    type: "boolean"
+                    name: "position",
+                    type: "string",
+                    desc: "Whether to play the song now or next, if so desired",
+                    choices: [
+                        {
+                            name: "now",
+                            value: "now"
+                        },
+                        {
+                            name: "next",
+                            value: "next"
+                        }
+                    ]
                 }
             ],
         });
@@ -38,17 +43,19 @@ export class Play extends Command {
     async run(int: CommandInteraction): Promise<void> {
         const args = this.resolveArgs(int);
 
+        await this.deferReply(int);
+
         const sources = ["youtube", "soundcloud"];
 
-        if(args.source && !sources.includes(args.source)) return this.reply(int, embedify("Sources must be either `youtube` (includes youtube music) or `soundcloud`.\n\n`spotify support coming soon`"));
+        if(args.source && !sources.includes(args.source)) return this.editReply(int, embedify("Sources must be either `youtube` (includes youtube music) or `soundcloud`.\n\n`spotify support coming soon`"));
 
         const guild = int.guild;
 
-        if(!guild || !int.channel) return this.reply(int, embedify("This command cannot be used in DM's"));
+        if(!guild || !int.channel) return this.editReply(int, embedify("This command cannot be used in DM's"));
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
-        if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"), true);
+        if(!voice) return this.editReply(int, embedify("You must be in a voice channel to use this command"));
 
         const manager = getManager();
 
@@ -57,9 +64,9 @@ export class Play extends Command {
             source: args.source as SearchQuery["source"] ?? "youtube"
         }, int.user);
 
-        if(res.loadType == "LOAD_FAILED") return this.reply(int, embedify("Something went wrong loading that track"), true);
+        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("Something went wrong loading that track"));
 
-        if(res.loadType == "NO_MATCHES") return this.reply(int, embedify("No songs were found with that title"), true);
+        if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
 
         const player = manager.get(guild.id) ?? manager.create({
             guild: guild.id,
@@ -71,46 +78,47 @@ export class Play extends Command {
 
         const channelMention = `<#${voice}>`;
 
-        const [now, next] = [Boolean(args.now) ?? false, Boolean(args.next) ?? false];
+        // const [now, next] = [Boolean(args.now) ?? false, Boolean(args.next) ?? false];
+        const position = args.position || null;
 
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT") {
-            if(now && !next) {
-                this.reply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
+            if(position == "now") {
+                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
                 player.queue.add(res.tracks[0], 0);
                 
                 setTimeout(() => {player.stop();}, 200); //find golden timing
 
                 return;
-            } else if(next && !now) {
+            } else if(position == "next") {
                 player.queue.add(res.tracks[0], 0);
 
-                return this.reply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
+                return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
             }
 
             player.queue.add(res.tracks[0]);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
-            return this.reply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
+            return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
-            if(now && !next) {
-                this.reply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+            if(position == "now") {
+                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
                 player.queue.add(res.tracks, 0);
 
                 player.stop();
 
                 return;
-            } else if(next && !now) {
+            } else if(position == "next") {
                 player.queue.add(res.tracks, 0);
 
-                return this.reply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+                return this.editReply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
             }
 
             player.queue.add(res.tracks);
 
             if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
 
-            return this.reply(int, embedify(`Queued playlist \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+            return this.editReply(int, embedify(`Queued playlist \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
         }
     }
 }
