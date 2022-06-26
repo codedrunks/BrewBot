@@ -1,7 +1,8 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
+import { isDJOnlyandhasDJRole } from "../../database/music";
 
 export class Resume extends Command {
     constructor() {
@@ -15,6 +16,10 @@ export class Resume extends Command {
         const guild = int.guild;
 
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
+
+        const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
+
+        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
 
         const manager = getManager();
         
