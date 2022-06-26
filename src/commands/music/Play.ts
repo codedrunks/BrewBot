@@ -19,7 +19,17 @@ export class Play extends Command {
                 {
                     name: "source",
                     type: "string",
-                    desc: "Source for the music to be searched from"
+                    desc: "Source for the music to be searched from",
+                    choices: [
+                        {
+                            name: "youtube/youtube music",
+                            value: "youtube"
+                        },
+                        {
+                            name: "soundcloud",
+                            value: "soundcloud"
+                        }
+                    ]
                 },
                 {
                     name: "position",
@@ -45,10 +55,6 @@ export class Play extends Command {
         await this.deferReply(int);
         
         const args = this.resolveArgs(int);
-
-        const sources = ["youtube", "soundcloud"];
-
-        if(args.source && !sources.includes(args.source)) return this.editReply(int, embedify("Sources must be either `youtube` (includes youtube music) or `soundcloud`.\n\n`spotify support coming soon`"));
 
         const guild = int.guild;
 
