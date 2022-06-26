@@ -136,7 +136,7 @@ export class Steam extends Command
                         const first = eRoles.slice(0, half);
                         const second = eRoles.slice((eRoles.length - half) * -1);
 
-                        const toField = (games: Game[]): EmbedFieldData => ({ name: "Games:", value: games.map(g => `${g.name} (${(g.playTime / 60).toFixed(1)}h)`).join("\n"), inline: true });
+                        const toField = (games: Game[]): EmbedFieldData => ({ name: "\u200B", value: games.map(g => `${g.name} (${(g.playTime / 60).toFixed(1)}h)`).join("\n"), inline: true });
 
                         const pageDisp = totalPages > 1 ? ` (${pageNbr}/${totalPages})` : "";
 
@@ -160,6 +160,9 @@ export class Steam extends Command
                     let ebdIdx = 0;
 
                     bm.on("press", async (btn, btInt) => {
+                        if(btInt.user.id !== int.user.id && btInt.createdTimestamp - int.createdTimestamp < 1000 * 60)
+                            return await btInt.reply({ content: "You can't interact with this yet.\nPlease wait a minute or send the command yourself.", ephemeral: true });
+
                         switch(btn.label)
                         {
                         case "First":

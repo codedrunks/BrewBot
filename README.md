@@ -81,6 +81,27 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 - (Sub)Command names and command option names need to be lowercase only with no spaces (underscores are fine).
 - If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
 
+<br>
+
+### Length limits
+| What | Limit |
+| --- | --- |
+| username | 1-80 chars |
+| message content | 2000 chars |
+| files per message | 10 files |
+| embeds per message | 10 embeds |
+| embed title | 256 chars |
+| embed description | 2048 chars |
+| embed author name | 256 chars |
+| embed fields | 25 fields |
+| embed field name | 256 chars |
+| embed field value | 1024 chars |
+| embed footer text | 2048 chars |
+| sum of all chars in embed | 6000 chars |
+| slash command description | 100 chars |
+| slash command arg description | 100 chars |
+
+
 <br><br>
 
 ## Classes
