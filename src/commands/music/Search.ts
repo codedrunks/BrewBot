@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, MessageEmbed } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client";
 import { embedify } from "../../util";
@@ -16,6 +16,21 @@ export class Search extends Command {
                     type: "string",
                     desc: "Song to play or URL",
                     required: true
+                },
+                {
+                    name: "position",
+                    type: "string",
+                    desc: "Whether to play the song now or next, if so desired",
+                    choices: [
+                        {
+                            name: "now",
+                            value: "now"
+                        },
+                        {
+                            name: "next",
+                            value: "next"
+                        }
+                    ]
                 }
             ]
         });
@@ -46,6 +61,8 @@ export class Search extends Command {
         if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("Something went wrong loading that track"));
 
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
+
+        const position = args.position || null;
 
         if(res.loadType == "SEARCH_RESULT") {
 
@@ -89,13 +106,36 @@ export class Search extends Command {
                     if(player.state !== "CONNECTED") player.connect();
                     const channelMention = `<#${voice}>`;
 
-                    player.queue.add(track);
+                    let sEmbed: MessageEmbed | undefined;
+
+                    if(position == "next") {
+                        player.queue.add(track, 0);
+                        sEmbed = embedify(`Queued \`${track.title}\` to play next in ${channelMention}`);
+                    }
+
+                    if(position == "now") {
+                        player.queue.add(track, 0);
+                        sEmbed = embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${track.title}\` in ${channelMention}`);
+
+                        setTimeout(() => {
+                            if(player.queue.totalSize > 1) player.stop();
+                        }, 200);
+                    }
+
+                    if(!position) {
+                        sEmbed = embedify(`Queued \`${track.title}\` in ${channelMention}`);
+                    }
+
+                    sEmbed = sEmbed ?? embedify("Something went wrong");
+
+                    // player.queue.add(track);
+                    this.editReply(int, sEmbed);
 
                     if(!player.playing && !player.paused && !player.queue.size) player.play();
 
                     await m.delete();
 
-                    this.editReply(int, embedify(`Queued \`${track.title}\` in ${channelMention}`));
+                    // this.editReply(int, embedify(`Queued \`${track.title}\` in ${channelMention}`));
                     
                     if(activeSearches.has(int.user.id)) activeSearches.delete(int.user.id);
 
