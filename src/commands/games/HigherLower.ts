@@ -3,7 +3,7 @@ import { randRange } from "svcorelib";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
-const inactiveTimeout = 1000 * 30;
+const inactiveTimeout = 1000 * 60;
 
 export class HigherLower extends Command
 {
@@ -17,22 +17,24 @@ export class HigherLower extends Command
                     name: "max",
                     desc: "The maximum number that can be chosen. Defaults to 1000. Must be between 10 and 1 000 000 000",
                     type: "number",
-                    min: 0,
+                    min: 10,
                     max: 1000000000,
                 }
             ]
         });
     }
 
-    baseEmbed({ username: name, avatarURL }: User)
+    baseEmbed(usr: User)
     {
-        const iconURL = avatarURL() ?? undefined;
-
-        return new MessageEmbed()
+        const ebd = new MessageEmbed()
             .setTitle("Higher Lower")
             .setColor(settings.embedColors.default)
-            .setFooter({ text: "Try to type the randomly selected number only by getting a higher/lower hint. React with X to end the game." })
-            .setAuthor({ name, iconURL });
+            .setFooter({ text: "Try to type the randomly selected number only by getting a higher/lower hint. React with X to end the game." });
+
+        const iconURL = usr.avatarURL();
+        iconURL && ebd.setAuthor({ name: usr.username, iconURL, url: `https://discord.com/users/415597358752071693/${usr.id}` });
+
+        return ebd;
     }
 
     async run(int: CommandInteraction): Promise<void>
@@ -53,35 +55,36 @@ export class HigherLower extends Command
 
         const randNum = randRange(0, max);
 
+        await this.reply(int, "Starting the game...", true);
+
 
         const msg = await int.channel.send({ embeds: [
             this.baseEmbed(author)
-                .setDescription(`Please type your guesses in this channel.\nThis message will be edited to show the hints.\n\nReact with X or wait for ${(inactiveTimeout / 1000).toFixed(0)} seconds`)
+                .setDescription(`Please type your guesses in this channel.\nThis message will be edited to show the hints.\n\nReact with X or wait for ${(inactiveTimeout / 1000).toFixed(0)} seconds to end the game.`)
                 .setFooter(null)
         ] });
 
         await msg.react("❌");
 
-        this.awaitReplies(author, msg, randNum);
+        this.awaitReplies(author, msg, randNum, max);
     }
 
-    async awaitReplies(author: User, msg: Message, randNum: number)
+    async awaitReplies(author: User, msg: Message, randNum: number, max: number)
     {
         const time = 1000 * 60 * 10;
 
         const msgColl = msg.channel.createMessageCollector({
             time,
             filter: (msg) => {
-                ["stop", "exit", "end"].forEach(v => {
-                    if(msg.content.toLowerCase().includes(v))
-                    {
-                        msg.reply({ content: "To end the game, please react with an X on this message" }).then(rep => {
-                            setTimeout(() => rep.delete(), 15000);
+                // exit game hint
+                ["stop", "exit", "end", "leave"].forEach(async (v) => {
+                    if(msg.author.id === author.id && msg.content.toLowerCase().startsWith(v))
+                        await msg.reply({ content: "To end the game, please click the ❌ reaction" }).then(rep => {
+                            setTimeout(async () => await rep.delete(), 10000);
                         });
-                    }
                 });
 
-                return (msg.content.match(/^\d+$/) && msg.author.id === author.id) ?? false;
+                return (msg.content.trim().match(/^\d+$/) && msg.author.id === author.id) ?? false;
             }
         });
 
@@ -89,16 +92,14 @@ export class HigherLower extends Command
 
         const editEmbed = (state: "equal" | "higher" | "lower", curGuess: number, guessAmt: number) => msg.edit({ embeds: [
             this.baseEmbed(author)
-                .setDescription(`Current guess: ${curGuess}\nThe number that's searched for is **${state}**\n\nYou've guessed ${guessAmt} time${guessAmt === 1 ? "" : "s"}\n`)
+                .setDescription(`Current guess: **\`${curGuess}\`**\nThe number that's searched for is **\`${state}\`** (between 0 and ${max})\n\nYou've guessed ${guessAmt} time${guessAmt === 1 ? "" : "s"} so far.\n`)
         ] });
 
         let guessesAmt = 0;
 
-        msgColl.on("collect", async (msg) => {
-            const guess = parseInt(msg.content);
+        msgColl.on("collect", async (guessMsg) => {
+            const guess = parseInt(guessMsg.content.trim());
             guessesAmt++;
-
-            await msg.delete();
 
             if(guess === randNum)
             {
@@ -107,15 +108,20 @@ export class HigherLower extends Command
                 await msg.edit({ embeds: [
                     this.baseEmbed(author)
                         .setColor(settings.embedColors.gameWon)
-                        .setDescription(`Congratulations! You guessed the number ${randNum} after ${guessesAmt} guess${guessesAmt === 1 ? "" : "es"}`)
+                        .setDescription(`Congratulations! You guessed the number **${randNum}** after ${guessesAmt} guess${guessesAmt === 1 ? "" : "es"}.`)
+                        .setFooter(null)
                 ] });
 
                 msgColl.stop();
                 reactColl.stop();
 
-                await Promise.all(msg.reactions.cache.map(r => r.remove()));
+                await guessMsg.delete();
+
+                await msg.reactions.removeAll();
                 return;
             }
+
+            await guessMsg.delete();
 
             resetTimeout();
 
@@ -129,7 +135,6 @@ export class HigherLower extends Command
             resetTimeout(true);
             this.exitGame(author, msg, randNum, guessesAmt);
         });
-
 
         let inactTo: NodeJS.Timeout;
 
@@ -153,8 +158,10 @@ export class HigherLower extends Command
     {
         await msg.edit({ embeds: [
             this.baseEmbed(author)
-                .setDescription(`The game has ended.\nThe number that was searched for was **${randNum}**\nYou guessed ${guessesAmt} time${guessesAmt === 1 ? "" : "s"}`)
+                .setDescription(`The game has ended.\nThe number that was searched for was **${randNum}**\nYou guessed ${guessesAmt} time${guessesAmt === 1 ? "" : "s"}.`)
                 .setFooter(null)
         ]});
+
+        await msg.reactions.removeAll();
     }
 }

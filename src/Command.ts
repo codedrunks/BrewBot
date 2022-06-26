@@ -64,7 +64,7 @@ export abstract class Command extends EventEmitter
                             .setRequired(arg.required ?? false);
 
                         arg.min && opt.setMinValue(arg.min);
-                        arg.max && opt.setMinValue(arg.max);
+                        arg.max && opt.setMaxValue(arg.max);
 
                         return opt;
                     });
@@ -140,7 +140,7 @@ export abstract class Command extends EventEmitter
                                     .setRequired(arg.required ?? false);
 
                                 arg.min && opt.setMinValue(arg.min);
-                                arg.max && opt.setMinValue(arg.max);
+                                arg.max && opt.setMaxValue(arg.max);
 
                                 return opt;
                             });
