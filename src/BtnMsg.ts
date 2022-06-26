@@ -1,17 +1,16 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
+import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
 import EventEmitter from "events";
-import { EmojiIdentifierResolvable } from "discord.js/typings";
 
 import { registerBtnMsg } from "./registry";
 
 
 interface BtnMsgOpts {
-    /** In milliseconds - set to -1 to disable */
+    /** In milliseconds - defaults to 30 minutes, set to -1 to disable */
     timeout: number;
 }
 
-type ButtonOpts = {
+export type ButtonOpts = {
     style?: MessageButtonStyleResolvable,
     label?: string,
     emoji?: EmojiIdentifierResolvable,
@@ -33,7 +32,7 @@ export interface BtnMsg {
  */
 export class BtnMsg extends EventEmitter
 {
-    readonly id: string = randomUUID({ disableEntropyCache: true });
+    readonly id: string = randomUUID();
 
     readonly btns: MessageButton[];
     readonly msg: string | MessageEmbed[];
@@ -81,7 +80,7 @@ export class BtnMsg extends EventEmitter
         });
 
         const defaultOpts: BtnMsgOpts = {
-            timeout: -1,
+            timeout: 1000 * 60 * 30,
         };
 
         this.opts = { ...defaultOpts, ...options };
@@ -107,7 +106,7 @@ export class BtnMsg extends EventEmitter
     /**
      * Returns reply options that can be passed to the `CommandInteraction.reply()` function
      * @example ```ts
-     * await int.reply(new BtnMsg("yo", new MessageButton()).getReplyOpts())
+     * await int.reply(new BtnMsg(...).getReplyOpts())
      * ```
      */
     public getReplyOpts(): InteractionReplyOptions
@@ -116,9 +115,9 @@ export class BtnMsg extends EventEmitter
     }
 
     /**
-     * Returns message options that can be passed to the `Message.send()` function
+     * Returns message options that can be passed to the `TextBasedChannel.send()` function
      * @example ```ts
-     * await int.channel?.send(new BtnMsg("yo", new MessageButton()).getMsgOpts())
+     * await channel.send(new BtnMsg(...).getMsgOpts())
      * ```
      */
     public getMsgOpts(): MessageOptions
@@ -134,7 +133,7 @@ export class BtnMsg extends EventEmitter
         };
     }
 
-    /** Sends this message in a channel */
+    /** Sends this message in the provided `channel` */
     public sendIn(channel: TextBasedChannel)
     {
         return channel.send(this.getMsgOpts());
