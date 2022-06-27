@@ -12,6 +12,7 @@ export class HigherLower extends Command
         super({
             name: "higherlower",
             desc: "Guess the random number that is searched for only by getting the hints \"higher\" and \"lower\".",
+            category: "games",
             args: [
                 {
                     name: "max",

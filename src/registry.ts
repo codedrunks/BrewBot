@@ -9,6 +9,8 @@ import { events } from "./events";
 import { BtnMsg } from "./BtnMsg";
 import { Modal } from "./Modal";
 
+import { initHelp } from "./commands/util/Help";
+
 
 let rest: REST;
 let botClient: Client;
@@ -63,6 +65,8 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     }
 
     const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
+
+    initHelp();
 
 
     // use this when ready for production, as global commands are cached and take an hour to update across guilds - guild commands on the other hand update instantly

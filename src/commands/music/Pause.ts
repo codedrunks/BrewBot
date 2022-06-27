@@ -8,7 +8,8 @@ export class Pause extends Command {
     constructor() {
         super({
             name: "pause",
-            desc: "Pause the currently playing song"
+            desc: "Pause the currently playing song",
+            category: "music"
         });
     }
 

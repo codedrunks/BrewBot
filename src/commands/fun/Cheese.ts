@@ -11,6 +11,7 @@ export class Cheese extends Command
             name: "cheese",
             desc: "For your cheesy needs",
             perms: [],
+            category: "fun",
             subcommands: [
                 {
                     name: "today",

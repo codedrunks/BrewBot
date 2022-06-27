@@ -8,6 +8,7 @@ export class Mock extends Command
         super({
             name: "mock",
             desc: "Mockifies your message",
+            category: "fun",
             perms: [],
             args: [
                 {

@@ -11,7 +11,8 @@ export class Daily extends Command {
     constructor() {
         super({
             name: "daily",
-            desc: "Recieves a coin bonus every 24 hours"
+            desc: "Recieves a coin bonus every 24 hours",
+            category: "economy"
         });
     }
 

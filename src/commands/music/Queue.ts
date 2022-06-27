@@ -18,7 +18,8 @@ export class Queue extends Command {
     constructor() {
         super({
             name: "queue",
-            desc: "Shows the current music queue"
+            desc: "Shows the current music queue",
+            category: "music"
         });
     }
 

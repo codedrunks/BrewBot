@@ -18,6 +18,7 @@ export class Define extends Command
         super({
             name: "define",
             desc: "Searches for the definition of a term",
+            category: "util",
             args: [
                 {
                     name: "term",

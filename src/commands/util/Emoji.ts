@@ -11,6 +11,7 @@ export class Emoji extends Command
         super({
             name: "emoji",
             desc: "Turns one or more custom emojis into full-sized images for you to download",
+            category: "util",
             args: [
                 {
                     name: "emoji",

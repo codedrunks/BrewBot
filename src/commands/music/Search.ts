@@ -11,6 +11,7 @@ export class Search extends Command {
         super({
             name: "search",
             desc: "Search for a song",
+            category: "music",
             args: [
                 {
                     name: "song",

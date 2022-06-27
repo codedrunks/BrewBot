@@ -13,6 +13,7 @@ export class Reminder extends Command
         super({
             name: "reminder",
             desc: "Set a reminder to get DMed after a certain time passed",
+            category: "util",
             subcommands: [
                 {
                     name: "set",

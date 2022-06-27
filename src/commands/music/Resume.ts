@@ -8,7 +8,8 @@ export class Resume extends Command {
     constructor() {
         super({
             name: "resume",
-            desc: "Resumes current song"
+            desc: "Resumes current song",
+            category: "music"
         });
     }
 

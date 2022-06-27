@@ -9,6 +9,7 @@ export class Say extends Command
         super({
             name: "say",
             desc: "Makes the bot send a message",
+            category: "mod",
             args: [
                 {
                     name: "message",

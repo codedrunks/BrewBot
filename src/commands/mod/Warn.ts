@@ -16,6 +16,7 @@ export class Warn extends Command
         super({
             name: "warn",
             desc: "Warns a user",
+            category: "mod",
             args: [
                 {
                     name: "member",

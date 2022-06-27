@@ -12,6 +12,7 @@ export class SetBalance extends Command {
         super({
             name: "setbalance",
             desc: "Set a users balance",
+            category: "economy",
             args: [
                 {
                     name: "amount",

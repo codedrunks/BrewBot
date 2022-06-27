@@ -17,6 +17,7 @@ export class Contest extends Command
             name: "contest",
             desc: "Contest command to start, vote on, and submit art contests",
             perms: [],
+            category: "fun",
             subcommands: [
                 {
                     name: "add",

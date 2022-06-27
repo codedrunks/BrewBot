@@ -88,6 +88,8 @@ interface AttachmentCommandArg {
     type: "attachment";
 }
 
+export type CommandCategory = "economy" | "fun" | "games" | "mod" | "music" | "util" | "restricted";
+
 interface CmdMetaBase {
     /** Name of the command (`/name` to call it in chat) */
     name: string;
@@ -103,6 +105,7 @@ interface CmdMetaBase {
 export interface CommandMeta extends CmdMetaBase {
     /** Optional array of arguments this command has */
     args?: CommandArg[];
+    category?: CommandCategory;
 }
 
 /** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
