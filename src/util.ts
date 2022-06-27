@@ -38,9 +38,7 @@ export function TryCatchMethod(handler: HandlerFunction) {
 
         descriptor.value = function(...args: any[]) {
             const interaction = args[0];
-            let isInteractionType: boolean;
-            if(interaction instanceof CommandInteraction) isInteractionType = true;
-            else isInteractionType = false;
+            let isInteractionType = interaction instanceof CommandInteraction;
 
             try {
                 const result = wrappedMethod.apply(this, args);
