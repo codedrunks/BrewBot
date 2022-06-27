@@ -13,6 +13,8 @@ const CommandObj: Record<string, CommandMeta[]> = {
     "util": []
 };
 
+let finalizedString: string;
+
 export function initHelp() {
     const commands = getCommands();
 
@@ -22,6 +24,8 @@ export function initHelp() {
         if(!cat || cat == "restricted") return;
         else CommandObj[cat].push(c.meta);
     });
+
+    finalizedString = `${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
 }
 
 export class Help extends Command {
@@ -34,8 +38,8 @@ export class Help extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const embed = embedify(`${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`) // eslint-disable-line
-            .setTitle(`${int.client.user?.username}'s Commands`);
+        const embed = embedify(finalizedString)
+            .setTitle(`${int.client.user?.username ?? "Bot"}'s Commands`);
 
         this.reply(int, embed);
     }
