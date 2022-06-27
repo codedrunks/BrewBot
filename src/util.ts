@@ -1,4 +1,4 @@
-import { ColorResolvable, MessageEmbed } from "discord.js";
+import { ColorResolvable, CommandInteraction, MessageEmbed } from "discord.js";
 import { ParseDurationResult } from "svcorelib";
 import { settings } from "./settings";
 
@@ -27,3 +27,36 @@ export function musicReadableTimeString(position: ParseDurationResult, duration:
 
     return `${positionString}/${durationString}`;
 }
+
+/* eslint-disable */
+
+export type HandlerFunction = (err: any, interaction?: CommandInteraction) => void;
+
+export function TryCatchMethod(handler: HandlerFunction) {
+    return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+        const wrappedMethod = descriptor.value;
+
+        descriptor.value = function(...args: any[]) {
+            const interaction = args[0];
+            let isInteractionType: boolean;
+            if(interaction instanceof CommandInteraction) isInteractionType = true;
+            else isInteractionType = false;
+
+            try {
+                const result = wrappedMethod.apply(this, args);
+
+                if(result && result instanceof Promise) {
+                    return result.catch((err: any) => handler(err, isInteractionType ? interaction : null));
+                }
+
+                return result;
+            } catch(err) {
+                handler(err, isInteractionType ? interaction : null);
+            }
+        }
+
+        return descriptor;
+    };
+}
+
+/* eslint-enable */

@@ -1,7 +1,7 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "../../Command";
 import { getManager } from "../../lavalink/client"; // eslint-disable-line
-import { embedify } from "../../util";
+import { embedify, TryCatchMethod } from "../../util";
 import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "../../database/music";
 
 export class DJ extends Command {
@@ -49,6 +49,7 @@ export class DJ extends Command {
         });
     }
 
+    @TryCatchMethod((err, interaction) => interaction?.reply({ embeds: [ embedify("Something went wrong!") ]}))
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void> {
         const guild = int.guild;
 
