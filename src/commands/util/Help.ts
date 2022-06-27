@@ -4,11 +4,7 @@ import { Command } from "../../Command";
 import { embedify } from "../../util";
 import { CommandMeta } from "../../types";
 
-interface ICommandObj {
-    [key: string]: CommandMeta[]
-}
-
-const CommandObj: ICommandObj = {
+const CommandObj: Record<string, CommandMeta[]> = {
     "economy": [],
     "fun": [],
     "games": [],
@@ -38,12 +34,8 @@ export class Help extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-
-        console.log(CommandObj);
-
         const embed = embedify(`${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`) // eslint-disable-line
             .setTitle(`${int.client.user?.username}'s Commands`);
-        // const embed = embedify(`${commands.map(v => `\`${v.meta.name}\``).join(" ")}`).setTitle(`${int.client.user?.username}'s Commands`);
 
         this.reply(int, embed);
     }
