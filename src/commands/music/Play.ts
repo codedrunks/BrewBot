@@ -83,7 +83,8 @@ export class Play extends Command {
         const player = manager.get(guild.id) ?? manager.create({
             guild: guild.id,
             voiceChannel: voice,
-            textChannel: int.channel.id
+            textChannel: int.channel.id,
+            selfDeafen: true
         });
 
         if(player.state !== "CONNECTED") player.connect();
