@@ -22,11 +22,13 @@ if(clientID && clientSecret) {
 
 const nodes: NodeOptions[] = [];
 
-process.env.LAVALINK_HOST?.split(",").map((v) => {
+process.env.LAVALINK_HOSTS?.split(",").map((v) => {
+    const [host, pass] = v.split(":");
+
     nodes.push({
-        host: v,
+        host: host,
         port: 2333,
-        password: process.env.LAVALINK_PASSWORD
+        password: pass
     });
 });
 

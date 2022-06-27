@@ -128,6 +128,7 @@ export class Search extends Command {
                     }
 
                     if(!position) {
+                        player.queue.add(track);
                         sEmbed = embedify(`Queued \`${track.title}\` in ${channelMention}`);
                     }
 
