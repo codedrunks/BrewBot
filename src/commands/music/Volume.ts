@@ -9,6 +9,7 @@ export class Volume extends Command {
         super({
             name: "volume",
             desc: "Sets the volume of the bot (1-100)",
+            category: "music",
             args: [
                 {
                     name: "volume",

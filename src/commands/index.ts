@@ -21,7 +21,9 @@ import { Exec } from "./util/Exec";
 import { Ping } from "./util/Ping";
 import { Reminder } from "./util/Reminder";
 import { Server } from "./util/Server";
+import { Help } from "./util/Help";
 import { Btn } from "./Btn";
+
 import { Contest } from "./fun/Contest/Contest";
 
 import { Balance } from "./economy/Balance";
@@ -74,6 +76,7 @@ export const commands = [
     Ping,
     Reminder,
     Server,
+    Help,
 
     // Economy
     Balance,

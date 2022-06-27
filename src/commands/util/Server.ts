@@ -9,6 +9,7 @@ export class Server extends Command
         super({
             name: "server",
             desc: "Server information",
+            category: "util",
             subcommands: [
                 {
                     name: "info",

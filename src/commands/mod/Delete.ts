@@ -11,6 +11,7 @@ export class Delete extends Command {
         super({
             name: "del",
             desc: "Deletes a specific amount of messages",
+            category: "mod",
             args: [
                 {
                     name: "amount",

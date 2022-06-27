@@ -9,6 +9,7 @@ export class DJ extends Command {
         super({
             name: "dj",
             desc: "Set DJ roles and set music to DJ only",
+            category: "music",
             subcommands: [
                 {
                     name: "set",

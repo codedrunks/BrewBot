@@ -18,6 +18,7 @@ export class Ferret extends Command
         super({
             name: "ferret",
             desc: "Displays a random ferret image",
+            category: "fun",
             perms: [],
         });
     }

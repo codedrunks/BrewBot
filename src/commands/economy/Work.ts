@@ -12,7 +12,8 @@ export class Work extends Command {
     constructor() {
         super({
             name: "work",
-            desc: `Work for coins, can be used every ${secs4hours / 3600} hours.`
+            desc: `Work for coins, can be used every ${secs4hours / 3600} hours.`,
+            category: "economy"
         });
     }
 

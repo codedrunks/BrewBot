@@ -10,6 +10,7 @@ export class Play extends Command {
         super({
             name: "play",
             desc: "Plays a song from youtube url",
+            category: "music",
             args: [
                 {
                     name: "song",

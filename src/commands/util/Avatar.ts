@@ -10,6 +10,7 @@ export class Avatar extends Command
         super({
             name: "avatar",
             desc: "Shows your own or another user's avatar",
+            category: "util",
             args: [
                 {
                     name: "user",

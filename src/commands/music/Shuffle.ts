@@ -8,7 +8,8 @@ export class Shuffle extends Command {
     constructor() {
         super({
             name: "shuffle",
-            desc: "Shuffles the queue"
+            desc: "Shuffles the queue",
+            category: "music"
         });
     }
 

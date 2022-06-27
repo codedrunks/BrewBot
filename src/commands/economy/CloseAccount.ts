@@ -11,6 +11,7 @@ export class CloseAccount extends Command {
         super({
             name: "closeaccount",
             desc: "Delete your database entry",
+            category: "economy"
         });
     }
 

@@ -8,7 +8,8 @@ export class NowPlaying extends Command {
     constructor() {
         super({
             name: "nowplaying",
-            desc: "Shows the current playing song"
+            desc: "Shows the current playing song",
+            category: "music"
         });
     }
 

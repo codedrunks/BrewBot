@@ -9,6 +9,7 @@ export class Skip extends Command {
         super({
             name: "skip",
             desc: "Skip the currently playing song",
+            category: "music",
             args: [
                 {
                     name: "amount",

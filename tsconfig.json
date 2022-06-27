@@ -19,10 +19,10 @@
             "node_modules/@types"
         ],
         "sourceMap": true,
-        "paths": {
-            "@src/*": ["src/*"],
-            "@commands/*": ["src/commands/*"]
-        }
+        // "paths": {
+        //     "@src/*": ["src/*"],
+        //     "@commands/*": ["src/commands/*"]
+        // }
     },
     "files": [
         "src/bot.ts"

@@ -8,6 +8,7 @@ export class OpenAccount extends Command {
         super({
             name: "openaccount",
             desc: "Opens a coin account with Bot Bank :tm:",
+            category: "economy",
             perms: []
         });
     }

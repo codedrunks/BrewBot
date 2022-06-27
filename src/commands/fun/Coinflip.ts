@@ -13,6 +13,7 @@ export class Coinflip extends Command {
             name: "coinflip",
             desc: "Flips one or multiple coins",
             perms: [],
+            category: "fun",
             args: [
                 {
                     name: "amount",

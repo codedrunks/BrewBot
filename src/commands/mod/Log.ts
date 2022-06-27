@@ -10,6 +10,7 @@ export class Log extends Command {
         super({
             name: "log",
             desc: "Logs the last x messages from current channel to the specified channel",
+            category: "mod",
             args: [
                 {
                     name: "amount",

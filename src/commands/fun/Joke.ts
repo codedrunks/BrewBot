@@ -38,6 +38,7 @@ export class Joke extends Command
             name: "joke",
             desc: "Gives you one or multiple random jokes",
             perms: [],
+            category: "fun",
             args: [
                 {
                     name: "category",

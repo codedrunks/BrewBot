@@ -8,6 +8,7 @@ export class Balance extends Command {
         super({
             name: "balance",
             desc: "Gets your current coin balance",
+            category: "economy",
             perms: []
         });
     }

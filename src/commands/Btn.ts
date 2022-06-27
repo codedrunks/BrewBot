@@ -9,6 +9,7 @@ export class Btn extends Command
         super({
             name: "btn",
             desc: "DEBUG",
+            category: "restricted",
             perms: [ "MANAGE_MESSAGES" ],
             args: [
                 {

@@ -9,6 +9,7 @@ export class Repeat extends Command {
         super({
             name: "repeat",
             desc: "Repeats current song or queue",
+            category: "music",
             subcommands: [
                 {
                     name: "song",

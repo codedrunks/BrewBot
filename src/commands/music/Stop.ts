@@ -8,7 +8,8 @@ export class Stop extends Command {
     constructor() {
         super({
             name: "stop",
-            desc: "Clears the queue and makes the bot leave the voice channel"
+            desc: "Clears the queue and makes the bot leave the voice channel",
+            category: "music"
         });
     }
 

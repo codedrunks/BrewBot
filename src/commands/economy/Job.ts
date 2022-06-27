@@ -9,7 +9,8 @@ export class Job extends Command {
     constructor() {
         super({
             name: "job",
-            desc: "Shows your current job and it's information"
+            desc: "Shows your current job and it's information",
+            category: "economy"
         });
     }
 

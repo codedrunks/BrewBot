@@ -18,6 +18,7 @@ export class Fact extends Command
         super({
             name: "fact",
             desc: "Tells you a random, useless fact",
+            category: "fun"
         });
     }
 

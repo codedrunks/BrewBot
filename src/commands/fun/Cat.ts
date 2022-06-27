@@ -27,6 +27,7 @@ export class Cat extends Command
         super({
             name: "cat",
             desc: "Shows you images of cats",
+            category: "fun"
         });
     }
 

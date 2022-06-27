@@ -7,7 +7,7 @@ export class Ping extends Command {
         super({
             name: "ping",
             desc: "Check if the bot is alive",
-            perms: [],
+            category: "util"
         });
     }
 
