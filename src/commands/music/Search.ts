@@ -74,7 +74,8 @@ export class Search extends Command {
             const player = manager.get(guild.id) ?? manager.create({
                 guild: guild.id,
                 voiceChannel: voice,
-                textChannel: int.channel.id
+                textChannel: int.channel.id,
+                selfDeafen: true
             });
 
             if(res.tracks.length > 10) res.tracks.length = 10;
