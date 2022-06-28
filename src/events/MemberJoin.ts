@@ -1,6 +1,6 @@
 import { GuildMember } from "discord.js";
-import { Event } from "../Event";
-import { sendLogMsg } from "../botLogs";
+import { Event } from "@src/Event";
+import { sendLogMsg } from "@src/botLogs";
 
 export class MemberJoin extends Event
 {

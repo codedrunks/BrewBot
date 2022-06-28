@@ -1,8 +1,8 @@
 import { Client } from "discord.js";
 import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
 import Spotify from "erela.js-spotify";
-import { queueEnd } from "./lib/queueEnd";
-import { trackStart } from "./lib/trackStart";
+import { queueEnd } from "@src/lavalink/lib/queueEnd";
+import { trackStart } from "@src/lavalink/lib/trackStart";
 
 let client: Client;
 const plugins: Plugin[] = [];

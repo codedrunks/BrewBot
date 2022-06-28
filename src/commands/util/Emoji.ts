@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
 
 const maxEmojiAmt = 10;
 

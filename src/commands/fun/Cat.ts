@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randomItem } from "svcorelib";
 import axios, { AxiosError } from "axios";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
 
 const apiInfo = {
     illusion: {

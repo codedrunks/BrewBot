@@ -2,10 +2,10 @@ import { CommandInteraction, MessageEmbed, MessageButton, ModalSubmitInteraction
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { unused } from "svcorelib";
 
-import { Command } from "../../Command";
-import { BtnMsg } from "../../BtnMsg";
-import { settings } from "../../settings";
-import { Modal } from "../../Modal";
+import { Command } from "@src/Command";
+import { BtnMsg } from "@src/BtnMsg";
+import { settings } from "@src/settings";
+import { Modal } from "@src/Modal";
 
 export class Exec extends Command
 {

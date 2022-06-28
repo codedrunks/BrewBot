@@ -1,10 +1,10 @@
 import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import parseRelativeTime from "parse-relative-time";
 import { readableArray } from "svcorelib";
-import { Command } from "../../Command";
-import persistentData from "../../persistentData";
-import { settings } from "../../settings";
-import { CommandMeta } from "../../types";
+import { Command } from "@src/Command";
+import persistentData from "@src/persistentData";
+import { settings } from "@src/settings";
+import { CommandMeta } from "@src/types";
 
 export class Reminder extends Command
 {

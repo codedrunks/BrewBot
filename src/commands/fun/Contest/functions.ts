@@ -1,7 +1,7 @@
 import { hyperlink, roleMention, time, userMention } from "@discordjs/builders";
 import { Contest, ContestSubmission, Guild } from "@prisma/client";
-import { checkContestTimes, getContestWinners } from "../../../database/contest";
-import { settings } from "../../../settings";
+import { checkContestTimes, getContestWinners } from "@database/contest";
+import { settings } from "@src/settings";
 import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
 
 export async function doContestStuff(cl: Client) {

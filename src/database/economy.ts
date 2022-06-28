@@ -1,5 +1,5 @@
-import { prisma } from "./client";
-import { nowInSeconds } from "../util";
+import { prisma } from "@database/client";
+import { nowInSeconds } from "@src/util";
 
 
 /** get coins from a user */

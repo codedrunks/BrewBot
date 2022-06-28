@@ -1,8 +1,8 @@
-import { embedify } from "../util";
+import { embedify } from "@src/util";
 import { ModalSubmitInteraction, CacheType, TextInputComponent } from "discord.js";
-import { Modal } from "../Modal";
-import { addContest } from "../database/contest";
-import { DatabaseError } from "../database/util";
+import { Modal } from "@src/Modal";
+import { addContest } from "@database/contest";
+import { DatabaseError } from "@database/util";
 
 export class ContestModal extends Modal {
     /** Date format is: "YYYY-MM-DD HH:MM" */

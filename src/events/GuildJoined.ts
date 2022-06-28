@@ -1,7 +1,7 @@
 import { Guild } from "discord.js";
-import { registerGuildCommands } from "../registry";
-import { Event } from "../Event";
-import { sendLogMsg } from "../botLogs";
+import { registerGuildCommands } from "@src/registry";
+import { Event } from "@src/Event";
+import { sendLogMsg } from "@src/botLogs";
 
 
 export class GuildJoined extends Event

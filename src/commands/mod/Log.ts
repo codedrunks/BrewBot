@@ -1,8 +1,8 @@
 import { CommandInteraction, TextChannel, MessageEmbed, ColorResolvable } from "discord.js";
 import k from "kleur";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
-import persistentData from "../../persistentData";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
+import persistentData from "@src/persistentData";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 
 export class Log extends Command {

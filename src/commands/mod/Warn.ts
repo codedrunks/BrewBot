@@ -1,8 +1,8 @@
 import { Client, CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
-import { Command } from "../../Command";
-import { sendLogMsg } from "../../botLogs";
-import persistentData from "../../persistentData";
-import { settings } from "../../settings";
+import { Command } from "@src/Command";
+import { sendLogMsg } from "@src/botLogs";
+import persistentData from "@src/persistentData";
+import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 
 const votesToBan = settings.moderation.votesToBan;

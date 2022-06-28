@@ -1,7 +1,7 @@
 import { CommandInteraction, User } from "discord.js";
-import { Command } from "../../Command";
-import { getManager } from "../../lavalink/client";
-import { embedify, musicReadableTimeString } from "../../util";
+import { Command } from "@src/Command";
+import { getManager } from "@src/lavalink/client";
+import { embedify, musicReadableTimeString } from "@src/util";
 import { formatDuration, parseDuration } from "svcorelib";
 
 export class NowPlaying extends Command {

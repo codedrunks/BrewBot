@@ -1,6 +1,6 @@
 import { GuildMember, PartialGuildMember } from "discord.js";
-import { sendLogMsg } from "../botLogs";
-import { Event } from "../Event";
+import { sendLogMsg } from "@src/botLogs";
+import { Event } from "@src/Event";
 
 
 export class MemberLeave extends Event
