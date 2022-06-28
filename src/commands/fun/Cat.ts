@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randomItem } from "svcorelib";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
@@ -9,11 +9,6 @@ const apiInfo = {
         name: "KotAPI",
         url: "https://api.illusionman1212.tech/kotapi",
         embedFooter: "https://github.com/IllusionMan1212/kotAPI"
-    },
-    thatcopy: {
-        name: "catAPI",
-        url: "https://thatcopy.pw/catapi/rest/",
-        embedFooter: "https://thatcopy.pw/catapi"
     },
 };
 
@@ -32,50 +27,82 @@ export class Cat extends Command
         super({
             name: "cat",
             desc: "Shows you images of cats",
-            perms: [],
-            args: [
-                {
-                    name: "api",
-                    desc: "Selects which API the images should come from",
-                    choices: [
-                        { name: "illusion", value: "illusion" },
-                        { name: "thatcopy", value: "thatcopy" },
-                    ]
-                },
-            ]
         });
     }
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await this.deferReply(int);
-
-        const args = this.resolveArgs(int);
-        let api = args.api as "illusion" | "thatcopy";
-
-        if(!api || api.length === 0)
-            api = randomItem(Object.keys(apiInfo)) as "illusion" | "thatcopy";
-
-        const { data, status, statusText } = await axios.get(apiInfo[api].url, { timeout: 10000 });
-
-        if(status < 200 || status >= 300)
+        try
         {
-            await this.editReply(int, `${apiInfo[api]} is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
-            return;
-        }
+            await this.deferReply(int);
 
-        if(data.webpurl || data.compressed_url)
+            const args = this.resolveArgs(int);
+            let api = args.api as "illusion";
+
+            let allowRetry = false;
+
+            if(!api || api.length === 0)
+            {
+                allowRetry = true;
+                api = randomItem(Object.keys(apiInfo)) as typeof api;
+            }
+
+            const triedApis: typeof api[] = [];
+
+            const tryApi = async (tApi: typeof api): Promise<void> => {
+                triedApis.push(tApi);
+
+                try
+                {
+                    const { data } = await axios.get(apiInfo[tApi].url, { timeout: 5000 });
+
+                    if(data.webpurl || data.compressed_url)
+                    {
+                        const embed = new MessageEmbed()
+                            .setTitle(randomItem(embedTitles))
+                            .setColor(settings.embedColors.default)
+                            .setFooter({ text: apiInfo[tApi].embedFooter })
+                            .setImage(data.webpurl ?? data.compressed_url);
+
+                        return await this.editReply(int, embed);
+                    }
+                    else
+                        return await this.editReply(int, `Couldn't fetch an image from ${apiInfo[api].name}. Please try again later.`);
+                }
+                catch(err)
+                {
+                    if(!(err instanceof AxiosError) || !err.response)
+                        return await this.editReply(int, `${apiInfo[tApi].name} is currently unreachable. Please try again later.`);
+
+                    const { status } = err.response;
+
+                    if(status < 200 || status >= 300)
+                    {
+                        const avlApis = Object.keys(apiInfo).filter(a => !triedApis.includes(a as typeof api)) as typeof api[];
+
+                        if(avlApis.length === 0)
+                            return await this.editReply(int, "All cat APIs are currently unreachable. Please try again later.");
+
+                        const newApi = randomItem(avlApis);
+
+                        if(allowRetry)
+                            return await tryApi(newApi);
+                        else
+                            return await this.editReply(int, `${apiInfo[tApi].name} is currently unreachable. Please try again later.`);
+                    }
+                }
+            };
+
+            return await tryApi(api);
+        }
+        catch(err)
         {
-            const embed = new MessageEmbed()
-                .setTitle(randomItem(embedTitles))
-                .setColor(settings.embedColors.default)
-                .setFooter({ text: apiInfo[api].embedFooter })
-                .setImage(data.webpurl ?? data.compressed_url);
+            const msg = `Encountered an internal error${err instanceof Error ? `: ${err.message}` : ""}`;
 
-            await this.editReply(int, embed);
-            return;
+            if(int.deferred)
+                return await this.editReply(int, msg);
+
+            return await this.reply(int, msg, true);
         }
-        else
-            await this.editReply(int, `Couldn't fetch an image from ${apiInfo[api].name}. Please try again later.`);
     }
 }

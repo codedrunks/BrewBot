@@ -1,15 +1,21 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, InteractionReplyOptions, MessageActionRow, MessageButton, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
+import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
 import EventEmitter from "events";
 
 import { registerBtnMsg } from "./registry";
 
 
 interface BtnMsgOpts {
-    /** In milliseconds - set to -1 to disable */
+    /** In milliseconds - defaults to 30 minutes, set to -1 to disable */
     timeout: number;
 }
 
+export type ButtonOpts = {
+    style?: MessageButtonStyleResolvable,
+    label?: string,
+    emoji?: EmojiIdentifierResolvable,
+    url?: string,
+}[];
 
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
@@ -26,7 +32,7 @@ export interface BtnMsg {
  */
 export class BtnMsg extends EventEmitter
 {
-    readonly id: string = randomUUID({ disableEntropyCache: true });
+    readonly id: string = randomUUID();
 
     readonly btns: MessageButton[];
     readonly msg: string | MessageEmbed[];
@@ -41,11 +47,31 @@ export class BtnMsg extends EventEmitter
      * @param buttons One or up to 5 MessageButton instances
      */
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
+    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
+    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
         super();
 
         this.msg = message instanceof MessageEmbed ? [message] : message;
-        this.btns = Array.isArray(buttons) ? buttons : [buttons];
+
+        if(buttons instanceof MessageButton || (Array.isArray(buttons) && buttons[0] instanceof MessageButton))
+            this.btns = Array.isArray(buttons) ? buttons as MessageButton[] : [buttons];
+        else
+        {
+            const btns: MessageButton[] = [];
+
+            buttons.forEach(b => {
+                const mb = new MessageButton();
+                b.label && mb.setLabel(b.label);
+                b.style && mb.setStyle(b.style);
+                b.emoji && mb.setEmoji(b.emoji as EmojiIdentifierResolvable);
+                b.url && mb.setURL(b.url);
+
+                btns.push(mb);
+            });
+
+            this.btns = btns;
+        }
 
         this.btns = this.btns.map((b, i) => {
             if(!b.url)
@@ -54,7 +80,7 @@ export class BtnMsg extends EventEmitter
         });
 
         const defaultOpts: BtnMsgOpts = {
-            timeout: -1,
+            timeout: 1000 * 60 * 30,
         };
 
         this.opts = { ...defaultOpts, ...options };
@@ -80,7 +106,7 @@ export class BtnMsg extends EventEmitter
     /**
      * Returns reply options that can be passed to the `CommandInteraction.reply()` function
      * @example ```ts
-     * await int.reply(new BtnMsg("yo", new MessageButton()).getReplyOpts())
+     * await int.reply(new BtnMsg(...).getReplyOpts())
      * ```
      */
     public getReplyOpts(): InteractionReplyOptions
@@ -89,9 +115,9 @@ export class BtnMsg extends EventEmitter
     }
 
     /**
-     * Returns message options that can be passed to the `Message.send()` function
+     * Returns message options that can be passed to the `TextBasedChannel.send()` function
      * @example ```ts
-     * await int.channel?.send(new BtnMsg("yo", new MessageButton()).getMsgOpts())
+     * await channel.send(new BtnMsg(...).getMsgOpts())
      * ```
      */
     public getMsgOpts(): MessageOptions
@@ -107,7 +133,7 @@ export class BtnMsg extends EventEmitter
         };
     }
 
-    /** Sends this message in a channel */
+    /** Sends this message in the provided `channel` */
     public sendIn(channel: TextBasedChannel)
     {
         return channel.send(this.getMsgOpts());

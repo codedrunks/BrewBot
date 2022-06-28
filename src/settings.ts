@@ -33,7 +33,7 @@ export const settings: Settings = {
         ],
     },
     embedColors: {
-        default: "FUCHSIA",
+        default: "DARK_PURPLE",
         gameWon: "GREEN",
         gameLost: "GREY",
         warning: "ORANGE",
@@ -51,7 +51,10 @@ export const settings: Settings = {
         "407351772575694879",
         "194507254249160704",
         "415597358752071693"
-    ]
+    ],
+    commands: {
+        execEnabled: envVarEquals("EXEC_CMD_ENABLED", false) ? false : true,
+    },
 };
 
 /** Tests if the environment variable `varName` equals `value` - case insensitive! */
@@ -84,5 +87,8 @@ interface Settings {
     emojiList: string[];
     guildID: string;
     messageLogChannel: string;
-    devs: string[]
+    devs: string[];
+    commands: {
+        execEnabled: boolean;
+    }
 }

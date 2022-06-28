@@ -3,6 +3,7 @@ import k from "kleur";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 import persistentData from "../../persistentData";
+import { PermissionFlagsBits } from "discord-api-types/v10";
 
 export class Log extends Command {
     constructor() {
@@ -28,6 +29,7 @@ export class Log extends Command {
                 },
             ],
             perms: ["MANAGE_MESSAGES"],
+            memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }
 

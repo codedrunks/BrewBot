@@ -61,15 +61,16 @@ async function init()
             activities: [{ type: "WATCHING", name: "ur mom" }],
         });
 
-        await doContestStuff(cl);
-
-        console.log(`• ${user.username} is listening for commands and events in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
-
+        console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 
-        settings.debug.bellOnReady && console.log("\u0007");
+        await doContestStuff(cl);
+
+        console.log(k.green(`\n${user.username} is ready.\n`));
 
         process.stdin.isTTY && awaitKeypress();
+
+        ringBell();
     });
 
     client.on("error", err => {
@@ -80,14 +81,12 @@ async function init()
     ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, async () => {
         console.log("Shutting down...");
 
-        prisma.$disconnect();
+        await prisma.$disconnect();
 
-        client.user?.setPresence({
-            status: "dnd",
-            activities: [{ type: "PLAYING", name: "shutting down..." }]
-        });
+        client.user?.setPresence({ status: "dnd", activities: [{ type: "PLAYING", name: "shutting down..." }] });
+        client.user?.setPresence({ status: "invisible", activities: [{ type: "PLAYING", name: "shutting down..." }] });
 
-        exit(0);
+        setTimeout(() => exit(0), 100);
     }));
 }
 
@@ -178,6 +177,12 @@ function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
     }
 
     console.log(msg);
+}
+
+/** Triggers the console bell sound */
+function ringBell()
+{
+    settings.debug.bellOnReady && process.stdout.write("\u0007");
 }
 
 init();

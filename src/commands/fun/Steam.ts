@@ -1,7 +1,7 @@
 import axios from "axios";
-import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageButton, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
-import { BtnMsg } from "../../BtnMsg";
+import { BtnMsg, ButtonOpts } from "../../BtnMsg";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
@@ -13,7 +13,7 @@ export class Steam extends Command
     {
         super({
             name: "steam",
-            desc: "Steam-related commands",
+            desc: "Info about a Steam user and their games",
             subcommands: [
                 {
                     name: "info",
@@ -52,14 +52,14 @@ export class Steam extends Command
 
         try
         {
-            const { username } = this.resolveArgs(int);
+            const username = int.options.getString("username");
 
-            const { data } = await axios.get(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${process.env.STEAM_TOKEN}&vanityurl=${username}`);
+            const { data, status } = await axios.get(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${process.env.STEAM_TOKEN}&vanityurl=${username}`);
+
+            if(status < 200 || status >= 300 || data.response.success !== 1)
+                return await this.editReply(int, "Couldn't find a user with that name");
 
             const usrId = data.response.steamid as string;
-
-            if(data.response.success !== 1)
-                return await this.editReply(int, "Couldn't find a user with that name");
 
             const { nickname, avatar, createdAt, countryCode, realName, url } = await this.api.getUserSummary(usrId);
 
@@ -69,7 +69,6 @@ export class Steam extends Command
             {
                 const embed = new MessageEmbed()
                     .setTitle(`Steam user **${nickname ?? "Anonymous"}**:`)
-                    .setFooter({ text: url })
                     .setColor(settings.embedColors.default);
 
                 avatar && embed.setThumbnail(avatar.large ?? avatar.medium ?? avatar.small);
@@ -89,7 +88,7 @@ export class Steam extends Command
 
                 promises.push(async () => {
                     const recentGames = await this.api.getUserRecentGames(usrId);
-                    Array.isArray(recentGames) && recentGames.length > 0 && embed.addField("Recent Games", recentGames.map(r => r.name).join(", "), true);
+                    Array.isArray(recentGames) && recentGames.length > 0 && embed.addField("Recent Games", recentGames.slice(0, 4).map(r => r.name).join(", "), true);
                 });
 
                 promises.push(async () => {
@@ -107,7 +106,11 @@ export class Steam extends Command
 
                 await Promise.allSettled(promises.map(p => p()));
 
-                await this.editReply(int, embed);
+                const bm = new BtnMsg(embed, [
+                    { style: "LINK", label: "Open profile", url },
+                ]);
+
+                await int.editReply({ ...bm.getReplyOpts() });
                 break;
             }
             case "gamelist":
@@ -121,7 +124,7 @@ export class Steam extends Command
                 {
                     const totalPages = Math.ceil((games.length - 1) / gamesPerMsg);
 
-                    const ebdGames = games;
+                    const ebdGames = [...games.sort((a, b) => a.name > b.name ? 1 : -1)];
                     let pageNbr = 0;
 
                     while(ebdGames.length > 0)
@@ -133,29 +136,33 @@ export class Steam extends Command
                         const first = eRoles.slice(0, half);
                         const second = eRoles.slice((eRoles.length - half) * -1);
 
-                        const toField = (games: Game[]): EmbedFieldData => ({ name: "", value: games.map(g => g.name).join("\n") });
+                        const toField = (games: Game[]): EmbedFieldData => ({ name: "\u200B", value: games.map(g => `${g.name} (${(g.playTime / 60).toFixed(1)}h)`).join("\n"), inline: true });
 
                         const pageDisp = totalPages > 1 ? ` (${pageNbr}/${totalPages})` : "";
 
                         embeds.push(new MessageEmbed()
-                            .setTitle(`Showing Steam games of **${nickname}**:${pageDisp}`)
+                            .setTitle(`Showing Steam games of **${nickname}**${pageDisp}:`)
                             .setColor(settings.embedColors.default)
                             .setFields([ toField(first), toField(second) ])
+                            .setFooter({ text: `${pageDisp} - Total games: ${games.length}` })
                         );
                     }
 
-                    const btns: MessageButton[] = [
-                        new MessageButton().setEmoji("⏮️").setLabel("First").setStyle("SECONDARY"),
-                        new MessageButton().setEmoji("⬅️").setLabel("Previous").setStyle("PRIMARY"),
-                        new MessageButton().setEmoji("➡️").setLabel("Next").setStyle("PRIMARY"),
-                        new MessageButton().setEmoji("⏭️").setLabel("Last").setStyle("SECONDARY"),
+                    const btns: ButtonOpts = [
+                        { emoji: "⏮️", style: "SECONDARY", label: "First" },
+                        { emoji: "⬅️", style: "PRIMARY",   label: "Previous" },
+                        { emoji: "➡️", style: "PRIMARY",   label: "Next" },
+                        { emoji: "⏭️", style: "SECONDARY", label: "Last" },
                     ];
 
-                    const bm = new BtnMsg(embeds[0], btns, { timeout: 1000 * 60 * 5 });
+                    const bm = new BtnMsg(embeds[0], btns);
 
                     let ebdIdx = 0;
 
-                    bm.on("press", async (btn, int) => {
+                    bm.on("press", async (btn, btInt) => {
+                        if(btInt.user.id !== int.user.id && btInt.createdTimestamp - int.createdTimestamp < 1000 * 60)
+                            return await btInt.reply({ content: "You can't interact with this yet.\nPlease wait a minute or send the command yourself.", ephemeral: true });
+
                         switch(btn.label)
                         {
                         case "First":
@@ -176,7 +183,13 @@ export class Steam extends Command
                             break;
                         }
 
+                        await btInt.deferUpdate();
+
                         await int.editReply({ ...bm.getReplyOpts(), embeds: [ embeds[ebdIdx] ] });
+                    });
+
+                    bm.on("timeout", async () => {
+                        await int.editReply({ components: [], embeds: [ embeds[ebdIdx] ] });
                     });
 
                     await int.editReply({ ...bm.getReplyOpts(), embeds: [ embeds[0] ] });
@@ -192,8 +205,8 @@ export class Steam extends Command
 
     async getCountryName(code: string)
     {
-        const { data } = await axios.get(`https://restcountries.com/v2/alpha/${code}`);
+        const { data, status } = await axios.get(`https://restcountries.com/v2/alpha/${code}`);
 
-        return data?.name ?? undefined;
+        return status >= 200 && status < 300 ? data?.name : undefined;
     }
 }

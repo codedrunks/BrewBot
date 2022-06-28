@@ -1,3 +1,4 @@
+import { PermissionFlagsBits } from "discord-api-types/v10";
 import { CommandInteraction, TextBasedChannel } from "discord.js";
 import { Command } from "../../Command";
 
@@ -8,7 +9,6 @@ export class Say extends Command
         super({
             name: "say",
             desc: "Makes the bot send a message",
-            perms: [ "MANAGE_MESSAGES" ],
             args: [
                 {
                     name: "message",
@@ -19,8 +19,10 @@ export class Say extends Command
                     name: "channel",
                     type: "channel",
                     desc: "Which channel to send the message in, leave empty for the current channel"
-                }
-            ]
+                },
+            ],
+            perms: [ "MANAGE_MESSAGES" ],
+            memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }
 

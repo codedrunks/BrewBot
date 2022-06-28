@@ -3,6 +3,7 @@ import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "./types";
 import { ChannelType } from "discord-api-types/v10";
+import k from "kleur";
 
 export interface Command {
     on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
@@ -18,21 +19,27 @@ export abstract class Command extends EventEmitter
 
     //#SECTION constructor
 
-    /** Base class for all slash commands */
+    /**
+     * Base class for all slash commands
+     * @param cmdMeta Meta object that describes this command
+     */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
         super();
 
         const data = new SlashCommandBuilder();
 
+        cmdMeta.memberPerms && data
+            .setDefaultMemberPermissions(cmdMeta.memberPerms.reduce((acc, cur) => acc | cur, 0n));
+
+        const fallbackMeta = {
+            perms: [],
+            args: [],
+        };
+
         if(Command.isCommandMeta(cmdMeta))
         {
             // regular command
-            const fallbackMeta = {
-                perms: [],
-                args: [],
-            };
-
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
@@ -41,6 +48,9 @@ export abstract class Command extends EventEmitter
 
             // string arguments
             Array.isArray(args) && args.forEach(arg => {
+                if(arg.desc.length > 100)
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars`);
+
                 if(arg.type === "user")
                     data.addUserOption(opt =>
                         opt.setName(arg.name)
@@ -54,7 +64,7 @@ export abstract class Command extends EventEmitter
                             .setRequired(arg.required ?? false);
 
                         arg.min && opt.setMinValue(arg.min);
-                        arg.max && opt.setMinValue(arg.max);
+                        arg.max && opt.setMaxValue(arg.max);
 
                         return opt;
                     });
@@ -99,17 +109,24 @@ export abstract class Command extends EventEmitter
         else
         {
             // subcommands
-            this.meta = cmdMeta;
+            this.meta = { ...fallbackMeta, ...cmdMeta };
 
             data.setName(cmdMeta.name)
                 .setDescription(cmdMeta.desc);
 
             cmdMeta.subcommands.forEach(scmd => {
+                if(scmd.desc.length > 100)
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars`);
+
                 data.addSubcommand(sc => {
+
                     sc.setName(scmd.name)
                         .setDescription(scmd.desc);
 
                     Array.isArray(scmd.args) && scmd.args.forEach(arg => {
+                        if(arg.desc.length > 100)
+                            throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} argument ${k.yellow(arg.name)} can't be longer than 100 chars`);
+
                         if(arg.type === "user")
                             sc.addUserOption(opt =>
                                 opt.setName(arg.name)
@@ -123,7 +140,7 @@ export abstract class Command extends EventEmitter
                                     .setRequired(arg.required ?? false);
 
                                 arg.min && opt.setMinValue(arg.min);
-                                arg.max && opt.setMinValue(arg.max);
+                                arg.max && opt.setMaxValue(arg.max);
 
                                 return opt;
                             });
@@ -265,7 +282,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -289,7 +306,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
@@ -304,7 +321,7 @@ export abstract class Command extends EventEmitter
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || content instanceof Array<MessageEmbed>)
+        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
             await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 

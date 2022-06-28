@@ -3,6 +3,7 @@ import { Command } from "../../Command";
 import { sendLogMsg } from "../../botLogs";
 import persistentData from "../../persistentData";
 import { settings } from "../../settings";
+import { PermissionFlagsBits } from "discord-api-types/v10";
 
 const votesToBan = settings.moderation.votesToBan;
 
@@ -15,7 +16,6 @@ export class Warn extends Command
         super({
             name: "warn",
             desc: "Warns a user",
-            perms: [ "MODERATE_MEMBERS" ],
             args: [
                 {
                     name: "member",
@@ -28,7 +28,9 @@ export class Warn extends Command
                     desc: "The reason of the warning",
                     required: true,
                 },
-            ]
+            ],
+            perms: [ "MODERATE_MEMBERS" ],
+            memberPerms: [ PermissionFlagsBits.ModerateMembers ],
         });
 
         this.botName = client.user?.username;
