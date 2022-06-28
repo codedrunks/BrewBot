@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { embedify } from "../../util";
+import { embedify, useEmbedify } from "../../util";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
 
@@ -173,15 +173,25 @@ export class Define extends Command
         });
     }
 
+    /** Returns an embed description for an emoji choose "dialog" */
+    emojiChooseEmbedDesc(choices: { name: string, url?: string }[]): string
+    {
+        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}${a.url ? ` [\\🔗](${a.url})` : ""}**`).join("\n");
+    }
+
     async findWikiArticle(int: CommandInteraction, articles: WikiArticle[])
     {
         if(!int.channel)
-            throw new Error("Couldn't find channel for /define command");
+            return await int.reply(useEmbedify("Please run this command in a server's text channel.", settings.embedColors.error));
 
         const m = await int.channel.send({ embeds: [
             new MessageEmbed()
                 .setTitle("Select the best matching article")
-                .setDescription(articles.map((a, i) => `${settings.emojiList[i]}  **${a.title} [\\🔗](${a.url})**`).join("\n"))
+                .setDescription(this.emojiChooseEmbedDesc(
+                    articles.map(
+                        ({ title: name, url }) => ({ name, url })
+                    )
+                ))
                 .setColor(settings.embedColors.default)
         ]});
 
