@@ -9,7 +9,7 @@ import { events } from "@src/events";
 import { BtnMsg } from "@src/BtnMsg";
 import { Modal } from "@src/Modal";
 
-import { initHelp } from "./commands/util/Help";
+import { initHelp } from "@commands/util/Help";
 
 
 let rest: REST;

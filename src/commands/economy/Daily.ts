@@ -1,5 +1,5 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../../Command";
+import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@src/util";
 import { addCoins, getLastDaily, setLastDaily } from "@database/economy";
 import { getUser } from "@database/users";

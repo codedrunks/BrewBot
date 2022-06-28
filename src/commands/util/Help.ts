@@ -1,8 +1,8 @@
-import { getCommands } from "../../registry";
+import { getCommands } from "@src/registry";
 import { CommandInteraction } from "discord.js";
-import { Command } from "../../Command";
-import { embedify } from "../../util";
-import { CommandMeta } from "../../types";
+import { Command } from "@src/Command";
+import { embedify } from "@src/util";
+import { CommandMeta } from "@src/types";
 
 const CommandObj: Record<string, CommandMeta[]> = {
     "economy": [],

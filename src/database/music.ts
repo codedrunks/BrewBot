@@ -1,5 +1,5 @@
 import { Collection, Role } from "discord.js";
-import { prisma } from "./client";
+import { prisma } from "@database/client";
 
 export async function addDJRoleId(guildId: string, roleId: string) {
     await prisma.guild.upsert({

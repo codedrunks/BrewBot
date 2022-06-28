@@ -33,18 +33,18 @@ import { Daily } from "@commands/economy/Daily";
 import { Work } from "@commands/economy/Work";
 import { Job } from "@commands/economy/Job";
 
-import { Play } from "./music/Play";
-import { Skip } from "./music/Skip";
-import { NowPlaying } from "./music/NowPlaying";
-import { Stop } from "./music/Stop";
-import { Resume } from "./music/Resume";
-import { Pause } from "./music/Pause";
-import { Search } from "./music/Search";
-import { Queue } from "./music/Queue";
-import { Shuffle } from "./music/Shuffle";
-import { Repeat } from "./music/Repeat";
-import { Volume } from "./music/Volume";
-import { DJ } from "./music/Dj";
+import { Play } from "@commands/music/Play";
+import { Skip } from "@commands/music/Skip";
+import { NowPlaying } from "@commands/music/NowPlaying";
+import { Stop } from "@commands/music/Stop";
+import { Resume } from "@commands/music/Resume";
+import { Pause } from "@commands/music/Pause";
+import { Search } from "@commands/music/Search";
+import { Queue } from "@commands/music/Queue";
+import { Shuffle } from "@commands/music/Shuffle";
+import { Repeat } from "@commands/music/Repeat";
+import { Volume } from "@commands/music/Volume";
+import { DJ } from "@commands/music/Dj";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [

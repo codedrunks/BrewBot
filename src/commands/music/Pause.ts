@@ -1,8 +1,8 @@
-import { isDJOnlyandhasDJRole } from "../../database/music";
+import { isDJOnlyandhasDJRole } from "@database/music";
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
-import { Command } from "../../Command";
-import { getManager } from "../../lavalink/client";
-import { embedify } from "../../util";
+import { Command } from "@src/Command";
+import { getManager } from "@src/lavalink/client";
+import { embedify } from "@src/util";
 
 export class Pause extends Command {
     constructor() {
