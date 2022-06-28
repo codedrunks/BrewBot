@@ -27,16 +27,6 @@ export class Cat extends Command
         super({
             name: "cat",
             desc: "Shows you images of cats",
-            perms: [],
-            args: [
-                // {
-                //     name: "api",
-                //     desc: "Selects which API the images should come from. Defaults to random.",
-                //     choices: [
-                //         { name: "illusion", value: "illusion" },
-                //     ]
-                // },
-            ]
         });
     }
 

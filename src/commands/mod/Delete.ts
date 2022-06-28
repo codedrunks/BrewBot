@@ -14,7 +14,10 @@ export class Delete extends Command {
             args: [
                 {
                     name: "amount",
+                    type: "number",
                     desc: `How many messages to delete. Must be between 1 and ${delMaxAmt}.`,
+                    min: 1,
+                    max: delMaxAmt,
                 },
                 {
                     name: "up_until",
