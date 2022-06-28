@@ -58,7 +58,7 @@ export class Queue extends Command {
 
                 const button = new BtnMsg(embed, btns, { timeout: 60_000 });
 
-                button.on("press", async (b, i) => { // eslint-disable-line
+                button.on("press", async (b, i) => {
 
                     await i.deferUpdate();
 
