@@ -1,6 +1,5 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "../../Command";
-import { getManager } from "../../lavalink/client"; // eslint-disable-line
 import { embedify, TryCatchMethod } from "../../util";
 import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "../../database/music";
 
