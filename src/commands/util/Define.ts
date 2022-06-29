@@ -21,10 +21,11 @@ type DictEntry = {
     source: string;
 };
 
+// TODO: change to raw.githubuserimages url after making the repo public
 const icons = {
-    dictionary: "./assets/external/dictionary.png",
-    wikipedia: "./assets/external/wikipedia.png",
-    urbandictionary: "./assets/external/urbandictionary.png",
+    dictionary: "https://i.postimg.cc/QF6f8Vry/dictionary.png",
+    wikipedia: "https://i.postimg.cc/KKRJRFGv/wikipedia.png",
+    urbandictionary: "https://i.postimg.cc/R3yGt8h1/urbandictionary.png",
 };
 
 export class Define extends Command
@@ -46,8 +47,8 @@ export class Define extends Command
                     desc: "Which search engine to use for the term's definition",
                     choices: [
                         { name: "Wikipedia", value: "wikipedia" },
-                        { name: "Urban Dictionary", value: "urbandictionary" },
                         { name: "Dictionary", value: "dictionary" },
+                        { name: "Urban Dictionary", value: "urbandictionary" },
                     ],
                     required: true,
                 },
@@ -94,7 +95,7 @@ export class Define extends Command
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
                     text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
-                    iconURL: "./assets/external/urbandictionary.png",
+                    iconURL: icons.urbandictionary,
                 });
 
             const redirLink = await grabRedirectUrl(permalink);
@@ -289,7 +290,8 @@ export class Define extends Command
                 const ebd = new MessageEmbed()
                     .setTitle(`Wikipedia definition for **${title}**:`)
                     .setColor(settings.embedColors.default)
-                    .setDescription(extract);
+                    .setDescription(extract)
+                    .setFooter({ text: "https://wikipedia.org/", iconURL: icons.wikipedia });
 
                 thumbnail && ebd.setThumbnail(thumbnail);
 
