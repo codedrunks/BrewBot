@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Launch",
             "program": "${workspaceFolder}/src/bot.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
+            "preLaunchTask": "prelaunch",
             "outFiles": ["${workspaceFolder}/out/**/*.js"],
             "console": "integratedTerminal"
         },
@@ -18,7 +18,7 @@
             "request": "launch",
             "name": "test.ts",
             "program": "${workspaceFolder}/src/test.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
+            "preLaunchTask": "prelaunch",
             "outFiles": ["${workspaceFolder}/out/**/*.js"],
             "console": "integratedTerminal"
         }

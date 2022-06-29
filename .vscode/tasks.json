@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "prelaunch",
+            "command": "tsc && tsc-alias",
+            "type": "shell",
+            "dependsOn": "build"
+        }
+    ]
+}
