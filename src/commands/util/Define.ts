@@ -12,20 +12,20 @@ type WikiArticle = {
     thumbnail?: string;
 };
 
-const iconFiles = [
-    {
-        attachment: "./assets/external/wikipedia.png",
-        name: "wikipedia.png",
-    },
-    {
-        attachment: "./assets/external/urbandictionary.png",
-        name: "urbandictionary.png",
-    },
-    {
-        attachment: "./assets/external/merriamwebster.png",
-        name: "merriamwebster.png",
-    },
-];
+type DictEntry = {
+    word: string;
+    phonetic?: string;
+    partOfSpeech?: string;
+    definitions?: string[];
+    pronounciation: string;
+    source: string;
+};
+
+const icons = {
+    dictionary: "./assets/external/dictionary.png",
+    wikipedia: "./assets/external/wikipedia.png",
+    urbandictionary: "./assets/external/urbandictionary.png",
+};
 
 export class Define extends Command
 {
@@ -47,7 +47,7 @@ export class Define extends Command
                     choices: [
                         { name: "Wikipedia", value: "wikipedia" },
                         { name: "Urban Dictionary", value: "urbandictionary" },
-                        { name: "Merriam Webster", value: "merriamwebster" },
+                        { name: "Dictionary", value: "dictionary" },
                     ],
                     required: true,
                 },
@@ -55,6 +55,7 @@ export class Define extends Command
         });
     }
 
+    // @TryCatchMethod((err, int) => int?.reply({ embeds: [ embedify("Something went wrong!") ], ephemeral: true }))
     async run(int: CommandInteraction): Promise<void>
     {
         const term = int.options.getString("term", true);
@@ -93,7 +94,7 @@ export class Define extends Command
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
                     text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
-                    iconURL: "attachment://urbandictionary.png",
+                    iconURL: "./assets/external/urbandictionary.png",
                 });
 
             const redirLink = await grabRedirectUrl(permalink);
@@ -172,14 +173,68 @@ export class Define extends Command
 
             return await searchWiki(term);
         }
-        case "merriamwebster":
-            return await this.editReply(int, "TODO");
+        case "dictionary":
+        {
+            const termNotFound = () => this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
+            let res;
+
+            try
+            {
+                res = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${term}`);
+            }
+            catch(err)
+            {
+                return await termNotFound();
+            }
+
+            const { data, status } = res;
+
+            if(status === 404 || !Array.isArray(data) || data.length === 0)
+                return await termNotFound();
+
+            if(status < 200 || status >= 300)
+                return await this.editReply(int, embedify("Couldn't reach the dictionary API. Please try again later.", settings.embedColors.error));
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const parseEntry = (data: any): DictEntry => {
+                const meanings = Array.isArray(data.meanings) && data.meanings.length > 0 ?
+                    data.meanings.sort((a: Record<string, string>, b: Record<string, string>) => (a.length > b.length ? 1 : -1))
+                    : undefined;
+
+                return {
+                    word: data.word,
+                    phonetic: data.phonetic,
+                    partOfSpeech: meanings ? meanings[0]?.partOfSpeech : undefined,
+                    definitions: meanings ? meanings[0].definitions.map((d: Record<string, string>) => d.definition).slice(0, 8) : undefined,
+                    pronounciation: Array.isArray(data.phonetics) && data.phonetics.length > 0 ? data.phonetics[0]?.audio : undefined,
+                    source: Array.isArray(data.sourceUrls) ? data.sourceUrls[0] : data.sourceUrls,
+                };
+            };
+
+            const entry = parseEntry(data[0]);
+
+            const desc = [
+                `**${entry.word}** ${entry.partOfSpeech ? `(${entry.partOfSpeech}) ` : ""}${entry.phonetic ? `\`${entry.phonetic}\`` : ""}\n`,
+                `Definition${entry.definitions?.length === 1 ? "" : "s"}:`,
+                entry.definitions ? `- ${entry.definitions.join("\n- ")}` : "(no definitions found)",
+            ].join("\n");
+
+            embed.setTitle(`Dictionary entry for **${term}**:`)
+                .setDescription(desc)
+                .setFooter({ text: "https://dictionaryapi.dev/", iconURL: icons.dictionary });
+
+            if(entry.pronounciation)
+                btns.push(new MessageButton().setStyle("LINK").setLabel("Pronounciation").setURL(entry.pronounciation));
+
+            btns.push(new MessageButton().setStyle("LINK").setLabel("Source").setURL(entry.source));
+
+            break;
+        }
         }
 
         // await this.editReply(int, embed);
         await int.editReply({
             embeds: [ embed ],
-            files: iconFiles,
             ...Command.useButtons(btns),
         });
     }
