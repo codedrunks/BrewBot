@@ -88,6 +88,7 @@ interface AttachmentCommandArg {
     type: "attachment";
 }
 
+/** The different categories that a command can be, these are denoted by the directory name a command is located in */
 export type CommandCategory = "economy" | "fun" | "games" | "mod" | "music" | "util" | "restricted";
 
 interface CmdMetaBase {
@@ -99,19 +100,20 @@ interface CmdMetaBase {
     perms?: (keyof PermissionFlags)[];
     /** Default member permissions needed to view and use this command */
     memberPerms?: PermissionFlagsBits[];
+    /** Category of the command */
+    category?: CommandCategory;
 }
 
 /** Meta information of a regular Command instance */
 export interface CommandMeta extends CmdMetaBase {
     /** Optional array of arguments this command has */
     args?: CommandArg[];
-    category?: CommandCategory;
 }
 
 /** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
 export interface SubcommandMeta extends CmdMetaBase {
     /** Array of subcommands */
-    subcommands: Omit<CommandMeta, "memberPerms">[];
+    subcommands: Omit<CommandMeta, "memberPerms" | "category">[];
 }
 
 //#SECTION reactionroles

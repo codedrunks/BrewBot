@@ -1,7 +1,7 @@
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Collection, CommandInteraction, Message } from "discord.js";
 import k from "kleur";
-import { Command } from "../../Command";
+import { Command } from "@src/Command";
 
 const delMaxAmt = 50;
 

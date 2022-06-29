@@ -1,7 +1,7 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
-import { Command } from "../../Command";
-import { embedify, TryCatchMethod } from "../../util";
-import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "../../database/music";
+import { Command } from "@src/Command";
+import { embedify, TryCatchMethod } from "@src/util";
+import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "@database/music";
 
 export class DJ extends Command {
     constructor() {

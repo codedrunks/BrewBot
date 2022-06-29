@@ -1,7 +1,7 @@
 import { CommandInteraction, Message, MessageEmbed, User } from "discord.js";
 import { randRange } from "svcorelib";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
 
 const inactiveTimeout = 1000 * 60;
 

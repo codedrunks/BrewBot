@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { embedify, useEmbedify } from "../../util";
-import { Command } from "../../Command";
-import { settings } from "../../settings";
+import { embedify, useEmbedify } from "@src/util";
+import { Command } from "@src/Command";
+import { settings } from "@src/settings";
 
 type WikiArticle = {
     title: string;

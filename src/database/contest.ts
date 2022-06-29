@@ -1,6 +1,6 @@
 import { Contest, ContestSubmission, Guild, Prisma } from "@prisma/client";
-import { prisma } from "./client";
-import { DatabaseError } from "./util";
+import { prisma } from "@database/client";
+import { DatabaseError } from "@database/util";
 
 export async function setContestChannel(guildId: string, channelId: string): Promise<DatabaseError> {
     try {

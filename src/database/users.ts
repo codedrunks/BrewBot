@@ -1,5 +1,5 @@
 import { User } from "@prisma/client";
-import { prisma } from "./client";
+import { prisma } from "@database/client";
 
 
 /** Gets user via ID */

@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandMeta, SubcommandMeta } from "./types";
+import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType } from "discord-api-types/v10";
 import k from "kleur";
 import { embedify } from "./util";

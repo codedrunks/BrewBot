@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
-import { BtnMsg } from "../BtnMsg";
-import { Command } from "../Command";
+import { BtnMsg } from "@src/BtnMsg";
+import { Command } from "@src/Command";
 
 export class Btn extends Command
 {

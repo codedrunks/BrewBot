@@ -1,6 +1,6 @@
 import { Client, TextChannel } from "discord.js";
 import { Player } from "erela.js";
-import { embedify } from "../../util";
+import { embedify } from "@src/util";
 
 export function queueEnd(player: Player, client: Client) {
     if(!player.textChannel) return;

@@ -19,10 +19,11 @@
             "node_modules/@types"
         ],
         "sourceMap": true,
-        // "paths": {
-        //     "@src/*": ["src/*"],
-        //     "@commands/*": ["src/commands/*"]
-        // }
+        "paths": {
+            "@src/*": ["./src/*"],
+            "@commands/*": ["./src/commands/*"],
+            "@database/*": ["./src/database/*"]
+        }
     },
     "files": [
         "src/bot.ts"
@@ -33,5 +34,12 @@
     "exclude": [
         "node_modules",
         "out"
-    ]
+    ],
+    "tsc-alias": {
+        "replacers": {
+            "base-url": {
+                "enabled": false
+            }
+        }
+    }
 }

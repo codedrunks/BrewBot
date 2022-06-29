@@ -1,11 +1,11 @@
-import { settings } from "../../../settings";
+import { settings } from "@src/settings";
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
-import { Command } from "../../../Command";
-import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "../../../database/contest";
-import { embedify } from "../../../util";
+import { Command } from "@src/Command";
+import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "@database/contest";
+import { embedify } from "@src/util";
 import { bold, channelMention, hyperlink, userMention, inlineCode, roleMention, strikethrough, time, underscore } from "@discordjs/builders";
-import { ContestModal } from "../../../modals/contest";
-import { DatabaseError } from "../../../database/util";
+import { ContestModal } from "@src/modals/contest";
+import { DatabaseError } from "@database/util";
 
 export class Contest extends Command
 {

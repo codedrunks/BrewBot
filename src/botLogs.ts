@@ -1,5 +1,5 @@
 import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
-import persistentData from "./persistentData";
+import persistentData from "@src/persistentData";
 
 
 let botLogsChannel: TextBasedChannel | undefined;

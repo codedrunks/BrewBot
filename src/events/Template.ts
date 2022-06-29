@@ -1,4 +1,4 @@
-import { Event } from "../Event";
+import { Event } from "@src/Event";
 
 
 export class TEMPLATE extends Event

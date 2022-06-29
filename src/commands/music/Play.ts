@@ -1,9 +1,9 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { SearchQuery } from "erela.js";
-import { Command } from "../../Command";
-import { getManager } from "../../lavalink/client";
-import { embedify } from "../../util";
-import { isDJOnlyandhasDJRole } from "../../database/music";
+import { Command } from "@src/Command";
+import { getManager } from "@src/lavalink/client";
+import { embedify } from "@src/util";
+import { isDJOnlyandhasDJRole } from "@database/music";
 
 export class Play extends Command {
     constructor() {

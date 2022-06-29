@@ -1,6 +1,6 @@
 import { Client, TextChannel, User } from "discord.js";
 import { Player, Track } from "erela.js";
-import { embedify } from "../../util";
+import { embedify } from "@src/util";
 
 export function trackStart(player: Player, track: Track, client: Client) {
     if(!player.textChannel) return;

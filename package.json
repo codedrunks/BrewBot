@@ -2,7 +2,7 @@
   "name": "bot",
   "version": "0.2.0",
   "scripts": {
-    "start": "tsc && node out/bot.js",
+    "start": "tsc && tsc-alias && node out/bot.js",
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
     "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
@@ -26,6 +26,7 @@
     "eslint": "^8.13.0",
     "nodemon": "^1.3.3",
     "ts-node": "^10.7.0",
+    "tsc-alias": "^1.6.11",
     "typescript": "^4.6.3"
   },
   "dependencies": {

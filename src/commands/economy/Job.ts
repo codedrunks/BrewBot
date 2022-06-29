@@ -1,9 +1,9 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
-import { Command } from "../../Command";
-import { getTotalWorks } from "../../database/economy";
-import { settings } from "../../settings";
-import { embedify } from "../../util";
-import { Levels, totalWorksToLevel, baseAward } from "./Jobs";
+import { CommandInteraction, MessageEmbed } from 'discord.js';
+import { Command } from "@src/Command";
+import { getTotalWorks } from "@database/economy";
+import { settings } from "@src/settings";
+import { embedify } from "@src/util";
+import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
 
 export class Job extends Command {
     constructor() {
