@@ -12,6 +12,21 @@ type WikiArticle = {
     thumbnail?: string;
 };
 
+const iconFiles = [
+    {
+        attachment: "./assets/external/wikipedia.png",
+        name: "wikipedia.png",
+    },
+    {
+        attachment: "./assets/external/urbandictionary.png",
+        name: "urbandictionary.png",
+    },
+    {
+        attachment: "./assets/external/merriamwebster.png",
+        name: "merriamwebster.png",
+    },
+];
+
 export class Define extends Command
 {
     constructor()
@@ -32,7 +47,7 @@ export class Define extends Command
                     choices: [
                         { name: "Wikipedia", value: "wikipedia" },
                         { name: "Urban Dictionary", value: "urbandictionary" },
-                        { name: "Marriam Webster", value: "marriamwebster" },
+                        { name: "Merriam Webster", value: "merriamwebster" },
                     ],
                     required: true,
                 },
@@ -146,7 +161,8 @@ export class Define extends Command
                     if(articles.length === 0)
                         return await this.editReply(int, "Couldn't find a wikipedia article with that term");
 
-                    return await this.findWikiArticle(int, articles);
+                    await this.findWikiArticle(int, articles);
+                    return;
                 }
                 catch(err)
                 {
@@ -156,19 +172,14 @@ export class Define extends Command
 
             return await searchWiki(term);
         }
-        case "marriamwebster":
+        case "merriamwebster":
             return await this.editReply(int, "TODO");
         }
 
         // await this.editReply(int, embed);
         await int.editReply({
             embeds: [ embed ],
-            files: [
-                {
-                    attachment: "./assets/external/urbandictionary.png",
-                    name: "urbandictionary.png",
-                }
-            ],
+            files: iconFiles,
             ...Command.useButtons(btns),
         });
     }
