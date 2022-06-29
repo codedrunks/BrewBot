@@ -63,15 +63,9 @@ export class NowPlaying extends Command {
             if(i.user.id !== int.user.id) return;
 
             const djCheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
-
-            console.log("DJCHECK", djCheck);
-
             if(djCheck) return;
 
-            console.log("HERE2");
             if(!player || !player.queue.current) return;
-
-            console.log("HERE3");
 
             switch(b.label) {
             case "- 10s":
