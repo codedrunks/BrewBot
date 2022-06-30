@@ -65,8 +65,10 @@ async function init()
         });
 
         console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+
         await doContestStuff(cl);
-        clientReadyInitLava(client);
+
+        clientReadyInitLava(cl);
 
 
         printDbgItmList(guilds.cache.map(g => g.name), 4);

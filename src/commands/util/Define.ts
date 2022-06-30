@@ -322,7 +322,14 @@ export class Define extends Command
 /** Follows redirects of a `url` and returns the final URL */
 async function grabRedirectUrl(url: string): Promise<string | null>
 {
-    const { request } = await axios.get(url);
+    try
+    {
+        const { request } = await axios.get(url);
 
-    return request?.res?.responseUrl ?? null;
+        return request?.res?.responseUrl ?? null;
+    }
+    catch(err)
+    {
+        return null;
+    }
 }
