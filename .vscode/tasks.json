@@ -3,9 +3,8 @@
     "tasks": [
         {
             "label": "prelaunch",
-            "command": "tsc && tsc-alias",
             "type": "shell",
-            "dependsOn": "build"
+            "command": "tsc && tsc-alias"
         }
     ]
 }
