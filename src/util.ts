@@ -9,6 +9,18 @@ export function embedify(text: string, color?: ColorResolvable): MessageEmbed {
         .setDescription(text).setColor(color ?? defaultColor);
 }
 
+/**
+ * Like embedify, but can be spread onto a `int.reply()` or `msg.edit()` etc.
+ * @example ```ts
+ * await int.reply({ ...useEmbedify("helo"), ...Command.useButtons(btns), attachments: [...] });
+ * await msg.edit(useEmbedify("helo"));
+ * ```
+ */
+export function useEmbedify(text: string, color?: ColorResolvable)
+{
+    return { embeds: [ embedify(text, color) ]};
+}
+
 export function formatSeconds(seconds: number): string {
     const date = new Date(1970, 0, 1);
     date.setSeconds(seconds);

@@ -1,5 +1,6 @@
+import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { embedify, useEmbedify } from "@src/util";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 
@@ -9,6 +10,22 @@ type WikiArticle = {
     pageid: number;
     url: string;
     thumbnail?: string;
+};
+
+type DictEntry = {
+    word: string;
+    phonetic?: string;
+    partOfSpeech?: string;
+    definitions?: string[];
+    pronounciation: string;
+    source: string;
+};
+
+// TODO: change to raw.githubuserimages url after making the repo public
+const icons = {
+    dictionary: "https://i.postimg.cc/QF6f8Vry/dictionary.png",
+    wikipedia: "https://i.postimg.cc/KKRJRFGv/wikipedia.png",
+    urbandictionary: "https://i.postimg.cc/R3yGt8h1/urbandictionary.png",
 };
 
 export class Define extends Command
@@ -30,6 +47,7 @@ export class Define extends Command
                     desc: "Which search engine to use for the term's definition",
                     choices: [
                         { name: "Wikipedia", value: "wikipedia" },
+                        { name: "Dictionary", value: "dictionary" },
                         { name: "Urban Dictionary", value: "urbandictionary" },
                     ],
                     required: true,
@@ -38,41 +56,55 @@ export class Define extends Command
         });
     }
 
+    // @TryCatchMethod((err, int) => int?.reply({ embeds: [ embedify("Something went wrong!") ], ephemeral: true }))
     async run(int: CommandInteraction): Promise<void>
     {
-        const { term, engine } = this.resolveArgs(int);
-
-        if(!term || term.length < 1 || !["urbandictionary", "wikipedia"].includes(engine))
-            return this.reply(int, "Please provide a term to search for and a search engine.", true);
+        const term = int.options.getString("term", true);
+        const engine = int.options.getString("engine", true);
 
         await this.deferReply(int);
 
         const embed = new MessageEmbed()
             .setColor(settings.embedColors.default);
 
+        const btns: MessageButton[] = [];
+
         switch(engine)
         {
         case "urbandictionary":
         {
             const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
-            const obj = req.data?.list[0];
+            const obj = req.data?.list?.at(0);
 
-            if(!obj || req.status < 200 || req.status >= 300)
-                return this.editReply(int, "Couldn't reach Urban Dictionary. Please try again later.");
+            if(req.status < 200 || req.status >= 300)
+                return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
+            else if(!obj)
+                return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
 
-            const removeAnnotations = (str: string) => str.replace(/\[([\w\s\d_-]+)\]/gm, "$1");
+            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´*+#]+)\]/gm, "$1");
 
-            const { definition, example, author, thumbs_up, thumbs_down } = obj;
+            const { definition, example, author, thumbs_up, thumbs_down, permalink } = obj;
 
             const def = definition.match(/^n:\s/i) ? String(definition)[0].toUpperCase() + String(definition).substring(4) : definition;
 
             const ex = example.replace(/(\r?\n){1,2}/gm, "\n> ");
 
             embed.setTitle(`Urban Dictionary definition for **${term}**:`)
-                .setDescription(`${removeAnnotations(def)}\n\n> Example:\n> ${removeAnnotations(ex)}`);
+                .setDescription(`Definition:\n${normalize(def)}\n\n> Example:\n> ${normalize(ex)}`);
 
             author && thumbs_up && thumbs_down &&
-                embed.setFooter({ text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down} - https://www.urbandictionary.com` });
+                embed.setFooter({
+                    text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
+                    iconURL: icons.urbandictionary,
+                });
+
+            const redirLink = await grabRedirectUrl(permalink);
+
+            btns.push(new MessageButton()
+                .setStyle("LINK")
+                .setLabel("Open")
+                .setURL(redirLink ?? permalink)
+            );
 
             break;
         }
@@ -86,13 +118,22 @@ export class Define extends Command
                 const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(searchTerm)}`);
 
                 // follow suggestion if needed
-                if(typeof searchReq.data?.query?.searchinfo?.suggestion === "string")
+                if((!Array.isArray(searchReq.data?.query?.search) || searchReq.data.query.search.length === 0) && typeof searchReq.data?.query?.searchinfo?.suggestion === "string")
                     return await searchWiki(searchReq.data.query.searchinfo.suggestion);
 
                 const searchResults = searchReq.data?.query?.search as WikiArticle[] | undefined;
 
-                if(!Array.isArray(searchResults) || searchReq.status < 200 || searchReq.status >= 300)
-                    return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
+                    reason === "offline"
+                        ? "Couldn't reach Wikipedia. Please try again later."
+                        : "Couldn't find that term.",
+                    settings.embedColors.error));
+
+                if(searchReq.status < 200 || searchReq.status >= 300)
+                    return await errored("offline");
+                else if(!Array.isArray(searchResults))
+                    return await errored("notfound");
+
 
                 const articles: WikiArticle[] = [];
 
@@ -100,8 +141,10 @@ export class Define extends Command
                 {
                     const { data, status } = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(artTitle)}`);
 
-                    if(!data.title || status < 200 || status >= 300)
-                        return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                    if(status < 200 || status >= 300)
+                        return await errored("offline");
+                    else if(!data.title)
+                        return await errored("notfound");
 
                     data.type === "standard" && articles.push({
                         title: data.title,
@@ -118,32 +161,104 @@ export class Define extends Command
                 try
                 {
                     if(articles.length === 0)
-                        return this.editReply(int, "Couldn't find a wikipedia article with that term");
+                        return await this.editReply(int, "Couldn't find a wikipedia article with that term");
 
-                    return await this.findWikiArticle(int, articles);
+                    await this.findWikiArticle(int, articles);
+                    return;
                 }
                 catch(err)
                 {
-                    return this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
+                    return await this.editReply(int, "Couldn't reach Wikipedia. Please try again later.");
                 }
             };
 
             return await searchWiki(term);
         }
+        case "dictionary":
+        {
+            const termNotFound = () => this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
+            let res;
+
+            try
+            {
+                res = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${term}`);
+            }
+            catch(err)
+            {
+                return await termNotFound();
+            }
+
+            const { data, status } = res;
+
+            if(status === 404 || !Array.isArray(data) || data.length === 0)
+                return await termNotFound();
+
+            if(status < 200 || status >= 300)
+                return await this.editReply(int, embedify("Couldn't reach the dictionary API. Please try again later.", settings.embedColors.error));
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const parseEntry = (data: any): DictEntry => {
+                const meanings = Array.isArray(data.meanings) && data.meanings.length > 0 ?
+                    data.meanings.sort((a: Record<string, string>, b: Record<string, string>) => (a.length > b.length ? 1 : -1))
+                    : undefined;
+
+                return {
+                    word: data.word,
+                    phonetic: data.phonetic,
+                    partOfSpeech: meanings ? meanings[0]?.partOfSpeech : undefined,
+                    definitions: meanings ? meanings[0].definitions.map((d: Record<string, string>) => d.definition).slice(0, 8) : undefined,
+                    pronounciation: Array.isArray(data.phonetics) && data.phonetics.length > 0 ? data.phonetics[0]?.audio : undefined,
+                    source: Array.isArray(data.sourceUrls) ? data.sourceUrls[0] : data.sourceUrls,
+                };
+            };
+
+            const entry = parseEntry(data[0]);
+
+            const desc = [
+                `**${entry.word}** ${entry.partOfSpeech ? `(${entry.partOfSpeech}) ` : ""}${entry.phonetic ? `\`${entry.phonetic}\`` : ""}\n`,
+                `Definition${entry.definitions?.length === 1 ? "" : "s"}:`,
+                entry.definitions ? `- ${entry.definitions.join("\n- ")}` : "(no definitions found)",
+            ].join("\n");
+
+            embed.setTitle(`Dictionary entry for **${term}**:`)
+                .setDescription(desc)
+                .setFooter({ text: "https://dictionaryapi.dev/", iconURL: icons.dictionary });
+
+            if(entry.pronounciation)
+                btns.push(new MessageButton().setStyle("LINK").setLabel("Pronounciation").setURL(entry.pronounciation));
+
+            btns.push(new MessageButton().setStyle("LINK").setLabel("Source").setURL(entry.source));
+
+            break;
+        }
         }
 
-        this.editReply(int, embed);
+        // await this.editReply(int, embed);
+        await int.editReply({
+            embeds: [ embed ],
+            ...Command.useButtons(btns),
+        });
+    }
+
+    /** Returns an embed description for an emoji choose "dialog" */
+    emojiChooseEmbedDesc(choices: { name: string, url?: string }[]): string
+    {
+        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}${a.url ? ` [\\🔗](${a.url})` : ""}**`).join("\n");
     }
 
     async findWikiArticle(int: CommandInteraction, articles: WikiArticle[])
     {
         if(!int.channel)
-            throw new Error("Couldn't find channel for /define command");
+            return await int.reply(useEmbedify("Please run this command in a server's text channel.", settings.embedColors.error));
 
         const m = await int.channel.send({ embeds: [
             new MessageEmbed()
                 .setTitle("Select the best matching article")
-                .setDescription(articles.map((a, i) => `${settings.emojiList[i]}  **${a.title} [\\🔗](${a.url})**`).join("\n"))
+                .setDescription(this.emojiChooseEmbedDesc(
+                    articles.map(
+                        ({ title: name, url }) => ({ name, url })
+                    )
+                ))
                 .setColor(settings.embedColors.default)
         ]});
 
@@ -176,11 +291,18 @@ export class Define extends Command
                     .setTitle(`Wikipedia definition for **${title}**:`)
                     .setColor(settings.embedColors.default)
                     .setDescription(extract)
-                    .setFooter({ text: url });
+                    .setFooter({ text: "https://wikipedia.org/", iconURL: icons.wikipedia });
 
                 thumbnail && ebd.setThumbnail(thumbnail);
 
-                await this.editReply(int, ebd);
+                return await int.editReply({
+                    embeds: [ ebd ],
+                    ...Command.useButtons(new MessageButton()
+                        .setStyle("LINK")
+                        .setLabel("Open")
+                        .setURL(url)
+                    )
+                });
             }
         });
 
@@ -188,11 +310,26 @@ export class Define extends Command
             if(reason === "time")
             {
                 await m.reactions.removeAll();
-                await this.editReply(int, "No article was selected in time. Please try again.");
+                return await this.editReply(int, "No article was selected in time. Please try again.");
             }
         });
 
         for await(const e of emList)
             !mDeleted && await m.react(e);
+    }
+}
+
+/** Follows redirects of a `url` and returns the final URL */
+async function grabRedirectUrl(url: string): Promise<string | null>
+{
+    try
+    {
+        const { request } = await axios.get(url);
+
+        return request?.res?.responseUrl ?? null;
+    }
+    catch(err)
+    {
+        return null;
     }
 }

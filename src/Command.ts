@@ -4,6 +4,8 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType } from "discord-api-types/v10";
 import k from "kleur";
+import { embedify } from "./util";
+import { settings } from "./settings";
 
 export interface Command {
     on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
@@ -200,21 +202,27 @@ export abstract class Command extends EventEmitter
     }
 
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
-    public async tryRun(interaction: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
+    public async tryRun(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
     {
         try
         {
-            if(opt ? this.hasPerm(interaction, opt?.name) : this.hasPerm(interaction))
-                return await this.run(interaction, opt);
-            else if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: "You don't have permission to run this command.", ephemeral: true });
+            if(opt ? this.hasPerm(int, opt?.name) : this.hasPerm(int))
+                return await this.run(int, opt);
+            else if(typeof int.reply === "function")
+                return await int.reply({ embeds: [ embedify("You don't have permission to run this command.", settings.embedColors.error) ], ephemeral: true });
 
             return null;
         }
         catch(err)
         {
-            if(typeof interaction.reply === "function")
-                return await interaction.reply({ content: `Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, ephemeral: true });
+            const embeds = [ embedify(`Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, settings.embedColors.error) ];
+
+            if(typeof int.reply === "function" && !int.replied && !int.deferred)
+                return await int.reply({ embeds, ephemeral: true });
+
+            if(typeof int.editReply === "function" && (int.deferred || int.replied))
+                return await int.editReply({ embeds });
+
             return null;
         }
     }
@@ -333,7 +341,13 @@ export abstract class Command extends EventEmitter
 
     //#SECTION static
 
-    /** Returns an object from passed buttons that can be spread onto an interaction reply */
+    /**
+     * Returns an object from passed buttons that can be spread onto an interaction reply  
+     * Returns an empty object if no buttons were passed, so it's always safe to spread
+     * @example ```ts
+     * await int.reply({ ...Command.useButtons(btns), content: "foo" });
+     * ```
+     */
     public static useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
