@@ -5,6 +5,7 @@ import { Command } from "@src/Command";
 import languages from "@src/languages.json";
 import { embedify } from "@src/util";
 import { settings } from "@src/settings";
+import { allOfType } from "svcorelib";
 
 export class Translate extends Command
 {
@@ -32,14 +33,14 @@ export class Translate extends Command
     {
         await this.deferReply(int);
 
-        const text = int.options.getString("text", true);
+        const text = int.options.getString("text", true).trim();
         const lang = int.options.getString("language", true);
 
         const fuse = new Fuse(
             Object.entries(languages).map(([k, v]) => ({ code: k, name: v })),
             {
                 keys: [ "name" ],
-                threshold: 0.675,
+                threshold: 0.5,
                 findAllMatches: true,
             }
         );
@@ -56,15 +57,19 @@ export class Translate extends Command
         if(!tr)
             return await this.editReply(int, embedify("Couldn't find a translation for that", settings.embedColors.error));
 
+        const { fromLang, translation } = tr;
+
+        const fromLangName = (languages as Record<string, string>)[fromLang];
+
         const ebd = new MessageEmbed()
-            .setTitle(`Translating to **${resLang.name}**:`)
+            .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${resLang.name}**:`)
             .setColor(settings.embedColors.default)
-            .setDescription(`> **Input:**\n> ${text}\n\n> **Translation:**\n> ${tr}`);
+            .setDescription(`> **Text:**\n> ${text}\n\n> **Translation:**\n> ${translation}`);
 
         return await this.editReply(int, ebd);
     }
 
-    async getTranslation(text: string, targetLang: string): Promise<string | null>
+    async getTranslation(text: string, targetLang: string): Promise<{ fromLang: string, translation: string } | null>
     {
         try
         {
@@ -73,7 +78,13 @@ export class Translate extends Command
             if(status < 200 || status >= 300)
                 return null;
 
-            return data?.[0]?.[0]?.[0] ?? null;
+            let fromLang = data?.[2];
+            const translation = data?.[0]?.[0]?.[0];
+
+            if(fromLang.match(/^\w+-\w+$/))
+                fromLang = fromLang.split("-")[0];
+
+            return allOfType([fromLang, translation], "string") ? { fromLang, translation } : null;
         }
         catch(err)
         {
