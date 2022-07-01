@@ -1,16 +1,17 @@
-import { getCommands } from "@src/registry";
 import { CommandInteraction } from "discord.js";
+import { getCommands } from "@src/registry";
 import { Command } from "@src/Command";
 import { embedify } from "@src/util";
-import { CommandMeta } from "@src/types";
+import { CommandCategory, CommandMeta } from "@src/types";
 
-const CommandObj: Record<string, CommandMeta[]> = {
+const commandObj: Record<CommandCategory, CommandMeta[]> = {
     "economy": [],
     "fun": [],
     "games": [],
     "mod": [],
     "music": [],
-    "util": []
+    "util": [],
+    "restricted": [],
 };
 
 let finalizedString: string;
@@ -18,14 +19,13 @@ let finalizedString: string;
 export function initHelp() {
     const commands = getCommands();
 
-    commands.forEach(c => {
-        const cat = (c.meta as CommandMeta).category;
+    commands.forEach(({ meta }) => {
+        const cat = meta.category;
 
-        if(!cat || cat == "restricted") return;
-        else CommandObj[cat].push(c.meta);
+        cat && commandObj[cat].push(meta);
     });
 
-    finalizedString = `${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
+    // finalizedString = `${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
 }
 
 export class Help extends Command {
@@ -38,6 +38,21 @@ export class Help extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
+        const helpCmds: Partial<Record<CommandCategory, CommandMeta[]>> = {};
+
+        Object.keys(commandObj).forEach((k: keyof typeof commandObj) => {
+            if(k === "restricted")
+                return;
+
+            commandObj[k].forEach((meta) => {
+                if(!Array.isArray(helpCmds[k]))
+                    helpCmds[k] = [];
+
+                if(int.user)
+                    helpCmds[k].push(meta);
+            });
+        });
+
         const embed = embedify(finalizedString)
             .setTitle(`${int.client.user?.username ?? "Bot"}'s Commands`);
 

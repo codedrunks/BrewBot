@@ -101,7 +101,7 @@ interface CmdMetaBase {
     /** Default member permissions needed to view and use this command */
     memberPerms?: PermissionFlagsBits[];
     /** Category of the command */
-    category?: CommandCategory;
+    category: CommandCategory;
 }
 
 /** Meta information of a regular Command instance */
