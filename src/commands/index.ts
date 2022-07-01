@@ -21,7 +21,7 @@ import { Exec } from "@commands/util/Exec";
 import { Ping } from "@commands/util/Ping";
 import { Reminder } from "@commands/util/Reminder";
 import { Server } from "@commands/util/Server";
-import { Translate } from "./util/Translate";
+import { Translate } from "@commands/util/Translate";
 import { Help } from "@commands/util/Help";
 import { Contest } from "@commands/fun/Contest/Contest";
 
