@@ -21,8 +21,8 @@ import { Exec } from "@commands/util/Exec";
 import { Ping } from "@commands/util/Ping";
 import { Reminder } from "@commands/util/Reminder";
 import { Server } from "@commands/util/Server";
+import { Translate } from "@commands/util/Translate";
 import { Help } from "@commands/util/Help";
-import { Btn } from "@commands/Btn";
 import { Contest } from "@commands/fun/Contest/Contest";
 
 import { Balance } from "@commands/economy/Balance";
@@ -75,6 +75,7 @@ export const commands = [
     Ping,
     Reminder,
     Server,
+    Translate,
     Help,
 
     // Economy
@@ -99,6 +100,4 @@ export const commands = [
     Repeat,
     Volume,
     DJ,
-
-    Btn, //#DEBUG
 ];
