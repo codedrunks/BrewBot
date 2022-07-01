@@ -33,7 +33,7 @@ export class Translate extends Command
     async run(int: CommandInteraction): Promise<void>
     {
         const text = int.options.getString("text", true).trim();
-        const lang = int.options.getString("language", true);
+        const lang = int.options.getString("language", true).trim();
 
         const fuse = new Fuse(
             Object.entries(languages).map(([k, v]) => ({ code: k, name: v })),
