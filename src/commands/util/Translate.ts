@@ -1,11 +1,12 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
+import { allOfType } from "svcorelib";
 import axios from "axios";
 import Fuse from "fuse.js";
+
 import { Command } from "@src/Command";
 import languages from "@src/languages.json";
 import { embedify } from "@src/util";
 import { settings } from "@src/settings";
-import { allOfType } from "svcorelib";
 
 export class Translate extends Command
 {
@@ -31,8 +32,6 @@ export class Translate extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        await this.deferReply(int);
-
         const text = int.options.getString("text", true).trim();
         const lang = int.options.getString("language", true);
 
@@ -41,16 +40,17 @@ export class Translate extends Command
             {
                 keys: [ "name" ],
                 threshold: 0.5,
-                findAllMatches: true,
             }
         );
 
         const res = fuse.search(lang);
 
         if(res.length === 0)
-            return await this.editReply(int, embedify("Couldn't find that language", settings.embedColors.error));
+            return await this.reply(int, embedify("Couldn't find that language", settings.embedColors.error), true);
 
         const resLang = res[0].item;
+
+        await this.deferReply(int);
 
         const tr = await this.getTranslation(text, resLang.code);
 
