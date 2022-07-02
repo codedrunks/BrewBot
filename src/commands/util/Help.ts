@@ -2,9 +2,9 @@ import { CommandInteraction } from "discord.js";
 import { getCommands } from "@src/registry";
 import { Command } from "@src/Command";
 import { embedify } from "@src/util";
-import { CommandCategory, CommandMeta } from "@src/types";
+import { CommandMeta } from "@src/types";
 
-const commandObj: Record<CommandCategory, CommandMeta[]> = {
+const commandObj: Record<string, CommandMeta[]> = {
     "economy": [],
     "fun": [],
     "games": [],
@@ -14,8 +14,6 @@ const commandObj: Record<CommandCategory, CommandMeta[]> = {
     "restricted": [],
 };
 
-let finalizedString: string;
-
 export function initHelp() {
     const commands = getCommands();
 
@@ -24,8 +22,6 @@ export function initHelp() {
 
         cat && commandObj[cat].push(meta);
     });
-
-    // finalizedString = `${Object.entries(CommandObj).map(e => `**${e[0]}**\n${e[1].map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
 }
 
 export class Help extends Command {
@@ -38,24 +34,47 @@ export class Help extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const helpCmds: Partial<Record<CommandCategory, CommandMeta[]>> = {};
+        const helpCmds: Partial<Record<string, CommandMeta[]>> = {};
 
-        Object.keys(commandObj).forEach((k: keyof typeof commandObj) => {
+        await this.deferReply(int);
+
+        Object.keys(commandObj).sort().forEach((k) => {
             if(k === "restricted")
                 return;
 
-            commandObj[k].forEach((meta) => {
-                if(!Array.isArray(helpCmds[k]))
-                    helpCmds[k] = [];
+            const category = commandObj[k];
 
-                if(int.user)
-                    helpCmds[k].push(meta);
-            });
+            category
+                .sort((a, b) => a.name > b.name ? 1 : -1)
+                .forEach((meta) => {
+                    if(!Array.isArray(helpCmds[k]))
+                        helpCmds[k] = [];
+
+                    const guildUser = int.guild?.members.cache.find(m => m.id === int.user.id);
+
+                    if(guildUser && Array.isArray(meta.perms) && meta.perms.length > 0)
+                    {
+                        const permNum = meta.perms.reduce((a, c) => a + (guildUser.permissions.has(c) ? 1 : 0), 0);
+
+                        if(permNum === meta.perms.length)
+                            helpCmds[k]?.push(meta);
+                    }
+                    else
+                        helpCmds[k]?.push(meta);
+                });
         });
 
-        const embed = embedify(finalizedString)
-            .setTitle(`${int.client.user?.username ?? "Bot"}'s Commands`);
+        const description = `${Object.entries(helpCmds)
+            .filter(([,v]) => Array.isArray(v) && v.length > 0)
+            .map(([cat, cmds]) => `**${cat}**\n${cmds!.map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
 
-        this.reply(int, embed);
+        const embed = embedify(description)
+            .setTitle(`${int.client.user?.username ?? "Bot"}'s Commands:`);
+
+        const avatar = int.client.user?.avatarURL();
+
+        avatar && embed.setThumbnail(avatar);
+
+        return await this.editReply(int, embed);
     }
 }
