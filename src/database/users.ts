@@ -1,7 +1,6 @@
 import { User } from "@prisma/client";
 import { prisma } from "@database/client";
 
-
 /** Gets user via ID */
 export async function getUser(userId: string): Promise<User | null> {
     const user = await prisma.user.findUnique({
@@ -46,21 +45,21 @@ export async function createNewUser(userId: string, guildId: string) {
     });
 }
 
-/** Add new user if they do not exist, and give them a balance */
 export async function createNewUserWithCoins(userId: string, guildId: string, coins: number) {
-    await prisma.user.upsert({
+    await prisma.coins.upsert({
         where: {
-            id: userId
-        },
-        update: {},
-        create: {
-            id: userId,
-            coins: {
-                create: {
-                    amount: coins,
-                    guildId,
-                }
+            guildId_userId: {
+                guildId,
+                userId
             }
+        },
+        update: {
+            amount: coins
+        },
+        create: {
+            guildId,
+            userId,
+            amount: coins
         }
     });
 }

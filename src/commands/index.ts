@@ -25,9 +25,7 @@ import { Translate } from "@commands/util/Translate";
 import { Help } from "@commands/util/Help";
 import { Contest } from "@commands/fun/Contest/Contest";
 
-import { Balance } from "@commands/economy/Balance";
-import { OpenAccount } from "@commands/economy/OpenAccount";
-import { CloseAccount } from "@commands/economy/CloseAccount";
+import { Account } from "@src/commands/economy/Account";
 import { SetBalance } from "@commands/economy/SetBalance";
 import { Daily } from "@commands/economy/Daily";
 import { Work } from "@commands/economy/Work";
@@ -81,9 +79,7 @@ export const commands = [
     Help,
 
     // Economy
-    Balance,
-    OpenAccount,
-    CloseAccount,
+    Account,
     SetBalance,
     Daily,
     Work,
