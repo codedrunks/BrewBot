@@ -32,6 +32,7 @@ import { SetBalance } from "@commands/economy/SetBalance";
 import { Daily } from "@commands/economy/Daily";
 import { Work } from "@commands/economy/Work";
 import { Job } from "@commands/economy/Job";
+import { Slots } from "@commands/games/Slots";
 
 import { Play } from "@commands/music/Play";
 import { Skip } from "@commands/music/Skip";
@@ -59,6 +60,7 @@ export const commands = [
     Joke,
     Mock,
     Steam,
+    Slots,
 
     // mod
     Delete,
