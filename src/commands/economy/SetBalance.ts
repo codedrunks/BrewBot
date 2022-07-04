@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
-import { createNewUserWithCoins } from "@database/users";
+import { setCoins } from "@database/economy";
 import { settings } from "@src/settings";
 import { embedify } from "@src/util";
 
@@ -41,7 +41,7 @@ export class SetBalance extends Command {
 
         const user = int.options.getUser("user") ?? int.user;
 
-        await createNewUserWithCoins(user.id, guildid, parseInt(args.amount));
+        await setCoins(user.id, guildid, parseInt(args.amount));
 
         return this.reply(int, embedify(`${user.id == int.user.id ? "Your" : `${user.username}'s`} balance has been set to ${args.amount}`));
     }

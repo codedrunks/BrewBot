@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from 'discord.js';
+import { CommandInteraction, MessageEmbed } from "discord.js";
 import { Command } from "@src/Command";
 import { getTotalWorks } from "@database/economy";
 import { settings } from "@src/settings";
