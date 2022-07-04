@@ -1,6 +1,7 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { createNewUser, createNewUserWithCoins, deleteUser } from "@database/users";
+import { createNewUser, deleteUser } from "@database/users";
+import { setCoins } from "@src/database/economy";
 import { getCoins } from "@src/database/economy";
 import { embedify } from "@src/util";
 
@@ -57,7 +58,7 @@ export class Account extends Command {
             let coins = await getCoins(user.id, int.guild.id);
         
             if(!coins && coins != 0) {
-                await createNewUserWithCoins(user.id, guildid, 0);
+                await setCoins(user.id, guildid, 0);
                 coins = 0;
             }
     

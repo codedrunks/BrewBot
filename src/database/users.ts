@@ -44,22 +44,3 @@ export async function createNewUser(userId: string, guildId: string) {
         },
     });
 }
-
-export async function createNewUserWithCoins(userId: string, guildId: string, coins: number) {
-    await prisma.coins.upsert({
-        where: {
-            guildId_userId: {
-                guildId,
-                userId
-            }
-        },
-        update: {
-            amount: coins
-        },
-        create: {
-            guildId,
-            userId,
-            amount: coins
-        }
-    });
-}
