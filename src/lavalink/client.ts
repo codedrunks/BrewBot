@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
 import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
-import Spotify from "erela.js-spotify";
+import Spotify from "better-erela.js-spotify";
 import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
 
@@ -8,13 +8,13 @@ let client: Client;
 const plugins: Plugin[] = [];
 let manager: Manager;
 
-const clientID = process.env.SPOTIFY_CLIENT_ID;
+const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-if(clientID && clientSecret) {
+if(clientId&& clientSecret) {
     plugins.push(
         new Spotify({
-            clientID,
+            clientId,
             clientSecret
         })
     );

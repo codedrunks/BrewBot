@@ -1,7 +1,6 @@
 import { prisma } from "@database/client";
 import { nowInSeconds } from "@src/util";
 
-
 /** get coins from a user */
 export async function getCoins(userId: string, guildId: string): Promise<number | undefined> {
     const amount = await prisma.coins.findUnique({
