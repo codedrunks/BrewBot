@@ -10,13 +10,6 @@ import { settings } from "../../settings";
 // const canvas = createCanvas(200, 200);
 // const ctx = canvas.getContext("2d");
 
-// ctx.font = "30px Impact";
-// ctx.strokeText = "rgba(255,255,255)";
-// ctx.rotate(0.1);
-// ctx.fillStyle = "green";
-// ctx.fillStyle = "center";
-// ctx.fillText("i am text uwu", 50, 100);
-
 let gameState:Board | null = null;
 
 // PIECE CLASSES
@@ -47,7 +40,7 @@ class Empty extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
+        // const moveDirs = [[]];
         return null;
     }
 
@@ -62,11 +55,38 @@ class Pawn extends Piece {
     {
         super(color, pos, board);
     }
-
+    
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = this.color === "w" ? [[-1, 0], [-2, 0], [-1, -1], [-1, 1]] :
+            [[0, 1], [0, 2], [-1, 1], [1, 1]];
+
+        const moveList:Array<Array<number>> = [];
+
+        deltas.forEach((d) => {
+
+            const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
+            const destinationTile = this.board.tiles[destination[0]][destination[1]];
+
+            // check if pawn can be moved 2 ahead
+            if (d === deltas[1] &&
+            destinationTile.constructor.name === "Empty" &&
+            this.pos[0] === (this.color === "w" ? 6 : 1)) {
+                moveList.push(destination);
+            // check if pawn can be moved 1 ahead
+            } else if (d === deltas[0] &&
+            destinationTile.constructor.name === "Empty") {
+                moveList.push(destination);
+            // check if pawn can capture a piece
+            } else if ((d === deltas[2] || d === deltas[3]) && 
+            destinationTile.constructor.name !== "Empty" &&
+            destinationTile.color === (this.color === "w" ? "b" : "w")) {
+                moveList.push(destination);
+                console.log(destinationTile);
+            }
+        });
+
+        return moveList;
     }
 
     getPieceGraphic()
@@ -171,6 +191,7 @@ class Board {
     // grid: any;
     canvas: any;
     tiles: any;
+    currPlayer: string;
 
     constructor()
     {
@@ -185,6 +206,8 @@ class Board {
             ["p", "p", "p", "p", "p", "p", "p", "p"],
             ["r", "h", "b", "q", "k", "b", "h", "r"]
         ];
+
+        this.currPlayer = "w";
 
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
@@ -201,7 +224,7 @@ class Board {
         {
             return Array(...Array(8)).map(function (x, y) 
             {
-                const color = (b + y) % 2 == 0 ? "w" : "b";
+                const color = b >= 4 ? "w" : "b";
                 
                 switch(layout[b][y]) {
                 case "p":
@@ -238,18 +261,18 @@ class Board {
             for (let y = 0; y < 8; y++) {
                 
                 // number label
-                if (y == 0) {
+                if (y === 0) {
                     ctx.fillStyle = "rgb(77, 51, 31)";
                     ctx.fillRect(0, (x * 250) + 100, 100, 250);
                     
                     ctx.font = "78px Impact";
                     ctx.fillStyle = "white";
                     ctx.fillStyle = "center";
-                    ctx.fillText((x + 1).toString(), 28, ((x + 1) * 250));
+                    ctx.fillText((8 - x).toString(), 28, ((x + 1) * 250));
                 }
 
                 //letter label
-                if (x == 0) {
+                if (x === 0) {
                     const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
                     ctx.fillStyle = "rgb(77, 51, 31)";
                     ctx.fillRect((y * 250) + 100, 250, 100);
@@ -273,7 +296,7 @@ class Board {
 
                 ctx.fillStyle = (x + y) % 2 == 0 ? "rgb(230, 185, 142)" : "rgb(143, 96, 50)";
                 ctx.fillRect((x * 250) + 100, (y * 250) + 100, 250, 250);
-                ctx.fillStyle = "white";
+                ctx.fillStyle = this.tiles[y][x].color === "w" ? "white" : "black";
 
                 // this is what will render the pieces
                 ctx.font = "156px sans-serif";
@@ -286,11 +309,24 @@ class Board {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
 
-        const temp = this.tiles[p1[0]][p1[1]];
-        this.tiles[p2[0]][p2[1]] = temp;
-        // TODO: get color of current player for this
-        this.tiles[p1[0]][p1[1]] = new Empty("w", [p1[0], p1[1]], self);
-        this.renderGrid();
+        console.log([p2[0], p2[1]]);
+        console.log(this.tiles[p1[0]][p1[1]].validMoves());
+        console.log(this.tiles[p1[0]][p1[1]].validMoves().includes([p2[0], p2[1]]));
+
+        const movesStringified = JSON.stringify(this.tiles[p1[0]][p1[1]].validMoves());
+        const currStringified = JSON.stringify([p2[0], p2[1]]);
+
+        if(gameState && this.tiles[p1[0]][p1[1]].constructor.name !== "Empty" && 
+            movesStringified.indexOf(currStringified)) {
+
+            const temp = this.tiles[p1[0]][p1[1]];
+            this.tiles[p2[0]][p2[1]] = temp;
+
+            this.tiles[p1[0]][p1[1]] = new Empty(gameState.currPlayer, [p1[0], p1[1]], self);
+            this.renderGrid();
+        } else {
+            throw Error("Invalid move!");
+        }
     }
 }
 
@@ -378,7 +414,7 @@ export class Chess extends Command
         
         if (opt.name === "move" && gameState) {
 
-            if (args && args[0] && args[1]) {
+            if (args && args.length === 2) {
                 const pos1 = args[0].value;
                 const pos2 = args[1].value;
 
@@ -389,15 +425,26 @@ export class Chess extends Command
                     const startPos = pos1.split("");
 
                     const x1 = letters.indexOf(startPos[0].toUpperCase());
-                    const y1 = parseInt(startPos[1]) - 1;
+                    const y1 = 8 - (parseInt(startPos[1]));
                     
                     const endPos = pos2.split("");
 
                     const x2 = letters.indexOf(endPos[0].toUpperCase());
-                    const y2 = parseInt(endPos[1]) - 1;
-                    
+                    const y2 = 8 - parseInt(endPos[1]);
+
+                    // console.log(y1);
+                    // console.log(y2);
+
+                    // console.log(gameState.tiles[y1][x1].validMoves());
                     
                     gameState.move([y1, x1], [y2, x2]);
+
+                    if (gameState.currPlayer === "w") {
+                        gameState.currPlayer = "b";
+                    } else {
+                        gameState.currPlayer = "w";
+                    }
+
                     update();
                 }
             }
