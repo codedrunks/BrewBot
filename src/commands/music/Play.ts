@@ -4,6 +4,7 @@ import { Command } from "@src/Command";
 import { getManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { randomizeArray } from "svcorelib";
 
 export class Play extends Command {
     constructor() {
@@ -131,9 +132,14 @@ export class Play extends Command {
 
             return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
+
+            let tracks = res.tracks;
+
+            tracks = randomizeArray(tracks);
+
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
-                player.queue.add(res.tracks, 0);
+                player.queue.add(tracks, 0);
 
                 if(args.shuffled) player.queue.shuffle();
 
@@ -141,14 +147,14 @@ export class Play extends Command {
 
                 return;
             } else if(position == "next") {
-                player.queue.add(res.tracks, 0);
+                player.queue.add(tracks, 0);
                 
                 if(args.shuffled) player.queue.shuffle();
 
                 return this.editReply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
             }
 
-            player.queue.add(res.tracks);
+            player.queue.add(tracks);
 
             if(args.shuffled) player.queue.shuffle();
 
