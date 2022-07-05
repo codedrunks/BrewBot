@@ -53,7 +53,8 @@ export class NowPlaying extends Command {
             new MessageButton().setEmoji("⏯️").setLabel("Pause/Resume").setStyle("PRIMARY"),
             new MessageButton().setEmoji("⏩").setLabel("+ 10s").setStyle("PRIMARY"),
             new MessageButton().setEmoji("⏭").setLabel("Skip").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏹️").setLabel("Stop").setStyle("PRIMARY")        ];
+            new MessageButton().setEmoji("⏹️").setLabel("Stop").setStyle("PRIMARY")
+        ];
 
         const button = new BtnMsg(embed, btns, { timeout: current.isStream ? -1 : (current.duration as number) - player.position });
 

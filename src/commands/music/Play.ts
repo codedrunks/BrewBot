@@ -94,7 +94,7 @@ export class Play extends Command {
             }, int.user);
         }
 
-        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("Something went wrong loading that track"));
+        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("That URL type is not supported or something went wrong"));
         
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
 

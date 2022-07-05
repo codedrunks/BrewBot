@@ -3,6 +3,7 @@ import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
 import Spotify from "better-erela.js-spotify";
 import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
+import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -11,14 +12,15 @@ let manager: Manager;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-if(clientId&& clientSecret) {
-    plugins.push(
-        new Spotify({
-            clientId,
-            clientSecret
-        })
-    );
+const spotifyOptions: SpotifyOptions = {};
+
+if(clientId && clientSecret) {
+    spotifyOptions.clientId = clientId;
+    spotifyOptions.clientSecret = clientSecret;
+    spotifyOptions.strategy = "API";
 }
+
+plugins.push(new Spotify(spotifyOptions));
 
 const nodes: NodeOptions[] = [];
 
