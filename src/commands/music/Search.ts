@@ -3,6 +3,8 @@ import { Command } from "@src/Command";
 import { getManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { SearchQuery, SearchResult } from "erela.js";
+import { randRange } from "svcorelib";
 
 const activeSearches: Set<string> = new Set();
 
@@ -20,6 +22,25 @@ export class Search extends Command {
                     required: true
                 },
                 {
+                    name: "source",
+                    type: "string",
+                    desc: "Source for the music to be searched from",
+                    choices: [
+                        {
+                            name: "youtube/youtube music",
+                            value: "youtube"
+                        },
+                        {
+                            name: "soundcloud",
+                            value: "soundcloud"
+                        },
+                        {
+                            name: "spotify",
+                            value: "spotify"
+                        }
+                    ]
+                },
+                {
                     name: "position",
                     type: "string",
                     desc: "Whether to play the song now or next, if so desired",
@@ -33,6 +54,11 @@ export class Search extends Command {
                             value: "next"
                         }
                     ]
+                },
+                {
+                    name: "shuffled",
+                    type: "boolean",
+                    desc: "Places song into the queue randomly"
                 }
             ]
         });
@@ -52,23 +78,29 @@ export class Search extends Command {
 
         const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
 
-        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
+        if(djcheck) return this.editReply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
         if(!voice) return this.editReply(int, embedify("You must be in a voice channel to use this command"));
 
         const manager = getManager();
-        const res = await manager.search({
-            query: args.song,
-            source: "youtube"
-        }, int.user);
+
+        let res: SearchResult;
+
+        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
+            || args.source == "spotify")) {
+            res = await manager.search(args.song, int.user);
+        } else {
+            res = await manager.search({
+                query: args.song,
+                source: args.source as SearchQuery["source"] ?? "youtube"
+            }, int.user);
+        }
 
         if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("Something went wrong loading that track"));
 
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
-
-        const position = args.position || null;
 
         if(res.loadType == "SEARCH_RESULT") {
 
@@ -106,6 +138,7 @@ export class Search extends Command {
                 }
 
                 if(idxs.includes(parseInt(m.content))) {
+                    const position = args.position || null;
                     const index = Number(m.content) - 1;
 
                     const track = res.tracks[index];
@@ -120,7 +153,7 @@ export class Search extends Command {
                         sEmbed = embedify(`Queued \`${track.title}\` to play next in ${channelMention}`);
                     }
 
-                    if(position == "now") {
+                    else if(position == "now") {
                         player.queue.add(track, 0);
                         sEmbed = embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${track.title}\` in ${channelMention}`);
 
@@ -129,21 +162,18 @@ export class Search extends Command {
                         }, 200);
                     }
 
-                    if(!position) {
-                        player.queue.add(track);
+                    else {
+                        player.queue.add(track, args.shuffled ? randRange(0, player.queue.size) : undefined);
                         sEmbed = embedify(`Queued \`${track.title}\` in ${channelMention}`);
                     }
 
                     sEmbed = sEmbed ?? embedify("Something went wrong");
 
-                    // player.queue.add(track);
                     this.editReply(int, sEmbed);
 
                     if(!player.playing && !player.paused && !player.queue.size) player.play();
 
                     await m.delete();
-
-                    // this.editReply(int, embedify(`Queued \`${track.title}\` in ${channelMention}`));
                     
                     if(activeSearches.has(int.user.id)) activeSearches.delete(int.user.id);
 

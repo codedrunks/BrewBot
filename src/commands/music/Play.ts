@@ -4,7 +4,7 @@ import { Command } from "@src/Command";
 import { getManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
-import { randomizeArray } from "svcorelib";
+import { randomizeArray, randRange } from "svcorelib";
 
 export class Play extends Command {
     constructor() {
@@ -56,7 +56,7 @@ export class Play extends Command {
                 {
                     name: "shuffled",
                     type: "boolean",
-                    desc: "Whether or not to shuffle the songs in a playlist before playing/queueing"
+                    desc: "Shuffles a playlist before adding, places into the queue randomly if a single track"
                 }
             ],
         });
@@ -85,8 +85,7 @@ export class Play extends Command {
         let res: SearchResult;
 
         if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
-            || args.source == "spotify")
-            && process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
+            || args.source == "spotify")) {
             res = await manager.search(args.song, int.user);
         } else {
             res = await manager.search({
@@ -126,7 +125,7 @@ export class Play extends Command {
                 return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
             }
 
-            player.queue.add(res.tracks[0]);
+            player.queue.add(res.tracks[0], args.shuffled ? randRange(0, player.queue.size) : undefined);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
@@ -135,28 +134,22 @@ export class Play extends Command {
 
             let tracks = res.tracks;
 
-            tracks = randomizeArray(tracks);
+            if(args.shuffled) tracks = randomizeArray(tracks);
 
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
                 player.queue.add(tracks, 0);
-
-                if(args.shuffled) player.queue.shuffle();
 
                 player.stop();
 
                 return;
             } else if(position == "next") {
                 player.queue.add(tracks, 0);
-                
-                if(args.shuffled) player.queue.shuffle();
 
                 return this.editReply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
             }
 
             player.queue.add(tracks);
-
-            if(args.shuffled) player.queue.shuffle();
 
             if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
 
