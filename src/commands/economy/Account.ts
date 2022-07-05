@@ -51,7 +51,7 @@ export class Account extends Command {
         } else if(opts.name == "close") {
             await deleteUser(userid);
     
-            return this.reply(int, embedify(`<@${userid}>'s account was closed`));
+            return this.reply(int, embedify(`<@${userid}>'s account was closed`), true);
         } else if(opts.name == "balance") {
             const user = int.options.getUser("user") ?? int.user;
 

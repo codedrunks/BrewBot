@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
 import { getManager } from "@src/lavalink/client";
-import { embedify, musicReadableTimeString, TryCatchMethod } from "@src/util";
+import { embedify, musicReadableTimeString } from "@src/util";
 import { formatDuration, parseDuration } from "svcorelib";
 import { BtnMsg } from "@src/BtnMsg";
 import { isDJOnlyandhasDJRole } from "@src/database/music";
@@ -17,11 +17,6 @@ export class NowPlaying extends Command {
         });
     }
 
-    @TryCatchMethod((e, i) => {
-        i?.channel?.send({ embeds: [ embedify("Check console, something went wrong") ]});
-
-        console.error(e);
-    })
     async run(int: CommandInteraction): Promise<void> {
         await this.deferReply(int);
 
@@ -90,10 +85,6 @@ export class NowPlaying extends Command {
                 player.queue.shuffle();
                 break;
             }
-        });
-
-        button.on("timeout", async () => {
-            return button.destroy();
         });
 
         await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
