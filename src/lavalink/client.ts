@@ -3,6 +3,7 @@ import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
 import Spotify from "better-erela.js-spotify";
 import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
+import { trackEnd } from "@src/lavalink/lib/trackEnd";
 import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
 
 let client: Client;
@@ -65,6 +66,9 @@ function initializeManagerFromClient(cl: Client): Manager {
         })
         .on("queueEnd", player => {
             queueEnd(player, client);
+        })
+        .on("trackEnd", (player, track, payload) => {
+            trackEnd(player, track, payload, client);
         });
 
     return manager;
