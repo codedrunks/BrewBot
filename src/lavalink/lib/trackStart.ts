@@ -3,7 +3,7 @@ import { Player, Track } from "erela.js";
 import { embedify } from "@src/util";
 
 export function trackStart(player: Player, track: Track, client: Client) {
-    if(!player.textChannel) return;
+    if(!player.textChannel || !player.voiceChannel) return;
 
     if(player.trackRepeat) return;
 
