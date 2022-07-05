@@ -88,7 +88,5 @@ export class NowPlaying extends Command {
         });
 
         await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
-
-        // return this.reply(int, embed);
     }
 }
