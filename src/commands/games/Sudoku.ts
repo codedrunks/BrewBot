@@ -4,6 +4,7 @@ import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
 import fs from "fs";
 import os from "os";
 import { settings } from "@src/settings";
+import { randRange } from "svcorelib";
 
 export class Sudoku extends Command
 {
@@ -11,8 +12,13 @@ export class Sudoku extends Command
     private readonly BOARD_HEIGHT = 900;
     private readonly CELL_WIDTH = 100;
     private readonly CELL_HEIGHT = 100;
+    private readonly MIN_HINTS = 40;
+
     private readonly canvas: Canvas;
     private readonly ctx: CanvasRenderingContext2D;
+
+    // TODO: store the solution here so we can compare it
+
     private board: number[][] = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -24,6 +30,8 @@ export class Sudoku extends Command
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
+    private emptyCells: number[][] = [];
+    private filledCells: number[] = new Array(81).fill(null).map((_, i) => i);
     constructor()
     {
         super({
@@ -76,6 +84,7 @@ export class Sudoku extends Command
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
         this.drawEmptyBoard();
+        await this.deferReply(int);
 
         switch (opt.name) {
         case "start":
@@ -89,14 +98,23 @@ export class Sudoku extends Command
         // TODO: check if game is already started by this user
         this.resetBoard();
         this.generateRandomBoard();
-        this.removeNumbers();
+        this.removeNumbers(this.board.length * 2);
         this.drawBoard();
         this.renderBoard();
         return await this.sendBoard(int);
     }
 
-    removeNumbers() {
-        // TODO: implement this
+    async place(int: CommandInteraction) {
+        // TODO: check if there's no game running
+        // TODO: different color for user inputs (#6E85B7)
+        const box = int.options.getNumber("box", true);
+        const cell = int.options.getNumber("cell", true);
+        const choice = int.options.getNumber("number", true);
+        this.placeNumber(box, cell, choice);
+        this.drawBoard();
+        this.renderBoard();
+        // TODO: check if all cells have been filled and then check win condition
+        return await this.sendBoard(int);
     }
 
     resetBoard() {
@@ -111,21 +129,103 @@ export class Sudoku extends Command
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ];
+        this.emptyCells = [];
+        this.filledCells = new Array(81).fill(null).map((_, i) => i);
     }
 
-    async place(int: CommandInteraction) {
-        // TODO: check if there's no game running
-        const box = int.options.getNumber("box", true);
-        const cell = int.options.getNumber("cell", true);
-        const choice = int.options.getNumber("number", true);
-        this.placeNumber(box, cell, choice);
-        this.drawBoard();
-        this.renderBoard();
-        // TODO: check if all cells have been filled and then check win condition
-        return await this.sendBoard(int);
+    solver(startRow: number, startCol: number, candidate: number, emptyCells: number[][], board: number[][]): boolean {
+        // backtracking algo
+        // 1- create list of candidates for the current cell
+        // 2- randomly choose a candidate
+        // 3- let function call itself with the next cell
+        // 4- if any cell has 0 valid candidates at any point in time. we revert the last cell placement and try another candidate
+        // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
+        //
+
+        // console.log("empty cells: ", emptyCells);
+        // console.log(board);
+
+        board[startRow][startCol] = candidate;
+        emptyCells.splice(emptyCells.indexOf([startRow, startCol]), 1);
+
+        if (emptyCells.length === 0) {
+            return true;
+        }
+
+        const [nextRow, nextCol] = emptyCells.splice(Math.floor(Math.random() * emptyCells.length), 1)[0];
+
+        // console.log("next cell: ", [nextRow, nextCol]);
+
+        const candidates = this.getCandidates(nextRow, nextCol, board);
+
+        // console.log("candidates for next cell: ", candidates);
+
+        while (candidates.length) {
+            const newCandidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
+            board[nextRow][nextCol] = newCandidate;
+            if (this.solver(nextRow, nextCol, newCandidate, emptyCells, board)) {
+                return true;
+            }
+            board[nextRow][nextCol] = 0;
+        }
+
+        return false;
+    }
+
+    removeNumbers(hints: number): boolean {
+        // algo for this
+        // 1- remove random number
+        // 2- try solving the board
+        // 3- if board not solveable, backtrack and try removing another digit
+        // 4- if board is solveable, backtrack to the last number we removed that had more than one candidate and try that candidate.
+        // if that candidate also results in a solution, backtrack even more and try removing another digit other that this. if not, recursively remove another number
+        // 5- continue until you reach whatever number of hints you want
+
+        if (hints === this.MIN_HINTS) {
+            return true;
+        }
+
+        let solutions = 0;
+
+        const cell = this.filledCells.splice(randRange(this.filledCells.length - 1), 1)[0];
+        const removedRow = Math.floor(cell / 9);
+        const removedCol = cell % 9;
+
+        // 1- remove random number
+        const removedVal = this.board[removedRow][removedCol];
+        this.board[removedRow][removedCol] = 0;
+
+        this.emptyCells.push([removedRow, removedCol]);
+
+        const candidates = this.getCandidates(removedRow, removedCol, this.board);
+
+        while (candidates.length) {
+            const candidate = candidates.splice(candidates.indexOf(removedVal), 1)[0];
+
+            // 2- try solving board
+            if (this.solver(removedRow, removedCol, candidate, this.emptyCells.slice(), JSON.parse(JSON.stringify(this.board)))) {
+                solutions++;
+            }
+            // 3- if not solveable, put the number back
+            // if solveable and multiiple solutions, put number back and try somewhere else
+            if (solutions > 1) {
+                this.board[removedRow][removedCol] = removedVal;
+                this.emptyCells.pop();
+                this.filledCells.push(cell);
+                break;
+            }
+        }
+
+        // 4- if solveable, and one solution, continue
+        if (this.removeNumbers(this.filledCells.length)) {
+            return true;
+        }
+
+        return false;
     }
 
     placeNumber(box: number, cell: number, choice: number) {
+        // TOOD: don't allow users to place numbers in the initial hints
         const boxRow = Math.floor((box - 1) / 3);
         const boxCol = (box - 1) % 3;
         const cellCol = (cell - 1) % 3;
@@ -136,22 +236,114 @@ export class Sudoku extends Command
         this.board[row][col] = choice;
     }
 
-    drawNumber(box: number, cell: number, choice: number) {
-        this.ctx.font = "bold 40pt Roboco";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "middle";
-        this.ctx.fillStyle = "#2C3639";
+    generateRandomBoard() {
+        // fill diagonal boxes 1, 5, 9
+        let digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        for (let i = 0; i < this.board.length; i++) {
+            if (i % 3 == 0) {
+                digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            }
 
-        const boxCol = (box - 1) % 3;
-        const boxRow = Math.floor((box - 1) / 3);
+            const k = Math.floor(i / 3) * 3;
+            for (let j = k; j < k + 3; j++) {
+                const num = digits.splice(Math.floor(Math.random() * digits.length), 1)[0];
+                this.board[i][j] = num;
+            }
+        }
 
-        const cellCol = (cell - 1) % 3;
-        const cellRow = Math.floor((cell - 1) / 3);
-
-        const xPos = (boxCol * 300) + (cellCol * 100) + this.CELL_WIDTH / 2;
-        const yPos = (boxRow * 300) + (cellRow * 100) + this.CELL_HEIGHT / 2;
-        this.ctx.fillText(choice.toString(), xPos, yPos);
+        // fill the rest of the boxes
+        this.backtracker(0, 3);
     }
+
+    backtracker(startRow: number, startCol: number): boolean {
+        // backtracking algo
+        // 1- create list of candidates for the current cell
+        // 2- randomly choose a candidate
+        // 3- let function call itself with the next cell
+        // 4- if any cell has 0 valid candidates at any point in time. we revert the last cell placement and try another candidate
+        // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
+
+        // if we went thru all the cols but not all the rows
+        if (startCol >= 9 && startRow < 9 - 1) {
+            startRow++;
+            startCol = 0;
+        }
+
+        // if we went thru the entire board
+        if (startRow >= 9 && startCol >= 9) {
+            return true;
+        }
+
+        // if we're at diagonal box 1, 5 or 9, skip it
+        if (startRow < 3) {
+            if (startCol < 3) {
+                startCol = 3;
+            }
+        } else if (startRow < 6) {
+            if (startCol === (Math.floor(startRow / 3) * 3)) {
+                startCol += 3;
+            }
+        } else {
+            if (startCol === 6) {
+                startRow++;
+                startCol = 0;
+                if (startRow >= 9) {
+                    return true;
+                }
+            }
+        }
+
+        const candidates = this.getCandidates(startRow, startCol, this.board);
+
+        // try every candidate until we find one that uniquely solves the board.
+        while (candidates.length) {
+            const candidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
+            this.board[startRow][startCol] = candidate;
+            if (this.backtracker(startRow, startCol + 1)) {
+                return true;
+            }
+            this.board[startRow][startCol] = 0;
+        }
+
+        // if no candidates, we backtrack and try something else.
+        return false;
+    }
+
+    getCandidates(row: number, col: number, board: number[][]): number[] {
+        const clashingDigits = new Set<number>();
+        const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+        // check row
+        for (let k = 0; k < board.length; k++) {
+            if (board[row][k] !== 0) {
+                clashingDigits.add(board[row][k]);
+            }
+        }
+
+        // check col
+        for (let k = 0; k < board.length; k++) {
+            if (board[k][col] !== 0) {
+                clashingDigits.add(board[k][col]);
+            }
+        }
+
+        // check box
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let k = boxRow; k < boxRow + 3; k++) {
+            for (let p = boxCol; p < boxCol + 3; p++) {
+                if (board[k][p] !== 0) {
+                    clashingDigits.add(board[k][p]);
+                }
+            }
+        }
+
+        return digits.filter(digit => !Array.from(clashingDigits).includes(digit));
+    }
+
+    /////////////////////////
+    /// Drawing Functions ///
+    ////////////////////////
 
     drawEmptyBoard() {
         this.ctx.fillStyle = "#F0EBE3";
@@ -185,103 +377,21 @@ export class Sudoku extends Command
         }
     }
 
-    generateRandomBoard() {
-        // fill diagonal boxes 1, 5, 9
-        let digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        for (let i = 0; i < this.board.length; i++) {
-            if (i % 3 == 0) {
-                digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            }
+    drawNumber(box: number, cell: number, choice: number) {
+        this.ctx.font = "bold 40pt Roboco";
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "middle";
+        this.ctx.fillStyle = "#2C3639";
 
-            const k = Math.floor(i / 3) * 3;
-            for (let j = k; j < k + 3; j++) {
-                const num = digits.splice(Math.floor(Math.random() * digits.length), 1)[0];
-                this.board[i][j] = num;
-            }
-        }
+        const boxCol = (box - 1) % 3;
+        const boxRow = Math.floor((box - 1) / 3);
 
-        // fill the rest of the boxes
-        this.backtracker(0, 3);
-    }
+        const cellCol = (cell - 1) % 3;
+        const cellRow = Math.floor((cell - 1) / 3);
 
-    backtracker(startRow: number, startCol: number): boolean {
-        // backtracking algo
-        // 1- create list of candidates for the current cell
-        // 2- randomly choose a candidate
-        // 3- let function call itself with the next cell
-        // 4- if any cell has 0 valid candidates at any point in time. we revert the last cell placement and try another candidate
-        // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
-
-        if (startCol >= 9 && startRow < 9 - 1) {
-            startRow++;
-            startCol = 0;
-        }
-        if (startRow >= 9 && startCol >= 9) {
-            return true;
-        }
-
-        if (startRow < 3) {
-            if (startCol < 3) {
-                startCol = 3;
-            }
-        } else if (startRow < 6) {
-            if (startCol === (Math.floor(startRow / 3) * 3)) {
-                startCol += 3;
-            }
-        } else {
-            if (startCol === 6) {
-                startRow++;
-                startCol = 0;
-                if (startRow >= 9) {
-                    return true;
-                }
-            }
-        }
-
-        const candidates = this.getCandidates(startRow, startCol);
-
-        while (candidates.length) {
-            const candidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
-            this.board[startRow][startCol] = candidate;
-            if (this.backtracker(startRow, startCol + 1)) {
-                return true;
-            }
-            this.board[startRow][startCol] = 0;
-        }
-
-        return false;
-    }
-
-    getCandidates(row: number, col: number): number[] {
-        const clashingDigits = new Set<number>();
-        const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-        // check row
-        for (let k = 0; k < this.board.length; k++) {
-            if (this.board[row][k] !== 0) {
-                clashingDigits.add(this.board[row][k]);
-            }
-        }
-
-        // check col
-        for (let k = 0; k < this.board.length; k++) {
-            if (this.board[k][col] !== 0) {
-                clashingDigits.add(this.board[k][col]);
-            }
-        }
-
-        // check box
-        const boxRow = Math.floor(row / 3) * 3;
-        const boxCol = Math.floor(col / 3) * 3;
-        for (let k = boxRow; k < boxRow + 3; k++) {
-            for (let p = boxCol; p < boxCol + 3; p++) {
-                if (this.board[k][p] !== 0) {
-                    clashingDigits.add(this.board[k][p]);
-                }
-            }
-        }
-
-        return digits.filter(digit => !Array.from(clashingDigits).includes(digit));
+        const xPos = (boxCol * 300) + (cellCol * 100) + this.CELL_WIDTH / 2;
+        const yPos = (boxRow * 300) + (cellRow * 100) + this.CELL_HEIGHT / 2;
+        this.ctx.fillText(choice.toString(), xPos, yPos);
     }
 
     drawBoard() {
@@ -307,7 +417,7 @@ export class Sudoku extends Command
     }
 
     async sendBoard(int: CommandInteraction) {
-        await int.reply({
+        await int.editReply({
             embeds: [
                 {
                     image: {
