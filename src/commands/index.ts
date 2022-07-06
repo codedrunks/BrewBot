@@ -44,6 +44,7 @@ import { Shuffle } from "@commands/music/Shuffle";
 import { Repeat } from "@commands/music/Repeat";
 import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
+import { Premium } from "@commands/music/Premium";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -98,4 +99,5 @@ export const commands = [
     Repeat,
     Volume,
     DJ,
+    Premium
 ];

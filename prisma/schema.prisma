@@ -51,7 +51,8 @@ model Guild {
   contestRoleId    String?
   contestChannelId String?
   djRoleIds        String[]
-  djOnly           Boolean?
+  djOnly           Boolean? @default(false)
+  premium          Boolean? @default(false)
   contests         Contest[]
 }
 

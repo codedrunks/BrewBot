@@ -87,6 +87,11 @@ export class NowPlaying extends Command {
             }
         });
 
+        button.on("timeout", async () => {
+            await this.deleteReply(int);
+            button.destroy();
+        });
+
         await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
     }
 }

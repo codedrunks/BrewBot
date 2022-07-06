@@ -1,5 +1,5 @@
 import { Client } from "discord.js";
-import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
+import { Manager, NodeOptions, Plugin, Track, VoicePacket } from "erela.js";
 import Spotify from "better-erela.js-spotify";
 import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
@@ -57,7 +57,8 @@ function initializeManagerFromClient(cl: Client): Manager {
             const guild = cl.guilds.cache.get(id);
             if (guild) guild.shard.send(payload);
         },
-        plugins
+        plugins,
+        autoPlay: false
     });
 
     manager.on("nodeConnect", (node) => console.log(`\nNode ${node.options.identifier} connected.`))
@@ -77,3 +78,9 @@ function initializeManagerFromClient(cl: Client): Manager {
 export function getManager(): Manager {
     return manager;
 }
+
+export function reduceSongsLength(tracks: Track[]): number {
+    return tracks.reduce((p, c) => p + c.duration, 0);
+}
+
+export const four_hours = 14_400_000;

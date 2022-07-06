@@ -1,9 +1,9 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { SearchQuery, SearchResult } from "erela.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { four_hours, getManager, reduceSongsLength } from "@src/lavalink/client";
 import { embedify } from "@src/util";
-import { isDJOnlyandhasDJRole } from "@database/music";
+import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { randomizeArray, randRange } from "svcorelib";
 
 export class Play extends Command {
@@ -105,13 +105,15 @@ export class Play extends Command {
             selfDeafen: true
         });
 
+        if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours && !(await getPremium(guild.id))) return this.editReply(int, embedify("Total queue time will be over 4 hours, please purchase premium to add more songs to your queue"));
+
         if(player.state !== "CONNECTED") player.connect();
 
         const channelMention = `<#${voice}>`;
 
         const position = args.position || null;
 
-        if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT") {
+        if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT" || res.loadType == "PLAYLIST_LOADED" && res.tracks.length == 1) {
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
                 player.queue.add(res.tracks[0], 0);
@@ -132,9 +134,7 @@ export class Play extends Command {
             return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
 
-            let tracks = res.tracks;
-
-            if(args.shuffled) tracks = randomizeArray(tracks);
+            const tracks = args.shuffled ? randomizeArray(res.tracks) : res.tracks;
 
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));

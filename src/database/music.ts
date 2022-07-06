@@ -1,6 +1,33 @@
 import { Collection, Role } from "discord.js";
 import { prisma } from "@database/client";
 
+export async function setPremium(guildId: string, set: boolean) {
+    await prisma.guild.upsert({
+        where: {
+            id: guildId
+        },
+        create: {
+            id: guildId
+        },
+        update: {
+            premium: set
+        }
+    });
+}
+
+export async function getPremium(guildId: string): Promise<boolean> {
+    const premium = await prisma.guild.findFirst({
+        where: {
+            id: guildId
+        },
+        select: {
+            premium: true
+        }
+    });
+
+    return premium?.premium ?? false;
+}
+
 export async function addDJRoleId(guildId: string, roleId: string) {
     await prisma.guild.upsert({
         where: {

@@ -61,11 +61,16 @@ export class Queue extends Command {
 
                 button.on("press", async (b, i) => {
 
+                    if(i.user.id !== int.user.id) return;
+
                     await i.deferUpdate();
 
                     if(!player || !player.queue.current) return;
 
                     const maxPage = Math.ceil(player.queue.length / multiple);
+
+                    // if there is no longer enough tracks to have buttons, delete embed, send new embed without buttons with a timeout of 15 seconds
+                    // set page variables and shiz
 
                     if(b.label == "Previous") {
                         if(page !== 1) page--;
