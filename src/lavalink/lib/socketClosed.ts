@@ -1,19 +1,21 @@
-import { embedify } from "@src/util";
-import { Client, TextChannel } from "discord.js";
-import { Player, WebSocketClosedEvent } from "erela.js";
+// import { embedify } from "@src/util";
+// import { Client, TextChannel } from "discord.js";
+// import { Player, WebSocketClosedEvent } from "erela.js";
 
-export function socketClosed(player: Player, payload: WebSocketClosedEvent, client: Client) { // eslint-disable-line
-    player.destroy();
+// export function socketClosed(player: Player, payload: WebSocketClosedEvent, client: Client) { // eslint-disable-line
+//     player.destroy();
 
-    if(!player.textChannel) return;
+//     console.log(payload);
 
-    const channel = client.channels.cache.get(player.textChannel);
+//     if(!player.textChannel) return;
 
-    if(!channel) return;
+//     const channel = client.channels.cache.get(player.textChannel);
 
-    (channel as TextChannel).send({
-        embeds: [
-            embedify("Forcefully disconnected from the voice channel, clearing queue")
-        ]
-    });
-}
+//     if(!channel) return;
+
+//     (channel as TextChannel).send({
+//         embeds: [
+//             embedify("Forcefully disconnected from the voice channel, clearing queue")
+//         ]
+//     });
+// }
