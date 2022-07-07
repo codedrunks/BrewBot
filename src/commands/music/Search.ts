@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { four_hours, getManager, reduceSongsLength } from "@src/lavalink/client";
 import { embedify } from "@src/util";
-import { isDJOnlyandhasDJRole } from "@database/music";
+import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { SearchQuery, SearchResult } from "erela.js";
 import { randRange } from "svcorelib";
 
@@ -102,14 +102,16 @@ export class Search extends Command {
 
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
 
-        if(res.loadType == "SEARCH_RESULT") {
+        const player = manager.get(guild.id) ?? manager.create({
+            guild: guild.id,
+            voiceChannel: voice,
+            textChannel: int.channel.id,
+            selfDeafen: true
+        });
 
-            const player = manager.get(guild.id) ?? manager.create({
-                guild: guild.id,
-                voiceChannel: voice,
-                textChannel: int.channel.id,
-                selfDeafen: true
-            });
+        if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours && !(await getPremium(guild.id))) return this.editReply(int, embedify("Total queue time will be over 4 hours, please purchase premium to add more songs to your queue"));
+
+        if(res.loadType == "SEARCH_RESULT") {
 
             if(res.tracks.length > 10) res.tracks.length = 10;
 
@@ -188,6 +190,11 @@ export class Search extends Command {
 
                 if(player && !player.queue.current) player.destroy();
             });
-        }
+            // TODO: implement playlists here too :sadge:
+        } else if(res.loadType == "PLAYLIST_LOADED" || res.loadType == "TRACK_LOADED") {
+            return this.editReply(int, embedify("Playlist and URL search support coming soon."));
+
+
+        } else return this.editReply(int, embedify("Something went wrong"));
     }
 }

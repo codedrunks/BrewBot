@@ -5,6 +5,7 @@ import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
 import { trackEnd } from "@src/lavalink/lib/trackEnd";
 import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
+import { socketClosed } from "./lib/socketClosed";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -31,7 +32,8 @@ process.env.LAVALINK_HOSTS?.split(",").map((v) => {
     nodes.push({
         host: host,
         port: 2333,
-        password: pass
+        password: pass,
+        retryDelay: 5000
     });
 });
 
@@ -70,6 +72,9 @@ function initializeManagerFromClient(cl: Client): Manager {
         })
         .on("trackEnd", (player, track, payload) => {
             trackEnd(player, track, payload, client);
+        })
+        .on("socketClosed", (player, payload) => {
+            socketClosed(player, payload, client);
         });
 
     return manager;
