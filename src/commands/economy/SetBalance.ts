@@ -1,6 +1,5 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
-import { createNewUserWithCoins } from "@database/users";
 import { setCoins } from "@database/economy";
 import { settings } from "@src/settings";
 import { embedify } from "@src/util";
@@ -30,28 +29,20 @@ export class SetBalance extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const userid = int.user.id;
-
         const args = this.resolveArgs(int);
 
         if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
 
-        if(!devs.includes(userid)) return this.reply(int, embedify("Only devs can use this command."), true);
+        if(!devs.includes(int.user.id)) return this.reply(int, embedify("Only devs can use this command."), true);
         
         if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."), true);
 
-        if(!args.user) {
-            await setCoins(userid, guildid, parseInt(args.amount));
+        const user = int.options.getUser("user") ?? int.user;
 
-            return this.reply(int, embedify(`Your balance has been set to ${args.amount}`), true);
-        } else {
-            await createNewUserWithCoins(args.user, guildid, parseInt(args.amount));
+        await setCoins(user.id, guildid, parseInt(args.amount));
 
-            const username = int.guild?.members.cache.get(args.user)?.user.username;
-
-            return this.reply(int, embedify(`${username}'s balance has been set to ${args.amount}`));
-        }
+        return this.reply(int, embedify(`${user.id == int.user.id ? "Your" : `${user.username}'s`} balance has been set to ${args.amount}`));
     }
 }

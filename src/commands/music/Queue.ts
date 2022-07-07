@@ -92,6 +92,8 @@ export class Queue extends Command {
                     delete pages[int.user.id];
 
                     await this.deleteReply(int);
+                    
+                    button.destroy();
                 });
 
                 await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});

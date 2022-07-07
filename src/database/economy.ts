@@ -1,7 +1,6 @@
 import { prisma } from "@database/client";
 import { nowInSeconds } from "@src/util";
 
-
 /** get coins from a user */
 export async function getCoins(userId: string, guildId: string): Promise<number | undefined> {
     const amount = await prisma.coins.findUnique({
@@ -21,14 +20,19 @@ export async function getCoins(userId: string, guildId: string): Promise<number 
 
 /** Set coins to x amount */
 export async function setCoins(userId: string, guildId: string, coins: number) {
-    await prisma.coins.update({
+    await prisma.coins.upsert({
         where: {
             guildId_userId: {
                 guildId,
                 userId
             }
         },
-        data: {
+        create: {
+            amount: coins,
+            guildId,
+            userId
+        },
+        update: {
             amount: coins
         }
     });

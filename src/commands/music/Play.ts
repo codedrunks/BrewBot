@@ -1,9 +1,10 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
-import { SearchQuery } from "erela.js";
+import { SearchQuery, SearchResult } from "erela.js";
 import { Command } from "@src/Command";
 import { getManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { randomizeArray, randRange } from "svcorelib";
 
 export class Play extends Command {
     constructor() {
@@ -30,6 +31,10 @@ export class Play extends Command {
                         {
                             name: "soundcloud",
                             value: "soundcloud"
+                        },
+                        {
+                            name: "spotify",
+                            value: "spotify"
                         }
                     ]
                 },
@@ -47,6 +52,11 @@ export class Play extends Command {
                             value: "next"
                         }
                     ]
+                },
+                {
+                    name: "shuffled",
+                    type: "boolean",
+                    desc: "Shuffles a playlist before adding, places into the queue randomly if a single track"
                 }
             ],
         });
@@ -72,13 +82,20 @@ export class Play extends Command {
 
         const manager = getManager();
 
-        const res = await manager.search({
-            query: args.song,
-            source: args.source as SearchQuery["source"] ?? "youtube"
-        }, int.user);
+        let res: SearchResult;
 
-        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("Something went wrong loading that track"));
+        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
+            || args.source == "spotify")) {
+            res = await manager.search(args.song, int.user);
+        } else {
+            res = await manager.search({
+                query: args.song,
+                source: args.source as SearchQuery["source"] ?? "youtube"
+            }, int.user);
+        }
 
+        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("That URL type is not supported or something went wrong"));
+        
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
 
         const player = manager.get(guild.id) ?? manager.create({
@@ -108,26 +125,31 @@ export class Play extends Command {
                 return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
             }
 
-            player.queue.add(res.tracks[0]);
+            player.queue.add(res.tracks[0], args.shuffled ? randRange(0, player.queue.size) : undefined);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
             return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
+
+            let tracks = res.tracks;
+
+            if(args.shuffled) tracks = randomizeArray(tracks);
+
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
-                player.queue.add(res.tracks, 0);
+                player.queue.add(tracks, 0);
 
                 player.stop();
 
                 return;
             } else if(position == "next") {
-                player.queue.add(res.tracks, 0);
+                player.queue.add(tracks, 0);
 
                 return this.editReply(int, embedify(`Queued \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
             }
 
-            player.queue.add(res.tracks);
+            player.queue.add(tracks);
 
             if(!player.playing && !player.paused && player.queue.totalSize === res.tracks.length) player.play();
 
