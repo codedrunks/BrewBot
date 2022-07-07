@@ -45,6 +45,7 @@ import { Repeat } from "@commands/music/Repeat";
 import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
 import { Premium } from "@commands/music/Premium";
+import { Remove } from "@commands/music/Remove";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -99,5 +100,6 @@ export const commands = [
     Repeat,
     Volume,
     DJ,
-    Premium
+    Premium,
+    Remove
 ];
