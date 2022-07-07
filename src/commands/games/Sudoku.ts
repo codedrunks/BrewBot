@@ -1,7 +1,7 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
-import fs from "fs";
+import fs from "fs-extra";
 import os from "os";
 import { settings } from "@src/settings";
 import { randRange } from "svcorelib";
@@ -162,8 +162,8 @@ export class Sudoku extends Command
         this.renderBoard(user.id);
 
         if (this.checkWin(game)) {
-            fs.rmSync(os.tmpdir() + `${user.id}-sudoku.png`);
             await this.sendBoard(int, user.id);
+            fs.rm(os.tmpdir() + `${user.id}-sudoku.png`);
             return this.followUpReply(int, embedify("Holy poggers you won!111!11!11"));
         }
 
@@ -464,9 +464,9 @@ export class Sudoku extends Command
         }
     }
 
-    renderBoard(userId: string) {
+    async renderBoard(userId: string) {
         const buf = this.canvas.toBuffer("image/png");
-        fs.writeFileSync(os.tmpdir() + `/${userId}-sudoku.png`, buf);
+        await fs.writeFile(os.tmpdir() + `/${userId}-sudoku.png`, buf);
     }
 
     async sendBoard(int: CommandInteraction, userId: string) {
