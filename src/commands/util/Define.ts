@@ -75,14 +75,16 @@ export class Define extends Command
         case "urbandictionary":
         {
             const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
-            const obj = req.data?.list?.at(0);
+
+            const results = req.data?.list?.sort((a: Record<string, number>, b: Record<string, number>) => a.thumbs_up < b.thumbs_up ? 1 : -1);
+            const obj = results?.at(0);
 
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
-            else if(!obj)
+            if(!Array.isArray(results) || results.length === 0)
                 return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
 
-            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´*+#]+)\]/gm, "$1");
+            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
 
             const { definition, example, author, thumbs_up, thumbs_down, permalink } = obj;
 
@@ -294,7 +296,7 @@ export class Define extends Command
                     .setTitle(`Wikipedia definition for **${title}**:`)
                     .setColor(settings.embedColors.default)
                     .setDescription(extract)
-                    .setFooter({ text: "Wikipedia", iconURL: icons.wikipedia });
+                    .setFooter({ text: "wikipedia.org", iconURL: icons.wikipedia });
 
                 thumbnail && ebd.setThumbnail(thumbnail);
 
