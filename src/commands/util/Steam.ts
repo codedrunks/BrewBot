@@ -14,7 +14,7 @@ export class Steam extends Command
         super({
             name: "steam",
             desc: "Info about a Steam user and their games",
-            category: "fun",
+            category: "util",
             subcommands: [
                 {
                     name: "info",
