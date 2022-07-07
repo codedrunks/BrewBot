@@ -93,11 +93,11 @@ export class Define extends Command
             const ex = example.replace(/(\r?\n){1,2}/gm, "\n> ");
 
             embed.setTitle(`Urban Dictionary definition for **${term}**:`)
-                .setDescription(`Definition:\n${normalize(def)}\n\n> Example:\n> ${normalize(ex)}`);
+                .setDescription(`Definition:\n${normalize(def)}\n${ex && ex.length > 0 ? `\n> Example:\n> ${normalize(ex)}\n` : ""}`);
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
-                    text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
+                    text: `By ${trimLength(author, 32)} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
                     iconURL: icons.urbandictionary,
                 });
 
@@ -337,4 +337,10 @@ async function grabRedirectUrl(url: string): Promise<string | null>
     {
         return null;
     }
+}
+
+/** Trims a `str`ing if it's longer than `len` (32 by default) and adds `trimChar` (`…` by default) */
+function trimLength(str: string, len = 32, trimChar = "…")
+{
+    return str.length > len ? str.substring(0, len) + trimChar : str;
 }

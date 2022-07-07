@@ -102,6 +102,8 @@ interface CmdMetaBase {
     memberPerms?: PermissionFlagsBits[];
     /** Category of the command */
     category: CommandCategory;
+    /** Set to true to allow this command to be used in DMs */
+    allowDM?: boolean;
 }
 
 /** Meta information of a regular Command instance */
