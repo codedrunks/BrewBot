@@ -5,13 +5,23 @@ import { embedify } from "@src/util";
 import { CommandMeta } from "@src/types";
 
 const commandObj: Record<string, CommandMeta[]> = {
-    "economy": [],
-    "fun": [],
-    "games": [],
-    "mod": [],
-    "music": [],
-    "util": [],
-    "restricted": [],
+    economy: [],
+    fun: [],
+    games: [],
+    mod: [],
+    music: [],
+    util: [],
+    restricted: [],
+};
+
+const categoryNames: Record<string, string> = {
+    economy: "Economy",
+    fun: "Fun",
+    games: "Games",
+    mod: "Mod",
+    music: "Music",
+    util: "Utility",
+    restricted: "Restricted",
 };
 
 export function initHelp() {
@@ -66,7 +76,7 @@ export class Help extends Command {
 
         const description = `${Object.entries(helpCmds)
             .filter(([,v]) => Array.isArray(v) && v.length > 0)
-            .map(([cat, cmds]) => `**${cat}**\n${cmds!.map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
+            .map(([cat, cmds]) => `**${categoryNames?.[cat] ?? cat}:**\n${cmds!.map(c => `\`${c.name}\``).join("  ")}`).join("\n")}`;
 
         const embed = embedify(description)
             .setTitle(`${int.client.user?.username ?? "Bot"}'s Commands:`);
