@@ -27,7 +27,7 @@ export class Daily extends Command {
 
         const userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/openaccount`!"), true);
+        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/account open`!"), true);
 
         const lastdaily = await getLastDaily(userid, int.guild.id);
 

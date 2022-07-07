@@ -109,7 +109,7 @@ export class Slots extends Command
         const coins = await getCoins(int.user.id, int.guild.id);
 
         if (!coins && coins != 0) {
-            return await this.reply(int, embedify("No account found for your user in this guild. use `/openaccount` to open a new account"));
+            return await this.reply(int, embedify("No account found for your user in this guild. use `/account open` to open a new account"));
         }
 
         const bet = int.options.getNumber("bet", true);
