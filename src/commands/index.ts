@@ -44,6 +44,7 @@ import { Shuffle } from "@commands/music/Shuffle";
 import { Repeat } from "@commands/music/Repeat";
 import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
+import { Sudoku } from "@commands/games/Sudoku";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -59,6 +60,7 @@ export const commands = [
     Mock,
     Steam,
     Slots,
+    Sudoku,
 
     // mod
     Delete,

@@ -5,6 +5,13 @@ import fs from "fs";
 import os from "os";
 import { settings } from "@src/settings";
 import { randRange } from "svcorelib";
+import { embedify } from "@src/util";
+
+interface Game {
+    board: number[][];
+    userInput: number[][];
+    solution: number[][];
+}
 
 export class Sudoku extends Command
 {
@@ -13,23 +20,13 @@ export class Sudoku extends Command
     private readonly CELL_WIDTH = 100;
     private readonly CELL_HEIGHT = 100;
     private readonly MIN_HINTS = 40;
+    private readonly BOARD_LENGTH = 9;
 
     private readonly canvas: Canvas;
     private readonly ctx: CanvasRenderingContext2D;
 
-    // TODO: store the solution here so we can compare it
+    private readonly games = new Map<string, Game>();
 
-    private board: number[][] = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ];
     private emptyCells: number[][] = [];
     private filledCells: number[] = new Array(81).fill(null).map((_, i) => i);
     constructor()
@@ -95,40 +92,111 @@ export class Sudoku extends Command
     }
 
     async start(int: CommandInteraction) {
-        // TODO: check if game is already started by this user
+        const user = int.user;
+        if (this.games.has(user.id)) {
+            return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
+        }
+
+        this.games.set(user.id, {
+            board: [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            userInput: [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            solution: [],
+        });
+
+        const game = this.games.get(user.id)!;
+
         this.resetBoard();
-        this.generateRandomBoard();
-        this.removeNumbers(this.board.length * 2);
-        this.drawBoard();
-        this.renderBoard();
-        return await this.sendBoard(int);
+        this.generateRandomBoard(game);
+        this.removeNumbers(game, this.BOARD_LENGTH * 2);
+        this.drawBoard(game);
+        this.renderBoard(user.id);
+        return await this.sendBoard(int, user.id);
     }
 
     async place(int: CommandInteraction) {
-        // TODO: check if there's no game running
-        // TODO: different color for user inputs (#6E85B7)
+        const user = int.user;
+
+        if (!this.games.has(user.id)) {
+            return await this.editReply(int, embedify("You have no game running. Start a new game with `/sudoku start`"));
+        }
+
+        const game = this.games.get(user.id)!;
+
         const box = int.options.getNumber("box", true);
         const cell = int.options.getNumber("cell", true);
         const choice = int.options.getNumber("number", true);
-        this.placeNumber(box, cell, choice);
-        this.drawBoard();
-        this.renderBoard();
-        // TODO: check if all cells have been filled and then check win condition
-        return await this.sendBoard(int);
+
+        const boxRow = Math.floor((box - 1) / 3);
+        const boxCol = (box - 1) % 3;
+        const cellCol = (cell - 1) % 3;
+        const cellRow = Math.floor((cell - 1) / 3);
+        const row = boxRow * 3 + cellRow;
+        const col = boxCol * 3 + cellCol;
+
+        if (game.board[row][col] !== 0) {
+            return await this.editReply(int, embedify("You cannot place a number there"));
+        }
+        game.userInput[row][col] = choice;
+
+        this.drawBoard(game);
+        this.renderBoard(user.id);
+
+        if (this.checkWin(game)) {
+            fs.rmSync(os.tmpdir() + `${user.id}-sudoku.png`);
+            await this.sendBoard(int, user.id);
+            return this.followUpReply(int, embedify("Holy poggers you won!111!11!11"));
+        }
+
+        return await this.sendBoard(int, user.id);
+    }
+
+    checkWin(game: Game): boolean {
+        const filled = game.userInput.reduce((a, item) => {
+            return a + item.reduce((b, item) => {
+                return b + Number(item !== 0);
+            }, 0);
+        }, 0);
+
+        if (filled !== 41) {
+            return false;
+        }
+
+        for (let i = 0; i < game.userInput.length; i++) {
+            for (let j = 0; j < game.userInput.length; j++) {
+                if (game.userInput[i][j] === 0) {
+                    continue;
+                }
+
+                if (game.userInput[i][j] !== game.solution[i][j]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     resetBoard() {
-        this.board = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ];
         this.emptyCells = [];
         this.filledCells = new Array(81).fill(null).map((_, i) => i);
     }
@@ -140,10 +208,6 @@ export class Sudoku extends Command
         // 3- let function call itself with the next cell
         // 4- if any cell has 0 valid candidates at any point in time. we revert the last cell placement and try another candidate
         // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
-        //
-
-        // console.log("empty cells: ", emptyCells);
-        // console.log(board);
 
         board[startRow][startCol] = candidate;
         emptyCells.splice(emptyCells.indexOf([startRow, startCol]), 1);
@@ -153,12 +217,7 @@ export class Sudoku extends Command
         }
 
         const [nextRow, nextCol] = emptyCells.splice(Math.floor(Math.random() * emptyCells.length), 1)[0];
-
-        // console.log("next cell: ", [nextRow, nextCol]);
-
         const candidates = this.getCandidates(nextRow, nextCol, board);
-
-        // console.log("candidates for next cell: ", candidates);
 
         while (candidates.length) {
             const newCandidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
@@ -172,7 +231,7 @@ export class Sudoku extends Command
         return false;
     }
 
-    removeNumbers(hints: number): boolean {
+    removeNumbers(game: Game, hints: number): boolean {
         // algo for this
         // 1- remove random number
         // 2- try solving the board
@@ -192,24 +251,24 @@ export class Sudoku extends Command
         const removedCol = cell % 9;
 
         // 1- remove random number
-        const removedVal = this.board[removedRow][removedCol];
-        this.board[removedRow][removedCol] = 0;
+        const removedVal = game.board[removedRow][removedCol];
+        game.board[removedRow][removedCol] = 0;
 
         this.emptyCells.push([removedRow, removedCol]);
 
-        const candidates = this.getCandidates(removedRow, removedCol, this.board);
+        const candidates = this.getCandidates(removedRow, removedCol, game.board);
 
         while (candidates.length) {
             const candidate = candidates.splice(candidates.indexOf(removedVal), 1)[0];
 
             // 2- try solving board
-            if (this.solver(removedRow, removedCol, candidate, this.emptyCells.slice(), JSON.parse(JSON.stringify(this.board)))) {
+            if (this.solver(removedRow, removedCol, candidate, this.emptyCells.slice(), JSON.parse(JSON.stringify(game.board)))) {
                 solutions++;
             }
             // 3- if not solveable, put the number back
             // if solveable and multiiple solutions, put number back and try somewhere else
             if (solutions > 1) {
-                this.board[removedRow][removedCol] = removedVal;
+                game.board[removedRow][removedCol] = removedVal;
                 this.emptyCells.pop();
                 this.filledCells.push(cell);
                 break;
@@ -217,29 +276,17 @@ export class Sudoku extends Command
         }
 
         // 4- if solveable, and one solution, continue
-        if (this.removeNumbers(this.filledCells.length)) {
+        if (this.removeNumbers(game, this.filledCells.length)) {
             return true;
         }
 
         return false;
     }
 
-    placeNumber(box: number, cell: number, choice: number) {
-        // TOOD: don't allow users to place numbers in the initial hints
-        const boxRow = Math.floor((box - 1) / 3);
-        const boxCol = (box - 1) % 3;
-        const cellCol = (cell - 1) % 3;
-        const cellRow = Math.floor((cell - 1) / 3);
-        const row = boxRow * 3 + cellRow;
-        const col = boxCol * 3 + cellCol;
-
-        this.board[row][col] = choice;
-    }
-
-    generateRandomBoard() {
+    generateRandomBoard(game: Game) {
         // fill diagonal boxes 1, 5, 9
         let digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        for (let i = 0; i < this.board.length; i++) {
+        for (let i = 0; i < this.BOARD_LENGTH; i++) {
             if (i % 3 == 0) {
                 digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
             }
@@ -247,15 +294,17 @@ export class Sudoku extends Command
             const k = Math.floor(i / 3) * 3;
             for (let j = k; j < k + 3; j++) {
                 const num = digits.splice(Math.floor(Math.random() * digits.length), 1)[0];
-                this.board[i][j] = num;
+                game.board[i][j] = num;
             }
         }
 
         // fill the rest of the boxes
-        this.backtracker(0, 3);
+        this.backtracker(game.board, 0, 3);
+
+        game.solution = JSON.parse(JSON.stringify(game.board));
     }
 
-    backtracker(startRow: number, startCol: number): boolean {
+    backtracker(board: number[][], startRow: number, startCol: number): boolean {
         // backtracking algo
         // 1- create list of candidates for the current cell
         // 2- randomly choose a candidate
@@ -293,16 +342,16 @@ export class Sudoku extends Command
             }
         }
 
-        const candidates = this.getCandidates(startRow, startCol, this.board);
+        const candidates = this.getCandidates(startRow, startCol, board);
 
         // try every candidate until we find one that uniquely solves the board.
         while (candidates.length) {
             const candidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
-            this.board[startRow][startCol] = candidate;
-            if (this.backtracker(startRow, startCol + 1)) {
+            board[startRow][startCol] = candidate;
+            if (this.backtracker(board, startRow, startCol + 1)) {
                 return true;
             }
-            this.board[startRow][startCol] = 0;
+            board[startRow][startCol] = 0;
         }
 
         // if no candidates, we backtrack and try something else.
@@ -381,7 +430,6 @@ export class Sudoku extends Command
         this.ctx.font = "bold 40pt Roboco";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "middle";
-        this.ctx.fillStyle = "#2C3639";
 
         const boxCol = (box - 1) % 3;
         const boxRow = Math.floor((box - 1) / 3);
@@ -394,42 +442,47 @@ export class Sudoku extends Command
         this.ctx.fillText(choice.toString(), xPos, yPos);
     }
 
-    drawBoard() {
-        for (let row = 0; row < this.board.length; row++) {
-            for (let col = 0; col < this.board[row].length; col++) {
-                if (this.board[row][col] != 0) {
-                    const boxRow = Math.floor(row / 3);
-                    const boxCol = Math.floor(col / 3);
-                    const box = (boxRow * 3 + boxCol) + 1;
-                    const cellRow = row - (boxRow * 3);
-                    const cellCol = col - (boxCol * 3);
-                    const cell = (cellRow * 3 + cellCol) + 1;
-                    this.drawNumber(box, cell, this.board[row][col]);
+    drawBoard(game: Game) {
+        for (let row = 0; row < this.BOARD_LENGTH; row++) {
+            for (let col = 0; col < this.BOARD_LENGTH; col++) {
+                const boxRow = Math.floor(row / 3);
+                const boxCol = Math.floor(col / 3);
+                const box = (boxRow * 3 + boxCol) + 1;
+                const cellRow = row - (boxRow * 3);
+                const cellCol = col - (boxCol * 3);
+                const cell = (cellRow * 3 + cellCol) + 1;
+                if (game.board[row][col] != 0) {
+                    this.ctx.fillStyle = "#2C3639";
+                    this.drawNumber(box, cell, game.board[row][col]);
+                }
+
+                if (game.userInput[row][col] != 0) {
+                    this.ctx.fillStyle = "#6E85B7";
+                    this.drawNumber(box, cell, game.userInput[row][col]);
                 }
             }
         }
     }
 
-    // TODO: rename test.png to sudoku.png or maybe even just a random uuid
-    renderBoard() {
+    renderBoard(userId: string) {
         const buf = this.canvas.toBuffer("image/png");
-        fs.writeFileSync(os.tmpdir() + "/test.png", buf);
+        fs.writeFileSync(os.tmpdir() + `/${userId}-sudoku.png`, buf);
     }
 
-    async sendBoard(int: CommandInteraction) {
+    async sendBoard(int: CommandInteraction, userId: string) {
         await int.editReply({
             embeds: [
                 {
                     image: {
-                        url: "attachment://test.png"
+                        url: `attachment://${userId}-sudoku.png`
                     },
                     color: settings.embedColors.default,
                 }
             ],
             files: [{
-                attachment: os.tmpdir() + "/test.png",
-                name: "test.png",
-                description: "A description of the file"
+                attachment: os.tmpdir() + `/${userId}-sudoku.png`,
+                name: `${userId}-sudoku.png`,
+                description: "Literally a sudoku"
             }]
         });
     }
