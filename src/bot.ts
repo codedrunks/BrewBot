@@ -44,9 +44,7 @@ async function init()
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
         
-        const redis = getRedis();
-
-        await redis?.connect();
+        await getRedis().connect();
         
         botLogs.init(cl);
         
