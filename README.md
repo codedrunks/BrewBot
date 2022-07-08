@@ -7,6 +7,7 @@
     - [General](#general)
     - [Prisma](#prisma)
 - [Debugging](#debugging)
+- [Redis](#redis)
 - [Discord API quirks](#discord-api-quirks)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
