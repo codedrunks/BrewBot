@@ -71,17 +71,20 @@ export class Define extends Command
 
         switch(engine)
         {
+        //#SECTION urbandict
         case "urbandictionary":
         {
             const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
-            const obj = req.data?.list?.at(0);
+
+            const results = req.data?.list?.sort((a: Record<string, number>, b: Record<string, number>) => a.thumbs_up < b.thumbs_up ? 1 : -1);
+            const obj = results?.at(0);
 
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
-            else if(!obj)
+            if(!Array.isArray(results) || results.length === 0)
                 return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
 
-            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´*+#]+)\]/gm, "$1");
+            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
 
             const { definition, example, author, thumbs_up, thumbs_down, permalink } = obj;
 
@@ -90,11 +93,11 @@ export class Define extends Command
             const ex = example.replace(/(\r?\n){1,2}/gm, "\n> ");
 
             embed.setTitle(`Urban Dictionary definition for **${term}**:`)
-                .setDescription(`Definition:\n${normalize(def)}\n\n> Example:\n> ${normalize(ex)}`);
+                .setDescription(`Definition:\n${normalize(def)}\n${ex && ex.length > 0 ? `\n> Example:\n> ${normalize(ex)}\n` : ""}`);
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
-                    text: `By ${author} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
+                    text: `By ${trimLength(author, 32)} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
                     iconURL: icons.urbandictionary,
                 });
 
@@ -108,6 +111,7 @@ export class Define extends Command
 
             break;
         }
+        //#SECTION wikipedia
         case "wikipedia":
         {
             const normalize = (str: string) => str
@@ -174,6 +178,7 @@ export class Define extends Command
 
             return await searchWiki(term);
         }
+        //#SECTION dictionary
         case "dictionary":
         {
             const termNotFound = () => this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
@@ -222,7 +227,7 @@ export class Define extends Command
 
             embed.setTitle(`Dictionary entry for **${term}**:`)
                 .setDescription(desc)
-                .setFooter({ text: "https://dictionaryapi.dev/", iconURL: icons.dictionary });
+                .setFooter({ text: "dictionaryapi.dev", iconURL: icons.dictionary });
 
             if(entry.pronounciation)
                 btns.push(new MessageButton().setStyle("LINK").setLabel("Pronounciation").setURL(entry.pronounciation));
@@ -240,10 +245,10 @@ export class Define extends Command
         });
     }
 
-    /** Returns an embed description for an emoji choose "dialog" */
-    emojiChooseEmbedDesc(choices: { name: string, url?: string }[]): string
+    /** Returns an embed description for an emoji-choice-dialog */
+    emojiChoiceDesc(choices: { name: string, url?: string }[]): string
     {
-        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}${a.url ? ` [\\🔗](${a.url})` : ""}**`).join("\n");
+        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}**${a.url ? ` - [open <:open_in_browser:994648843331309589>](${a.url})` : ""}`).join("\n");
     }
 
     async findWikiArticle(int: CommandInteraction, articles: WikiArticle[])
@@ -254,7 +259,7 @@ export class Define extends Command
         const m = await int.channel.send({ embeds: [
             new MessageEmbed()
                 .setTitle("Select the best matching article")
-                .setDescription(this.emojiChooseEmbedDesc(
+                .setDescription(this.emojiChoiceDesc(
                     articles.map(
                         ({ title: name, url }) => ({ name, url })
                     )
@@ -291,7 +296,7 @@ export class Define extends Command
                     .setTitle(`Wikipedia definition for **${title}**:`)
                     .setColor(settings.embedColors.default)
                     .setDescription(extract)
-                    .setFooter({ text: "https://wikipedia.org/", iconURL: icons.wikipedia });
+                    .setFooter({ text: "wikipedia.org", iconURL: icons.wikipedia });
 
                 thumbnail && ebd.setThumbnail(thumbnail);
 
@@ -332,4 +337,10 @@ async function grabRedirectUrl(url: string): Promise<string | null>
     {
         return null;
     }
+}
+
+/** Trims a `str`ing if it's longer than `len` (32 by default) and adds `trimChar` (`…` by default) */
+function trimLength(str: string, len = 32, trimChar = "…")
+{
+    return str.length > len ? str.substring(0, len) + trimChar : str;
 }

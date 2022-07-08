@@ -7,18 +7,18 @@ export class Mock extends Command
     {
         super({
             name: "mock",
-            desc: "Mockifies your message",
+            desc: "MoCkIfIeS yOuR mEsSaGe",
             category: "fun",
             perms: [],
             args: [
                 {
                     name: "text",
-                    desc: "The text to mockify.",
+                    desc: "The text to mockify",
                     required: true,
                 },
                 {
                     name: "copy",
-                    desc: "Set to true to hide the bot's reply from other members, so you can copy and send it instead.",
+                    desc: "Set to true to hide the bot's reply from other members, so you can copy and send it yourself",
                     type: "boolean",
                 }
             ]

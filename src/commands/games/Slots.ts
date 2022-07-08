@@ -22,6 +22,7 @@ export class Slots extends Command
         super({
             name: "slots",
             desc: "Run a slot machine thingy",
+            category: "games",
             perms: [],
             args: [
                 {

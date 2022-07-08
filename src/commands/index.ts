@@ -6,7 +6,6 @@ import { Ferret } from "@commands/fun/Ferret";
 import { HigherLower } from "@commands/games/HigherLower";
 import { Joke } from "@commands/fun/Joke";
 import { Mock } from "@commands/fun/Mock";
-import { Steam } from "@commands/fun/Steam";
 
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
@@ -21,6 +20,7 @@ import { Exec } from "@commands/util/Exec";
 import { Ping } from "@commands/util/Ping";
 import { Reminder } from "@commands/util/Reminder";
 import { Server } from "@commands/util/Server";
+import { Steam } from "@src/commands/util/Steam";
 import { Translate } from "@commands/util/Translate";
 import { Help } from "@commands/util/Help";
 import { Contest } from "@commands/fun/Contest/Contest";
@@ -46,6 +46,7 @@ import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
 import { Premium } from "@commands/music/Premium";
 import { Remove } from "@commands/music/Remove";
+import { Sudoku } from "@commands/games/Sudoku";
 
 /** Every command in here will get registered as soon as client is ready */
 export const commands = [
@@ -61,6 +62,7 @@ export const commands = [
     Mock,
     Steam,
     Slots,
+    Sudoku,
 
     // mod
     Delete,
