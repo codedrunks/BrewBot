@@ -8,6 +8,7 @@ export class TEMPLATE extends Command
         super({
             name: "template_name",
             desc: "Template_desc",
+            category: "util",
             perms: [],
         });
     }

@@ -14,6 +14,7 @@ export class Exec extends Command
         super({
             name: "exec",
             desc: "Developer command",
+            category: "restricted",
             args: [
                 {
                     name: "ephemeral",
