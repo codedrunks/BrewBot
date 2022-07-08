@@ -23,7 +23,7 @@ export class Job extends Command {
 
         const totalworks = await getTotalWorks(userid, guildid);
 
-        if(!totalworks && totalworks != 0) return this.reply(int, embedify("We have no job records for you, ya bum! Consider working using `/work` or grifting from society with `/daily`"), true);
+        if(!totalworks || totalworks == 0) return this.reply(int, embedify("We have no job records for you, ya bum! Consider doing something using `/work`"), true);
 
         const jobidx = totalWorksToLevel(totalworks);
         const job = Levels[jobidx as keyof typeof Levels];
