@@ -2,7 +2,7 @@ import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify } from "@src/util";
 import { settings } from "@src/settings";
-import { setPremium } from "@src/database/music";
+import { togglePremium } from "@src/database/music";
 
 export class Premium extends Command {
     constructor() {
@@ -11,17 +11,9 @@ export class Premium extends Command {
             desc: "Learn more about and purchase premium",
             subcommands: [
                 {
-                    name: "set",
+                    name: "toggle",
                     desc: "Give premium to current guild [DEV ONLY]",
-                    perms: ["ADMINISTRATOR"],
-                    args: [
-                        {
-                            name: "yn",
-                            desc: "bool",
-                            type: "boolean",
-                            required: true
-                        }
-                    ]
+                    perms: ["ADMINISTRATOR"]
                 }
             ]
         });
@@ -34,9 +26,7 @@ export class Premium extends Command {
         if(opt.name == "set") {
             if(!settings.devs.includes(int.user.id)) return this.reply(int, embedify("You cannot use this command"), true);
 
-            const a = int.options.getBoolean("yn");
-
-            await setPremium(int.guild.id, a ?? false);
+            const a = await togglePremium(int.guild.id);
 
             return this.reply(int, embedify(`${int.guild.name} ${a ? "now has" : "no longer has"} premium`));
         }

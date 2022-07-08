@@ -59,7 +59,7 @@ export class NowPlaying extends Command {
             if(i.user.id !== int.user.id) return;
 
             const djCheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
-            if(djCheck) return;
+            if(djCheck) return this.followUpReply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"), true);
 
             if(!player || !player.queue.current) return;
 

@@ -28,6 +28,25 @@ export async function getPremium(guildId: string): Promise<boolean> {
     return premium?.premium ?? false;
 }
 
+export async function togglePremium(guildId: string): Promise<boolean> {
+    const c = await getPremium(guildId);
+
+    await prisma.guild.upsert({
+        where: {
+            id: guildId
+        },
+        update: {
+            premium: !c
+        },
+        create: {
+            id: guildId,
+            premium: false
+        }
+    });
+
+    return !c;
+}
+
 export async function addDJRoleId(guildId: string, roleId: string) {
     await prisma.guild.upsert({
         where: {
