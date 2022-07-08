@@ -15,6 +15,7 @@ export class Translate extends Command
         super({
             name: "translate",
             desc: "Translate text",
+            category: "util",
             args: [
                 {
                     name: "text",

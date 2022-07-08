@@ -34,9 +34,10 @@ export abstract class Command extends EventEmitter
         cmdMeta.memberPerms && data
             .setDefaultMemberPermissions(cmdMeta.memberPerms.reduce((acc, cur) => acc | cur, 0n));
 
-        const fallbackMeta = {
+        const fallbackMeta: Partial<CommandMeta> = {
             perms: [],
             args: [],
+            allowDM: false,
         };
 
         if(Command.isCommandMeta(cmdMeta))
@@ -206,6 +207,9 @@ export abstract class Command extends EventEmitter
     {
         try
         {
+            if(!this.meta.allowDM && !int.inGuild())
+                return await this.reply(int, embedify("You can only use this command in a server.", settings.embedColors.error));
+
             if(opt ? this.hasPerm(int, opt?.name) : this.hasPerm(int))
                 return await this.run(int, opt);
             else if(typeof int.reply === "function")

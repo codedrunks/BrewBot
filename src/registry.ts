@@ -56,7 +56,8 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
 
     try
     {
-        commands.forEach(CmdClass => !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(botClient as Client)));
+        for(const CmdClass of commands)
+            !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(botClient));
     }
     catch(err)
     {
