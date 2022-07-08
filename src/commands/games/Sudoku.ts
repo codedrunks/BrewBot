@@ -34,6 +34,7 @@ export class Sudoku extends Command
         super({
             name: "sudoku",
             desc: "Play a game of sudoku",
+            category: "games",
             subcommands: [
                 {
                     name: "start",
