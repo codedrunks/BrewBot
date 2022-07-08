@@ -9,6 +9,7 @@ export class Premium extends Command {
         super({
             name: "premium",
             desc: "Learn more about and purchase premium",
+            category: "music",
             subcommands: [
                 {
                     name: "toggle",

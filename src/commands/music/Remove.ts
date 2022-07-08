@@ -9,6 +9,7 @@ export class Remove extends Command {
         super({
             name: "remove",
             desc: "Remove a song from the queue",
+            category: "music",
             args: [
                 {
                     name: "song",
