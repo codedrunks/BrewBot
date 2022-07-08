@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@src/util";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
-import { getUser } from "@database/users";
+import { createNewUser, getUser } from "@database/users";
 import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
 import { randomItem } from "svcorelib";
 
@@ -18,9 +18,12 @@ export class Work extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
+
+        await this.deferReply(int);
+
         const userid = int.user.id;
 
-        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
+        if(!int.guild?.id) return this.followUpReply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
 
@@ -28,7 +31,7 @@ export class Work extends Command {
 
         const userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/account open`!"), true);
+        if(!userInDB) await createNewUser(userid, guildid);
 
         const lastwork = await getLastWork(userid, guildid);
 
@@ -46,13 +49,13 @@ export class Work extends Command {
 
             await incrementTotalWorks(userid, guildid);
 
-            return this.reply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
+            return this.followUpReply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
         }
 
         const timeleft = now - lastwork;
 
         if(timeleft <= secs4hours) {
-            return this.reply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
+            return this.followUpReply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
         } else {
             const jobidx = totalWorksToLevel(totalworks);
             const job = Levels[jobidx as keyof typeof Levels];
@@ -63,7 +66,7 @@ export class Work extends Command {
 
             await incrementTotalWorks(userid, guildid);
 
-            return this.reply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
+            return this.followUpReply(int, embedify(`You got ${payout} coins by ${randomItem(job.phrases)}`));
         }
     }
 }

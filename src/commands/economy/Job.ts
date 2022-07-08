@@ -35,7 +35,7 @@ export class Job extends Command {
         const embed = new MessageEmbed()
             .setColor(settings.embedColors.default)
             .setTitle(`*${username}*'s Current Vocation: ${name}`)
-            .setDescription(`You currently make ${Math.round(baseAward * multiplier)} per 4 hours and have worked ${totalworks} times.`);
+            .setDescription(`You currently can make $${Math.round(baseAward * multiplier)} per 4 hours and have worked ${totalworks} time${totalworks > 1 ? "s": ""}.`);
 
         return this.reply(int, embed);
     }
