@@ -11,11 +11,11 @@ import { settings } from "@src/settings";
 import { prisma } from "@database/client";
 import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
+import { getRedis } from "./redis";
 
 const { env, exit } = process;
 
 dotenv.config();
-
 
 async function init()
 {
@@ -43,12 +43,14 @@ async function init()
             status: "dnd",
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
+        
+        const redis = getRedis();
 
-
+        await redis?.connect();
+        
         botLogs.init(cl);
-
+        
         initRegistry(cl);
-
 
         const evts = registerEvents().filter(e => e.enabled);
 

@@ -50,6 +50,12 @@ All database utils can be found in `/src/database`, the functions are organized 
   
 See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node client library [here.](https://www.prisma.io/docs/reference)
 
+### Redis:
+Redis is an in-memory cache to keep highly accessed values in a place that is fast to access and update.
+Setting up redis is easy for your distro of linux and if you are developing on Windows, can be installed through WSL, see docs for installation [here.](https://redis.io/docs/getting-started/installation/)
+
+In our specific application, your redis-server must be running on `127.0.0.1:6379`, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in %UserProfile%\.wslconfig, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
+
 <br>
 
 ## CLI
