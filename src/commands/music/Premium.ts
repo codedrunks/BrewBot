@@ -24,7 +24,7 @@ export class Premium extends Command {
 
         if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DMs"));
 
-        if(opt.name == "set") {
+        if(opt.name == "toggle") {
             if(!settings.devs.includes(int.user.id)) return this.reply(int, embedify("You cannot use this command"), true);
 
             const a = await togglePremium(int.guild.id);

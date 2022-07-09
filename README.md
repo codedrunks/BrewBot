@@ -61,6 +61,17 @@ When launching to production, you want redis to be daemonized, you can do that w
 
 In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in %UserProfile%\.wslconfig, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
 
+Another thing is to have a config for your instance of Redis, in testing/development you can do something like this to have an instance that does not save to disk. On WSL, you must do this because redis will not have write permissions to save to disk.
+```sh
+cd ~
+mkdir redis
+cd redis
+touch redis.conf
+redis-server redis.conf # run this in a separate window
+redis-cli config set save ""
+redis-cli config rewrite
+```
+
 <br>
 
 ## CLI

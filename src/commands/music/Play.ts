@@ -74,7 +74,7 @@ export class Play extends Command {
 
         const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
 
-        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
+        if(djcheck) return this.editReply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 

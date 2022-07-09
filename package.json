@@ -6,7 +6,8 @@
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
     "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
-    "clearCommands": "ts-node src/tools/clearCommands.ts"
+    "clearCommands": "ts-node src/tools/clearCommands.ts",
+    "deploy": "npx prisma generate && npx prisma migrate deploy && tsc && tsc-alias && node out/bot.js"
   },
   "repository": {
     "type": "git",
