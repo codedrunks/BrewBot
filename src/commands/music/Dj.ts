@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { embedify, TryCatchMethod } from "@src/util";
+import { embedify } from "@src/util";
 import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "@database/music";
 
 export class DJ extends Command {
@@ -49,7 +49,6 @@ export class DJ extends Command {
         });
     }
 
-    @TryCatchMethod((err, interaction) => interaction?.reply({ embeds: [ embedify("Something went wrong!") ]}))
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void> {
         const guild = int.guild;
 

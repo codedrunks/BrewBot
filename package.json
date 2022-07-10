@@ -6,7 +6,8 @@
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
     "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
-    "clearCommands": "ts-node src/tools/clearCommands.ts"
+    "clearCommands": "ts-node src/tools/clearCommands.ts",
+    "deploy": "npx prisma generate && npx prisma migrate deploy && tsc && tsc-alias && node out/bot.js"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,7 @@
     "kleur": "^4.1.4",
     "parse-relative-time": "^1.1.0",
     "prisma": "^3.15.1",
+    "redis": "^4.2.0",
     "steamapi": "^2.2.0",
     "svcorelib": "^1.16.0"
   },

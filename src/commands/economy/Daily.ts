@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@src/util";
 import { addCoins, getLastDaily, setLastDaily } from "@database/economy";
-import { getUser } from "@database/users";
+import { createNewUser, getUser } from "@database/users";
 
 const secs24hours = 86400;
 const dailyCoinsAward = 100;
@@ -17,17 +17,20 @@ export class Daily extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
+       
+        await this.deferReply(int);
+
         const userid = int.user.id;
 
         const now = nowInSeconds();
 
-        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
+        if(!int.guild?.id) return this.followUpReply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
 
         const userInDB = await getUser(userid);
 
-        if(!userInDB) return this.reply(int, embedify("You don't have a bank account! Open one today with `/openaccount`!"), true);
+        if(!userInDB) await createNewUser(userid, guildid);
 
         const lastdaily = await getLastDaily(userid, int.guild.id);
 
@@ -35,17 +38,17 @@ export class Daily extends Command {
             await setLastDaily(userid, guildid);
             await addCoins(userid, guildid, dailyCoinsAward);
 
-            return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
+            return this.followUpReply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
 
         const timeleft = now - lastdaily;
 
         if(timeleft <= secs24hours) {
-            return this.reply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
+            return this.followUpReply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``));
         } else {
             await addCoins(userid, guildid, dailyCoinsAward);
 
-            return this.reply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
+            return this.followUpReply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
         }
     }
 }

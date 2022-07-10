@@ -1,21 +1,30 @@
 import { prisma } from "@database/client";
+import { getRedis } from "@src/redis";
 import { nowInSeconds } from "@src/util";
+
+const redis = getRedis();
 
 /** get coins from a user */
 export async function getCoins(userId: string, guildId: string): Promise<number | undefined> {
-    const amount = await prisma.coins.findUnique({
-        where: {
-            guildId_userId: {
-                guildId,
-                userId
-            }
-        },
-        select: {
-            amount: true
-        }
-    });
+    const checkRedis = await redis.get(`coins_${guildId}${userId}`);
 
-    return amount?.amount;
+    if(!checkRedis) {
+        const amount = await prisma.coins.findUnique({
+            where: {
+                guildId_userId: {
+                    guildId,
+                    userId
+                }
+            },
+            select: {
+                amount: true
+            }
+        });
+
+        if(amount?.amount) await redis.set(`coins_${guildId}${userId}`, amount.amount, { "EX": 300 });
+
+        return amount?.amount;
+    } else return parseInt(checkRedis);
 }
 
 /** Set coins to x amount */
@@ -36,10 +45,16 @@ export async function setCoins(userId: string, guildId: string, coins: number) {
             amount: coins
         }
     });
+
+    await redis.set(`coins_${guildId}${userId}`, coins, { "EX": 300 });
 }
 
 /** Increment user coin amount by x amount */
 export async function addCoins(userId: string, guildId: string, coins: number) {
+    const checkRedis = await redis.get(`coins_${guildId}${userId}`);
+
+    if(checkRedis) await redis.set(`coins_${guildId}${userId}`, coins + checkRedis, { "EX": 300 });
+
     await prisma.coins.upsert({
         where: {
             guildId_userId: {

@@ -4,18 +4,19 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
 
-export class Volume extends Command {
+export class Remove extends Command {
     constructor() {
         super({
-            name: "volume",
-            desc: "Sets the volume of the bot (1-100)",
+            name: "remove",
+            desc: "Remove a song from the queue",
             category: "music",
             args: [
                 {
-                    name: "volume",
-                    desc: "how loud the bot should play music (1-100)",
+                    name: "song",
+                    desc: "Song to remove from the queue, denoted by it's position in the queue",
                     type: "number",
-                    required: true
+                    required: true,
+                    min: 1
                 }
             ]
         });
@@ -23,7 +24,7 @@ export class Volume extends Command {
 
     async run(int: CommandInteraction): Promise<void> {
 
-        const args = this.resolveArgs(int);
+        const song = int.options.getNumber("song", true);
 
         const guild = int.guild;
 
@@ -37,7 +38,7 @@ export class Volume extends Command {
 
         const player = manager.get(guild.id);
 
-        if(!player) return this.reply(int, embedify("The bot is not currently active in this server"));
+        if(!player || !player.paused && !player.playing) return this.reply(int, embedify("There is no music playing in this server"));
 
         const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
 
@@ -45,12 +46,12 @@ export class Volume extends Command {
 
         if(voice !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel as the bot"));
 
-        const volume = Number(args.volume);
+        if(song > player.queue.length) return this.reply(int, embedify("Can not remove a song that does not exist in the queue"));
 
-        if(!volume || volume < 1 || volume > 100) return this.reply(int, embedify("Volume must a number between 1 and 100"));
+        const removedName = player.queue[song - 1].title;
 
-        player.setVolume(volume);
+        player.queue.remove(song - 1);
 
-        return this.reply(int, embedify(`Player volume has been set to ${volume}%`));
+        return this.reply(int, embedify(`Removed \`${removedName}\` from the queue`));
     }
 }

@@ -1,8 +1,6 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { createNewUser, deleteUser } from "@database/users";
-import { setCoins } from "@src/database/economy";
-import { getCoins } from "@src/database/economy";
+import { setCoins, getCoins } from "@src/database/economy";
 import { embedify } from "@src/util";
 
 export class Account extends Command {
@@ -12,15 +10,6 @@ export class Account extends Command {
             desc: "Opens a coin account with Bot Bank :tm:",
             category: "economy",
             subcommands: [
-                {
-                    name: "open",
-                    desc: "Opens an account with the bank"
-                },
-                {
-                    name: "close",
-                    desc: "Closes a bank account for a server member",
-                    perms: ["MODERATE_MEMBERS"]
-                },
                 {
                     name: "balance",
                     desc: "See balance of an account",
@@ -38,21 +27,14 @@ export class Account extends Command {
     }
 
     async run(int: CommandInteraction, opts: CommandInteractionOption<"cached">): Promise<void> {
-        const userid = int.user.id;
+        
+        await this.deferReply(int);
 
-        if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
+        if(!int.guild?.id) return this.followUpReply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
 
-        if(opts.name == "open") {
-            await createNewUser(userid, guildid);
-
-            return this.reply(int, embedify(`Created or updated an account for <@${int.user.id}>`), true);
-        } else if(opts.name == "close") {
-            await deleteUser(userid);
-    
-            return this.reply(int, embedify(`<@${userid}>'s account was closed`), true);
-        } else if(opts.name == "balance") {
+        if(opts.name == "balance") {
             const user = int.options.getUser("user") ?? int.user;
 
             let coins = await getCoins(user.id, int.guild.id);
@@ -62,7 +44,7 @@ export class Account extends Command {
                 coins = 0;
             }
     
-            return this.reply(int, embedify(`${user.id == int.user.id ? "You have" : `<@${user.id}> has`} ${coins} coins`));
+            return this.followUpReply(int, embedify(`${user.id == int.user.id ? "You have" : `<@${user.id}> has`} ${coins} coins`));
         }
     }
 }
