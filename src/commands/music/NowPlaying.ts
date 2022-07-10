@@ -1,6 +1,6 @@
 import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString } from "@src/util";
 import { formatDuration, parseDuration } from "svcorelib";
 import { BtnMsg } from "@src/BtnMsg";
@@ -24,7 +24,7 @@ export class NowPlaying extends Command {
 
         if(!guild) return this.editReply(int, embedify("This command cannot be used in DM's")); 
 
-        const manager = getManager();
+        const manager = getMusicManager();
 
         const player = manager.get(guild.id);
 

@@ -168,7 +168,8 @@ export async function removeDJRoleId(guildId: string, roleId: string): Promise<b
 }
 
 export async function isDJRole(guildId: string, roleId: string): Promise<boolean> {
-    const roles = (await redis.hGetAll(`dj_${guildId}`)).ids.split(",") ?? await getDJRoleIds(guildId);
+    const redisCheck = (await redis.hGetAll(`dj_${guildId}`)).ids.split(",");
+    const roles = redisCheck.length > 0 ? redisCheck : await getDJRoleIds(guildId);
 
     if(roles.includes(roleId)) return true;
 
@@ -179,8 +180,8 @@ export async function isDJOnlyandhasDJRole(guildId: string, roleIds: Collection<
 
     const redisCheck = await redis.hGetAll(`dj_${guildId}`);
 
-    const djOnly = redisCheck.djonly === "true" ?? await getDJOnly(guildId);
-    const djRoles = redisCheck.ids ? redisCheck.ids.split(",") : null ?? await getDJRoleIds(guildId);
+    const djOnly = redisCheck.djonly === "true" || await getDJOnly(guildId);
+    const djRoles = redisCheck.ids.split(",").length > 0 ? redisCheck.ids.split(",") : await getDJRoleIds(guildId);
 
     if(djOnly && !roleIds.some(v => djRoles.includes(v.id))) return true;
 

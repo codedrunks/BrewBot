@@ -11,7 +11,7 @@ import { settings } from "@src/settings";
 import { prisma } from "@database/client";
 import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
-import { getRedis } from "./redis";
+import { getRedis } from "@src/redis";
 
 const { env, exit } = process;
 
@@ -26,7 +26,6 @@ async function init()
 
     await persistentData.init();
 
-
     const client = new Client({
         intents: settings.client.intents,
     });
@@ -34,7 +33,6 @@ async function init()
     lavaRetrieveClient(client);
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
-
 
     client.on("ready", async (cl) => {
         const { user, guilds } = cl;
@@ -57,8 +55,6 @@ async function init()
 
         await registerCommands(cl);
 
-
-
         user.setPresence({
             status: "online",
             activities: [{ type: "WATCHING", name: "ur mom" }],
@@ -69,7 +65,6 @@ async function init()
         await doContestStuff(cl);
 
         clientReadyInitLava(cl);
-
 
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 

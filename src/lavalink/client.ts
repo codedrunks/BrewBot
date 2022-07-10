@@ -80,7 +80,7 @@ function initializeManagerFromClient(cl: Client): Manager {
     return manager;
 }
 
-export function getManager(): Manager {
+export function getMusicManager(): Manager {
     return manager;
 }
 

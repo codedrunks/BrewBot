@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { SearchQuery, SearchResult } from "erela.js";
 import { Command } from "@src/Command";
-import { four_hours, getManager, reduceSongsLength } from "@src/lavalink/client";
+import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { randomizeArray, randRange } from "svcorelib";
@@ -80,7 +80,7 @@ export class Play extends Command {
 
         if(!voice) return this.editReply(int, embedify("You must be in a voice channel to use this command"));
 
-        const manager = getManager();
+        const manager = getMusicManager();
 
         let res: SearchResult;
 
@@ -105,7 +105,10 @@ export class Play extends Command {
             selfDeafen: true
         });
 
-        if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours && !(await getPremium(guild.id))) return this.editReply(int, embedify("Total queue time will be over 4 hours, please purchase premium to add more songs to your queue"));
+        // there was no pretty way of doing this tbh but illusion is a fucking whore so, so be it ig
+        if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours 
+            && !(await getPremium(guild.id)))
+            return this.editReply(int, embedify("Total queue time will be over 4 hours, please purchase premium to add more songs to your queue"));
 
         if(player.state !== "CONNECTED") player.connect();
 

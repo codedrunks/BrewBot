@@ -3,10 +3,9 @@ import { Client, TextChannel } from "discord.js";
 import { Player } from "erela.js";
 
 export function playerMove(player: Player, oldChannel: string, newChannel: string, client: Client) { // eslint-disable-line
+    if(!player.textChannel) return;
+    
     if(!newChannel) {
-        
-        if(!player.textChannel) return;
-
         const channel = client.channels.cache.get(player.textChannel);
 
         (channel as TextChannel).send({
@@ -17,8 +16,6 @@ export function playerMove(player: Player, oldChannel: string, newChannel: strin
 
         return player.destroy();
     }
-
-    if(!player.textChannel) return;
     
     player.setVoiceChannel(newChannel);
 
