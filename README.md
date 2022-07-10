@@ -55,9 +55,9 @@ See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node 
 Redis is an in-memory cache to keep highly accessed values in a place that is fast to access and update.
 Setting up redis is easy for your distro of linux and if you are developing on Windows, can be installed through WSL, see docs for installation [here.](https://redis.io/docs/getting-started/installation/)
 
-Launching redis is as simple as running `redis-server`. 
+Launching redis is as simple as running `redis-server`.
 
-When launching to production, you want redis to be daemonized, you can do that with something like [pm2](https://pm2.keymetrics.io/) or [screen](https://linuxize.com/post/how-to-use-linux-screen/), but can also be done manually with some configuration, see details [here.](https://redis.io/docs/getting-started/)
+When launching to production, you want redis to be daemonized, this can be done with systemd[^1] by default on most linux distributions using `sudo systemctl start redis` and `sudo systemctl enable redis` to enable launch on reboot, or you can do that with something like [pm2](https://pm2.keymetrics.io/) or [screen](https://linuxize.com/post/how-to-use-linux-screen/), but can also be done manually with some configuration, see details [here.](https://redis.io/docs/getting-started/)
 
 In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in %UserProfile%\.wslconfig, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
 
@@ -72,6 +72,8 @@ redis-cli config set save ""
 redis-cli config rewrite
 ```
 
+[^1]: If you are using systemd, create a `redis.conf` in `/etc/redis/redis.conf` and make sure to add the line `supervised systemd`.
+
 <br>
 
 ## CLI
@@ -81,6 +83,7 @@ redis-cli config rewrite
 - `npm run lint` : lints the code with eslint
 - `npm run test` : runs the script at `src/test.ts`
 - `npm run clearCommands` : clears all global and guild commands (takes a few minutes)
+- `npm run deploy` : runs prisma deployment scripts and launches the bot
 
 ### Prisma
 - `npx prisma db push` : this will update your local db to reflect any changes in your schema.prisma file, use this while making changes that you want to see
