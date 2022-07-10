@@ -5,7 +5,7 @@ import { getRedis } from "@src/redis";
 const redis = getRedis();
 
 export async function setPremium(guildId: string, set: boolean) {
-    await redis.set(`premium_${guildId}`, `${set}`);
+    await redis.set(`premium_${guildId}`, `${set}`, { "EX": 300 });
 
     await prisma.guild.upsert({
         where: {
@@ -41,7 +41,7 @@ export async function getPremium(guildId: string): Promise<boolean> {
 export async function togglePremium(guildId: string): Promise<boolean> {
     const c = await getPremium(guildId);
 
-    await redis.set(`premium_${guildId}`, `${!c}`);
+    await redis.set(`premium_${guildId}`, `${!c}`, { "EX": 300 });
 
     await prisma.guild.upsert({
         where: {
@@ -101,7 +101,10 @@ export async function getDJOnly(guildId: string): Promise<boolean> {
             }
         });
 
-        if(i?.djOnly) await redis.hSet(`dj_${guildId}`, "djonly", `${i.djOnly}`);
+        if(i?.djOnly) {
+            await redis.hSet(`dj_${guildId}`, "djonly", `${i.djOnly}`);
+            await redis.expire(`dj_${guildId}`, 300);
+        }
         if(i?.djRoleIds && i?.djRoleIds.length > 0) await redis.hSet(`dj_${guildId}`, "ids", `${i.djRoleIds.join(",")}`);
 
         return (i?.djOnly && i?.djRoleIds.length > 0) ?? false;

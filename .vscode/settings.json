@@ -46,6 +46,7 @@
     "files.exclude": {
         "**/.env": true,
         "out/**": true,
+        "node_modules/": true
     },
     "git.branchPrefix": "feat/",
     "git.branchProtection": [ "main" ],
