@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import os from "os";
 import { settings } from "@src/settings";
 import { embedify } from "@src/util";
+import path from "path";
 
 interface Game {
     board: number[][];
@@ -177,7 +178,7 @@ export class Sudoku extends Command
 
         if (this.checkWin(game)) {
             await this.sendBoard(int, user.id);
-            fs.rm(os.tmpdir() + `/${user.id}-sudoku.png`);
+            fs.rm(path.join(os.tmpdir(), `${user.id}-sudoku.png`));
             return this.followUpReply(int, embedify("Holy poggers you won!111!11!11"));
         }
 
@@ -204,7 +205,7 @@ export class Sudoku extends Command
         }
 
         this.games.delete(user.id);
-        await fs.rm(os.tmpdir() + `/${user.id}-sudoku.png`);
+        await fs.rm(path.join(os.tmpdir(), `${user.id}-sudoku.png`));
         return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/sudoku start`"));
     }
 
@@ -500,7 +501,7 @@ export class Sudoku extends Command
 
     async renderBoard(userId: string) {
         const buf = this.canvas.toBuffer("image/png");
-        await fs.writeFile(os.tmpdir() + `/${userId}-sudoku.png`, buf);
+        await fs.writeFile(path.join(os.tmpdir(), `${userId}-sudoku.png`), buf);
     }
 
     async sendBoard(int: CommandInteraction, userId: string) {
@@ -514,7 +515,7 @@ export class Sudoku extends Command
                 }
             ],
             files: [{
-                attachment: os.tmpdir() + `/${userId}-sudoku.png`,
+                attachment: path.join(os.tmpdir(), `${userId}-sudoku.png`),
                 name: `${userId}-sudoku.png`,
                 description: "Literally a sudoku"
             }]
