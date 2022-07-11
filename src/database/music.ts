@@ -108,7 +108,7 @@ export async function getDJOnly(guildId: string): Promise<boolean> {
         if(i?.djRoleIds && i?.djRoleIds.length > 0) await redis.hSet(`dj_${guildId}`, "ids", `${i.djRoleIds.join(",")}`);
 
         return (i?.djOnly && i?.djRoleIds.length > 0) ?? false;
-    } else return (redisCheck.djonly === "true" && redisCheck.ids.split(",").length > 0);
+    } else return (redisCheck.djonly === "true" && redisCheck.ids != undefined || redisCheck.ids != "" && redisCheck.ids.split(",").length > 0);
 }
 
 export async function toggleDJOnly(guildId: string): Promise<boolean> {
@@ -184,7 +184,7 @@ export async function isDJOnlyandhasDJRole(guildId: string, roleIds: Collection<
     const redisCheck = await redis.hGetAll(`dj_${guildId}`);
 
     const djOnly = redisCheck.djonly === "true" || await getDJOnly(guildId);
-    const djRoles = redisCheck.ids.split(",").length > 0 ? redisCheck.ids.split(",") : await getDJRoleIds(guildId);
+    const djRoles = redisCheck.ids && redisCheck.ids.split(",").length > 0 ? redisCheck.ids.split(",") : await getDJRoleIds(guildId);
 
     if(djOnly && !roleIds.some(v => djRoles.includes(v.id))) return true;
 
