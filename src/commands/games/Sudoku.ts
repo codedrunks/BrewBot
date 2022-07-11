@@ -4,8 +4,8 @@ import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
 import fs from "fs-extra";
 import os from "os";
 import { settings } from "@src/settings";
-import { randRange } from "svcorelib";
 import { embedify } from "@src/util";
+import path from "path";
 
 interface Game {
     board: number[][];
@@ -29,6 +29,8 @@ export class Sudoku extends Command
 
     private emptyCells: number[][] = [];
     private filledCells: number[] = new Array(81).fill(null).map((_, i) => i);
+    private restrictedCells: number[] = [];
+    private solutions = 0;
     constructor()
     {
         super({
@@ -69,6 +71,14 @@ export class Sudoku extends Command
                             required: true,
                         }
                     ],
+                },
+                {
+                    name: "show",
+                    desc: "Shows you the current game's board",
+                },
+                {
+                    name: "discard",
+                    desc: "Discards your current game and allows you to start a new one",
                 }
             ],
         });
@@ -89,6 +99,10 @@ export class Sudoku extends Command
             return await this.start(int);
         case "place":
             return await this.place(int);
+        case "show":
+            return await this.show(int);
+        case "discard":
+            return await this.discard(int);
         }
     }
 
@@ -128,9 +142,9 @@ export class Sudoku extends Command
 
         this.resetBoard();
         this.generateRandomBoard(game);
-        this.removeNumbers(game, this.BOARD_LENGTH * 2);
+        this.removeNumbers(game, this.BOARD_LENGTH * this.BOARD_LENGTH);
         this.drawBoard(game);
-        this.renderBoard(user.id);
+        await this.renderBoard(user.id);
         return await this.sendBoard(int, user.id);
     }
 
@@ -160,15 +174,39 @@ export class Sudoku extends Command
         game.userInput[row][col] = choice;
 
         this.drawBoard(game);
-        this.renderBoard(user.id);
+        await this.renderBoard(user.id);
 
         if (this.checkWin(game)) {
             await this.sendBoard(int, user.id);
-            fs.rm(os.tmpdir() + `${user.id}-sudoku.png`);
+            fs.rm(path.join(os.tmpdir(), `${user.id}-sudoku.png`));
             return this.followUpReply(int, embedify("Holy poggers you won!111!11!11"));
         }
 
         return await this.sendBoard(int, user.id);
+    }
+
+    async show(int: CommandInteraction) {
+        const user = int.user;
+        const game = this.games.get(user.id);
+        if (!game) {
+            return await this.editReply(int, embedify("You don't have a game running. Start one with `/sudoku start`"));
+        }
+
+        this.drawBoard(game);
+        await this.renderBoard(user.id);
+        return await this.sendBoard(int, user.id);
+    }
+
+    async discard(int: CommandInteraction) {
+        const user = int.user;
+        const game = this.games.get(user.id);
+        if (!game) {
+            return await this.editReply(int, embedify("You don't have a game running. Start one with `/sudoku start`"));
+        }
+
+        this.games.delete(user.id);
+        await fs.rm(path.join(os.tmpdir(), `${user.id}-sudoku.png`));
+        return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/sudoku start`"));
     }
 
     checkWin(game: Game): boolean {
@@ -199,10 +237,12 @@ export class Sudoku extends Command
 
     resetBoard() {
         this.emptyCells = [];
+        this.restrictedCells = [];
         this.filledCells = new Array(81).fill(null).map((_, i) => i);
+        this.solutions = 0;
     }
 
-    solver(startRow: number, startCol: number, candidate: number, emptyCells: number[][], board: number[][]): boolean {
+    solver(emptyCells: number[][], board: number[][]): boolean {
         // backtracking algo
         // 1- create list of candidates for the current cell
         // 2- randomly choose a candidate
@@ -210,10 +250,11 @@ export class Sudoku extends Command
         // 4- if any cell has 0 valid candidates at any point in time. we revert the last cell placement and try another candidate
         // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
 
-        board[startRow][startCol] = candidate;
-        emptyCells.splice(emptyCells.indexOf([startRow, startCol]), 1);
-
         if (emptyCells.length === 0) {
+            this.solutions++;
+            if (this.solutions > 1) {
+                return false;
+            }
             return true;
         }
 
@@ -223,16 +264,18 @@ export class Sudoku extends Command
         while (candidates.length) {
             const newCandidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
             board[nextRow][nextCol] = newCandidate;
-            if (this.solver(nextRow, nextCol, newCandidate, emptyCells, board)) {
+            if (this.solver(emptyCells, board)) {
                 return true;
             }
             board[nextRow][nextCol] = 0;
         }
 
+        emptyCells.push([nextRow, nextCol]);
+
         return false;
     }
 
-    removeNumbers(game: Game, hints: number): boolean {
+    removeNumbers(game: Game, hints: number) {
         // algo for this
         // 1- remove random number
         // 2- try solving the board
@@ -241,47 +284,38 @@ export class Sudoku extends Command
         // if that candidate also results in a solution, backtrack even more and try removing another digit other that this. if not, recursively remove another number
         // 5- continue until you reach whatever number of hints you want
 
-        if (hints === this.MIN_HINTS) {
-            return true;
-        }
+        while (hints > this.MIN_HINTS && this.filledCells.length) {
+            this.solutions = 0;
 
-        let solutions = 0;
+            const randCellIdx = Math.floor(Math.random() * this.filledCells.length);
+            const cell = this.filledCells.splice(randCellIdx, 1)[0];
+            const removedRow = Math.floor(cell / 9);
+            const removedCol = cell % 9;
 
-        const cell = this.filledCells.splice(randRange(this.filledCells.length - 1), 1)[0];
-        const removedRow = Math.floor(cell / 9);
-        const removedCol = cell % 9;
+            // 1- remove random number
+            const removedVal = game.board[removedRow][removedCol];
+            game.board[removedRow][removedCol] = 0;
 
-        // 1- remove random number
-        const removedVal = game.board[removedRow][removedCol];
-        game.board[removedRow][removedCol] = 0;
+            this.emptyCells.push([removedRow, removedCol]);
 
-        this.emptyCells.push([removedRow, removedCol]);
+            const candidates = this.getCandidates(removedRow, removedCol, game.board);
 
-        const candidates = this.getCandidates(removedRow, removedCol, game.board);
-
-        while (candidates.length) {
-            const candidate = candidates.splice(candidates.indexOf(removedVal), 1)[0];
-
-            // 2- try solving board
-            if (this.solver(removedRow, removedCol, candidate, this.emptyCells.slice(), JSON.parse(JSON.stringify(game.board)))) {
-                solutions++;
+            while (candidates.length) {
+                candidates.splice(candidates.indexOf(removedVal), 1);
+                // 2- try solving board
+                this.solver(this.emptyCells.slice(), JSON.parse(JSON.stringify(game.board)));
+                // 3- if not solveable, put the number back
+                // if solveable and multiiple solutions, put number back and try somewhere else
+                if (this.solutions > 1) {
+                    game.board[removedRow][removedCol] = removedVal;
+                    this.emptyCells.pop();
+                    this.restrictedCells.push(cell);
+                    break;
+                }
             }
-            // 3- if not solveable, put the number back
-            // if solveable and multiiple solutions, put number back and try somewhere else
-            if (solutions > 1) {
-                game.board[removedRow][removedCol] = removedVal;
-                this.emptyCells.pop();
-                this.filledCells.push(cell);
-                break;
-            }
-        }
 
-        // 4- if solveable, and one solution, continue
-        if (this.removeNumbers(game, this.filledCells.length)) {
-            return true;
+            hints = this.filledCells.length + this.restrictedCells.length;
         }
-
-        return false;
     }
 
     generateRandomBoard(game: Game) {
@@ -320,7 +354,7 @@ export class Sudoku extends Command
         }
 
         // if we went thru the entire board
-        if (startRow >= 9 && startCol >= 9) {
+        if (startRow >= 8 && startCol >= 9) {
             return true;
         }
 
@@ -467,7 +501,7 @@ export class Sudoku extends Command
 
     async renderBoard(userId: string) {
         const buf = this.canvas.toBuffer("image/png");
-        await fs.writeFile(os.tmpdir() + `/${userId}-sudoku.png`, buf);
+        await fs.writeFile(path.join(os.tmpdir(), `${userId}-sudoku.png`), buf);
     }
 
     async sendBoard(int: CommandInteraction, userId: string) {
@@ -481,7 +515,7 @@ export class Sudoku extends Command
                 }
             ],
             files: [{
-                attachment: os.tmpdir() + `/${userId}-sudoku.png`,
+                attachment: path.join(os.tmpdir(), `${userId}-sudoku.png`),
                 name: `${userId}-sudoku.png`,
                 description: "Literally a sudoku"
             }]
