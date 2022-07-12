@@ -46,6 +46,7 @@ export class Daily extends Command {
         if(timeleft <= secs24hours) {
             return this.followUpReply(int, embedify(`You can't claim your daily yet. Please try again in \`${formatSeconds(secs24hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``));
         } else {
+            await setLastDaily(userid, guildid);
             await addCoins(userid, guildid, dailyCoinsAward);
 
             return this.followUpReply(int, embedify(`You claimed your daily! You got ${dailyCoinsAward} coins!`));
