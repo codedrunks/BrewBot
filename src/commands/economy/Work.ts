@@ -57,6 +57,8 @@ export class Work extends Command {
         if(timeleft <= secs4hours) {
             return this.followUpReply(int, embedify(`You can't work again yet. Please try again in \`${formatSeconds(secs4hours - timeleft).replace(/:/, "h").replace(/:/, "m")}s\``), true);
         } else {
+            await setLastWork(userid, guildid);
+
             const jobidx = totalWorksToLevel(totalworks);
             const job = Levels[jobidx as keyof typeof Levels];
 
