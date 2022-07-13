@@ -1,4 +1,3 @@
-import EventEmitter from "events";
 import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
@@ -12,7 +11,7 @@ export interface Command {
 }
 
 /** Base class for all slash commands */
-export abstract class Command extends EventEmitter
+export abstract class Command
 {
     readonly meta: CommandMeta | SubcommandMeta;
     public readonly slashCmdJson: ApplicationCommandDataResolvable;
@@ -27,8 +26,6 @@ export abstract class Command extends EventEmitter
      */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
-        super();
-
         const data = new SlashCommandBuilder();
 
         cmdMeta.memberPerms && data
