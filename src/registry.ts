@@ -65,7 +65,7 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
         process.exit(1);
     }
 
-    const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
+    const slashCmds = cmds.filter(c => c.enabled).map(c => c.slashCmdJson);
 
     initHelp();
 

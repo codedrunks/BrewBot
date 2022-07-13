@@ -1,5 +1,5 @@
 import EventEmitter from "events";
-import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType } from "discord-api-types/v10";
@@ -15,7 +15,7 @@ export interface Command {
 export abstract class Command extends EventEmitter
 {
     readonly meta: CommandMeta | SubcommandMeta;
-    protected slashCmdJson: ApplicationCommandDataResolvable;
+    public readonly slashCmdJson: ApplicationCommandDataResolvable;
     /** Set to false to disable this command */
     public enabled = true;
 
@@ -196,12 +196,6 @@ export abstract class Command extends EventEmitter
 
     //#SECTION public
 
-    /** Returns the slash command JSON data (needed when registering commands) */
-    public getSlashCmdJson(): ApplicationCommandDataResolvable
-    {
-        return this.slashCmdJson;
-    }
-
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
     public async tryRun(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
     {
@@ -243,30 +237,25 @@ export abstract class Command extends EventEmitter
     {
         const { memberPermissions } = int;
 
-        if(Command.isCommandMeta(this.meta))
-        {
-            // regular command
-            const { perms } = this.meta;
-            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+        const has = (metaPerms?: PermissionString[]) =>
+            !(!Array.isArray(metaPerms) ? [] : metaPerms.map(p => memberPermissions?.has(p))).includes(false);
 
-            return !hasPerms.includes(false);
-        }
+        if(Command.isCommandMeta(this.meta))
+            return has(this.meta.perms);
         else if(subcommandName)
         {
-            // subcommands
             const scMeta = this.meta.subcommands.find(me => me.name === subcommandName);
-            if(!scMeta) return null;
-
-            const { perms } = scMeta;
-            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
-
-            return !hasPerms.includes(false);
+            if(scMeta)
+                return has(scMeta.perms);
         }
 
         return null;
     }
 
-    /** Resolves a flat object of command arguments from an interaction */
+    /**
+     * Resolves a flat object of command arguments from an interaction
+     * @deprecated ❗ This doesn't work with subcommands so it was deprecated. Use `int.options.getWhatever()` instead
+     */
     protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
         if(!Array.isArray(options.data))
@@ -294,9 +283,9 @@ export abstract class Command extends EventEmitter
     protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
+            return await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
+            return await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /**
@@ -318,9 +307,9 @@ export abstract class Command extends EventEmitter
     protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.editReply({ content, ...Command.useButtons(actions) });
+            return await int.editReply({ content, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
+            return await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
     /**
@@ -333,12 +322,12 @@ export abstract class Command extends EventEmitter
     protected async followUpReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
+            return await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
+            return await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
-    /** Deletes the reply of a CommandInteraction */
+    /** Deletes the reply of a CommandInteraction, only if it was already sent */
     protected async deleteReply(int: CommandInteraction)
     {
         int.replied && await int.deleteReply();
