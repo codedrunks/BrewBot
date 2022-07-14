@@ -13,7 +13,7 @@ export interface Command {
 /** Base class for all slash commands */
 export abstract class Command
 {
-    readonly meta: CommandMeta | SubcommandMeta;
+    public readonly meta: CommandMeta | SubcommandMeta;
     public readonly slashCmdJson: ApplicationCommandDataResolvable;
     /** Set to false to disable this command */
     public enabled = true;
@@ -39,14 +39,13 @@ export abstract class Command
 
         if(Command.isCommandMeta(cmdMeta))
         {
-            // regular command
+            // top level command
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
             data.setName(name)
                 .setDescription(desc);
 
-            // string arguments
             Array.isArray(args) && args.forEach(arg => {
                 if(arg.desc.length > 100)
                     throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars`);
@@ -65,6 +64,8 @@ export abstract class Command
 
                         arg.min && opt.setMinValue(arg.min);
                         arg.max && opt.setMaxValue(arg.max);
+
+                        arg.choices && opt.addChoices(...arg.choices);
 
                         return opt;
                     });
@@ -99,8 +100,7 @@ export abstract class Command
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false);
 
-                        if(Array.isArray(arg.choices))
-                            opt.addChoices(...arg.choices);
+                        arg.choices && opt.addChoices(...arg.choices);
 
                         return opt;
                     });
@@ -119,7 +119,6 @@ export abstract class Command
                     throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars`);
 
                 data.addSubcommand(sc => {
-
                     sc.setName(scmd.name)
                         .setDescription(scmd.desc);
 
@@ -141,6 +140,8 @@ export abstract class Command
 
                                 arg.min && opt.setMinValue(arg.min);
                                 arg.max && opt.setMaxValue(arg.max);
+
+                                arg.choices && opt.addChoices(...arg.choices);
 
                                 return opt;
                             });
@@ -175,8 +176,7 @@ export abstract class Command
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false);
 
-                                if(Array.isArray(arg.choices))
-                                    opt.addChoices(...arg.choices);
+                                arg.choices && opt.addChoices(...arg.choices);
 
                                 return opt;
                             });
