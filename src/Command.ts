@@ -280,9 +280,9 @@ export abstract class Command
     protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            return await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
+            await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            return await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
+            await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /**
@@ -292,7 +292,7 @@ export abstract class Command
      */
     protected async deferReply(int: CommandInteraction, ephemeral = false)
     {
-        return await int.deferReply({ ephemeral });
+        await int.deferReply({ ephemeral });
     }
 
     /**
@@ -304,9 +304,9 @@ export abstract class Command
     protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            return await int.editReply({ content, ...Command.useButtons(actions) });
+            await int.editReply({ content, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            return await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
+            await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
     /**
@@ -319,9 +319,9 @@ export abstract class Command
     protected async followUpReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
     {
         if(typeof content === "string")
-            return await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
+            await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
         else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
-            return await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
+            await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
     /** Deletes the reply of a CommandInteraction, only if it was already sent */
