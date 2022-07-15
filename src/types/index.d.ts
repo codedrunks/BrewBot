@@ -46,6 +46,14 @@ export type DataKey = keyof PersistentData;
 /** A single argument of a slash command */
 type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);
 
+interface ChoiceCmdArg<T> {
+    /** A set of predefined choices the user can pick from for this argument */
+    choices?: {
+        name: string;
+        value: T;
+    }[];
+}
+
 interface BaseCommandArg {
     name: string;
     /** Max 100 chars */
@@ -54,16 +62,11 @@ interface BaseCommandArg {
     required?: boolean;
 }
 
-interface StringCommandArg {
+interface StringCommandArg extends ChoiceCmdArg<string> {
     type?: "string";
-    /** A set of predefined choices the user can pick from for this argument */
-    choices?: {
-        name: string;
-        value: string;
-    }[];
 }
 
-interface NumberCommandArg {
+interface NumberCommandArg extends ChoiceCmdArg<number> {
     type: "number";
     min?: number;
     max?: number;

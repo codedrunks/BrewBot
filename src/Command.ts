@@ -1,5 +1,4 @@
-import EventEmitter from "events";
-import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed } from "discord.js";
+import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType } from "discord-api-types/v10";
@@ -12,10 +11,10 @@ export interface Command {
 }
 
 /** Base class for all slash commands */
-export abstract class Command extends EventEmitter
+export abstract class Command
 {
-    readonly meta: CommandMeta | SubcommandMeta;
-    protected slashCmdJson: ApplicationCommandDataResolvable;
+    public readonly meta: CommandMeta | SubcommandMeta;
+    public readonly slashCmdJson: ApplicationCommandDataResolvable;
     /** Set to false to disable this command */
     public enabled = true;
 
@@ -27,8 +26,6 @@ export abstract class Command extends EventEmitter
      */
     constructor(cmdMeta: CommandMeta | SubcommandMeta)
     {
-        super();
-
         const data = new SlashCommandBuilder();
 
         cmdMeta.memberPerms && data
@@ -42,14 +39,13 @@ export abstract class Command extends EventEmitter
 
         if(Command.isCommandMeta(cmdMeta))
         {
-            // regular command
+            // top level command
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
             data.setName(name)
                 .setDescription(desc);
 
-            // string arguments
             Array.isArray(args) && args.forEach(arg => {
                 if(arg.desc.length > 100)
                     throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars`);
@@ -68,6 +64,8 @@ export abstract class Command extends EventEmitter
 
                         arg.min && opt.setMinValue(arg.min);
                         arg.max && opt.setMaxValue(arg.max);
+
+                        arg.choices && opt.addChoices(...arg.choices);
 
                         return opt;
                     });
@@ -102,8 +100,7 @@ export abstract class Command extends EventEmitter
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false);
 
-                        if(Array.isArray(arg.choices))
-                            opt.addChoices(...arg.choices);
+                        arg.choices && opt.addChoices(...arg.choices);
 
                         return opt;
                     });
@@ -122,7 +119,6 @@ export abstract class Command extends EventEmitter
                     throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars`);
 
                 data.addSubcommand(sc => {
-
                     sc.setName(scmd.name)
                         .setDescription(scmd.desc);
 
@@ -144,6 +140,8 @@ export abstract class Command extends EventEmitter
 
                                 arg.min && opt.setMinValue(arg.min);
                                 arg.max && opt.setMaxValue(arg.max);
+
+                                arg.choices && opt.addChoices(...arg.choices);
 
                                 return opt;
                             });
@@ -178,8 +176,7 @@ export abstract class Command extends EventEmitter
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false);
 
-                                if(Array.isArray(arg.choices))
-                                    opt.addChoices(...arg.choices);
+                                arg.choices && opt.addChoices(...arg.choices);
 
                                 return opt;
                             });
@@ -195,12 +192,6 @@ export abstract class Command extends EventEmitter
     }
 
     //#SECTION public
-
-    /** Returns the slash command JSON data (needed when registering commands) */
-    public getSlashCmdJson(): ApplicationCommandDataResolvable
-    {
-        return this.slashCmdJson;
-    }
 
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
     public async tryRun(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
@@ -243,30 +234,25 @@ export abstract class Command extends EventEmitter
     {
         const { memberPermissions } = int;
 
-        if(Command.isCommandMeta(this.meta))
-        {
-            // regular command
-            const { perms } = this.meta;
-            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
+        const has = (metaPerms?: PermissionString[]) =>
+            !(!Array.isArray(metaPerms) ? [] : metaPerms.map(p => memberPermissions?.has(p))).includes(false);
 
-            return !hasPerms.includes(false);
-        }
+        if(Command.isCommandMeta(this.meta))
+            return has(this.meta.perms);
         else if(subcommandName)
         {
-            // subcommands
             const scMeta = this.meta.subcommands.find(me => me.name === subcommandName);
-            if(!scMeta) return null;
-
-            const { perms } = scMeta;
-            const hasPerms = !Array.isArray(perms) ? [] : perms.map(p => memberPermissions?.has(p));
-
-            return !hasPerms.includes(false);
+            if(scMeta)
+                return has(scMeta.perms);
         }
 
         return null;
     }
 
-    /** Resolves a flat object of command arguments from an interaction */
+    /**
+     * Resolves a flat object of command arguments from an interaction
+     * @deprecated ❗ This doesn't work with subcommands so it was deprecated. Use `int.options.getWhatever()` instead
+     */
     protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
     {
         if(!Array.isArray(options.data))
@@ -306,7 +292,7 @@ export abstract class Command extends EventEmitter
      */
     protected async deferReply(int: CommandInteraction, ephemeral = false)
     {
-        return await int.deferReply({ ephemeral });
+        await int.deferReply({ ephemeral });
     }
 
     /**
@@ -338,7 +324,7 @@ export abstract class Command extends EventEmitter
             await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
-    /** Deletes the reply of a CommandInteraction */
+    /** Deletes the reply of a CommandInteraction, only if it was already sent */
     protected async deleteReply(int: CommandInteraction)
     {
         int.replied && await int.deleteReply();
