@@ -3,6 +3,7 @@ import { Command } from "@src/Command";
 import { setCoins } from "@database/economy";
 import { settings } from "@src/settings";
 import { embedify } from "@src/util";
+import { PermissionFlagsBits } from "discord-api-types/v10";
 
 const { devs } = settings;
 
@@ -11,7 +12,7 @@ export class SetBalance extends Command {
         super({
             name: "setbalance",
             desc: "Set a users balance",
-            category: "economy",
+            category: "restricted",
             args: [
                 {
                     name: "amount",
@@ -24,7 +25,8 @@ export class SetBalance extends Command {
                     type: "user",
                     desc: "The user who's balance you wish to set"
                 }
-            ]
+            ],
+            memberPerms: [ PermissionFlagsBits.Administrator ]
         });
     }
 
