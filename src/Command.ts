@@ -1,7 +1,7 @@
-import { ApplicationCommandDataResolvable, ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
+import { ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
-import { ChannelType } from "discord-api-types/v10";
+import { ChannelType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 import k from "kleur";
 import { embedify } from "./util";
 import { settings } from "./settings";
@@ -14,7 +14,7 @@ export interface Command {
 export abstract class Command
 {
     public readonly meta: CommandMeta | SubcommandMeta;
-    public readonly slashCmdJson: ApplicationCommandDataResolvable;
+    public readonly slashCmdJson: RESTPostAPIApplicationCommandsJSONBody;
     /** Set to false to disable this command */
     public enabled = true;
 
@@ -188,7 +188,7 @@ export abstract class Command
         }
 
         // finalize
-        this.slashCmdJson = data.toJSON() as ApplicationCommandDataResolvable;
+        this.slashCmdJson = data.toJSON();
     }
 
     //#SECTION public
