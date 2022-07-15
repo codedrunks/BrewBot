@@ -37,6 +37,9 @@ export abstract class Command
             allowDM: false,
         };
 
+        if(cmdMeta.desc.length > 100)
+            throw new Error(`${k.yellow(`/${cmdMeta.name}`)}: Description can't be longer than 100 chars, got ${cmdMeta.desc.length}`);
+
         if(Command.isCommandMeta(cmdMeta))
         {
             // top level command
@@ -48,7 +51,7 @@ export abstract class Command
 
             Array.isArray(args) && args.forEach(arg => {
                 if(arg.desc.length > 100)
-                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars`);
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars, got ${arg.desc.length}`);
 
                 if(arg.type === "user")
                     data.addUserOption(opt =>
@@ -116,7 +119,7 @@ export abstract class Command
 
             cmdMeta.subcommands.forEach(scmd => {
                 if(scmd.desc.length > 100)
-                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars`);
+                    throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} can't be longer than 100 chars, got ${scmd.desc.length}`);
 
                 data.addSubcommand(sc => {
                     sc.setName(scmd.name)
@@ -124,7 +127,7 @@ export abstract class Command
 
                     Array.isArray(scmd.args) && scmd.args.forEach(arg => {
                         if(arg.desc.length > 100)
-                            throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} argument ${k.yellow(arg.name)} can't be longer than 100 chars`);
+                            throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} argument ${k.yellow(arg.name)} can't be longer than 100 chars, got ${arg.desc.length}`);
 
                         if(arg.type === "user")
                             sc.addUserOption(opt =>
