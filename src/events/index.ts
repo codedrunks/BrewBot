@@ -3,7 +3,7 @@ import { MemberJoin } from "@src/events/MemberJoin";
 import { MemberLeave } from "@src/events/MemberLeave";
 import { GuildJoined } from "@src/events/GuildJoined";
 
-/** Every command in here will get registered as soon as client is ready */
+/** Every event in here will get registered when the bot starts up */
 export const events = [
     Message,
     MemberJoin,

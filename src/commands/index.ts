@@ -46,7 +46,7 @@ import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
 import { Sudoku } from "@commands/games/Sudoku";
 
-/** Every command in here will get registered as soon as client is ready */
+/** Every command in here will get registered when the bot starts up */
 export const commands = [
     // fun
     Cat,
