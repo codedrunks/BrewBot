@@ -1,4 +1,5 @@
 ## Table of contents
+- [Installation](#installation)
 - [Development](#development)
     - [Project structure](#project-structure)
     - [Slash commands](#slash-commands)
@@ -20,9 +21,21 @@ https://discord.com/oauth2/authorize?client_id=__CLIENT_ID__&permissions=8&scope
 
 <br>
 
+## Installation:
+1. Install Node.js (v14+), npm (v8+) and Postgres
+2. Install GTK2 and libjpeg-turbo by following [this guide](https://github.com/Automattic/node-canvas/wiki/Installation:-Windows#2-installing-gtk-2)
+3. Set up a psql user and DB schema for the bot
+4. Run `npx prisma migrate reset` to initialize the DB schema
+5. Copy `.env.template` to `.env` and enter all values
+6. Run `npm i` to install dependencies
+
+<!-- TODO: add redis steps -->
+
+<br>
+
 ## Development:
 ### Project structure:
-Commands and events have template files in their respective folders called `Template.ts`, use these to create new commands and events.  
+Commands, events and context menus have template files in their respective folders called `Template.ts`, use these to create new commands and events.  
 In order for a command or event to be initialized on startup, add it to the array of the `index.ts` file in the respective folder.
 
 <br>
