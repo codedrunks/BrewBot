@@ -5,6 +5,8 @@ import { ButtonInteraction, Client, Collection, ModalSubmitInteraction } from "d
 import { Command } from "@src/Command";
 import { Event } from "@src/Event";
 import { commands } from "@src/commands";
+import { CtxMenu } from "@src/CtxMenu";
+import { contextMenus } from "@src/context";
 import { events } from "@src/events";
 import { BtnMsg } from "@src/BtnMsg";
 import { Modal } from "@src/Modal";
@@ -17,6 +19,8 @@ let botClient: Client;
 
 /** Array of all registered Command instances */
 const cmds: Command[] = [];
+/** Array of all registered CtxMenu instances */
+const ctxMenus: CtxMenu[] = [];
 /** Array of all registered Event instances */
 const evts: Event[] = [];
 /** Map of all registered BtnMsg instances */
@@ -29,18 +33,22 @@ export function initRegistry(client: Client)
 {
     botClient = client;
 
-    rest = new REST({
-        version: "10"
-    }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
+    rest = new REST({ version: "10" })
+        .setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 }
 
 
-//#MARKER commands
+//#MARKER commands & context menus
 
 
 export function getCommands()
 {
     return cmds;
+}
+
+export function getCtxMenus()
+{
+    return ctxMenus;
 }
 
 /** Registers all slash commands for the specified guild or guilds */
@@ -65,7 +73,13 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
         process.exit(1);
     }
 
-    const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
+    for(const CtxClass of contextMenus)
+        ctxMenus.push(new CtxClass());
+
+    const slashCmds = cmds
+        .filter(c => c.enabled)
+        .map(c => c.slashCmdJson)
+        .concat(ctxMenus.map(c => c.ctxMenuJson));
 
     initHelp();
 

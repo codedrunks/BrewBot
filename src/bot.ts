@@ -5,7 +5,7 @@ import { allOfType, system, Stringifiable } from "svcorelib";
 
 import persistentData from "@src/persistentData";
 import botLogs from "@src/botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted } from "@src/registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted, getCtxMenus } from "@src/registry";
 import { commands as slashCmds } from "@src/commands";
 import { settings } from "@src/settings";
 import { prisma } from "@database/client";
@@ -141,12 +141,16 @@ async function registerCommands(client: Client)
         // listen for slash commands
 
         const cmds = getCommands();
+        const ctxMenus = getCtxMenus();
 
         if(!cmds)
             throw new Error("No commands found to listen to");
 
         console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""}`);
         printDbgItmList(cmds.map(c => c.meta.name));
+
+        console.log(`• Registered ${k.green(ctxMenus.length)} context menu${ctxMenus.length != 1 ? "s" : ""}`);
+        printDbgItmList(ctxMenus.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
             if(int.isCommand())
@@ -162,11 +166,15 @@ async function registerCommands(client: Client)
 
                 await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
-            else if(int.isButton()) {
+            else if(int.isButton())
                 await btnPressed(int);
-            }
-            else if(int.isModalSubmit()) {
+            else if(int.isModalSubmit())
                 await modalSubmitted(int);
+            else if(int.isContextMenu())
+            {
+                const cm = ctxMenus.find(c => c.meta.name === int.commandName);
+
+                cm && cm.run(int);
             }
         });
     }

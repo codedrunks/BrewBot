@@ -1,5 +1,6 @@
 import { ClientEvents, ColorResolvable, PermissionFlags } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
+import { ContextMenuCommandType } from "@discordjs/builders";
 
 
 //#MARKER persistent data
@@ -141,3 +142,13 @@ export interface ReactionMsg {
 
 /** Client event names */
 export type EventName = keyof ClientEvents;
+
+//#MARKER context menus
+
+export interface CtxMeta {
+    name: string;
+    /** Accepts `User` or `Message` of `ApplicationCommandType` enum from `discord-api-types/v10` */
+    type: ContextMenuCommandType;
+    /** Default member permissions needed to use this context menu */
+    memberPerms?: PermissionFlagsBits[];
+}

@@ -76,13 +76,17 @@ export class Define extends Command
         {
             const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
 
-            const results = req.data?.list?.sort((a: Record<string, number>, b: Record<string, number>) => a.thumbs_up < b.thumbs_up ? 1 : -1);
-            const obj = results?.at(0);
+            // TODO: use better sorting algo
+            const results = req.data?.list?.sort(
+                (a: Record<string, number>, b: Record<string, number>) => (a.thumbs_up - a.thumbs_down) < (b.thumbs_up - b.thumbs_down) ? 1 : -1
+            );
 
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
             if(!Array.isArray(results) || results.length === 0)
                 return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
+
+            const obj = results?.at(0);
 
             const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
 
