@@ -201,13 +201,18 @@ export abstract class Command
     {
         try
         {
+            const noPerm = () => int.reply({ embeds: [ embedify("You don't have permission to run this command.", settings.embedColors.error) ], ephemeral: true });
+
+            if(this.meta.devOnly === true && !settings.devs.includes(int.user.id))
+                return await noPerm();
+
             if(!this.meta.allowDM && !int.inGuild())
                 return await this.reply(int, embedify("You can only use this command in a server.", settings.embedColors.error));
 
             if(opt ? this.hasPerm(int, opt?.name) : this.hasPerm(int))
                 return await this.run(int, opt);
             else if(typeof int.reply === "function")
-                return await int.reply({ embeds: [ embedify("You don't have permission to run this command.", settings.embedColors.error) ], ephemeral: true });
+                return await noPerm();
 
             return null;
         }

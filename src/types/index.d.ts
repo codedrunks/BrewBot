@@ -108,6 +108,8 @@ interface CmdMetaBase {
     category: CommandCategory;
     /** Set to true to allow this command to be used in DMs */
     allowDM?: boolean;
+    /** Set to true to only allow developers set in `settings.devs` to run this */
+    devOnly?: boolean;
 }
 
 /** Meta information of a regular Command instance */
