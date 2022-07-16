@@ -11,11 +11,11 @@ import { settings } from "@src/settings";
 import { prisma } from "@database/client";
 import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
+import { getRedis } from "@src/redis";
 
 const { env, exit } = process;
 
 dotenv.config();
-
 
 async function init()
 {
@@ -26,7 +26,6 @@ async function init()
 
     await persistentData.init();
 
-
     const client = new Client({
         intents: settings.client.intents,
     });
@@ -35,7 +34,6 @@ async function init()
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
 
-
     client.on("ready", async (cl) => {
         const { user, guilds } = cl;
 
@@ -43,12 +41,12 @@ async function init()
             status: "dnd",
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
-
-
+        
+        await getRedis().connect();
+        
         botLogs.init(cl);
-
+        
         initRegistry(cl);
-
 
         const evts = registerEvents().filter(e => e.enabled);
 
@@ -56,8 +54,6 @@ async function init()
         printDbgItmList(evts.map(e => e.constructor.name ?? e.names.join("&")));
 
         await registerCommands(cl);
-
-
 
         user.setPresence({
             status: "online",
@@ -69,7 +65,6 @@ async function init()
         await doContestStuff(cl);
 
         clientReadyInitLava(cl);
-
 
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 

@@ -1,6 +1,6 @@
 import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString } from "@src/util";
 import { formatDuration, parseDuration } from "svcorelib";
 import { BtnMsg } from "@src/BtnMsg";
@@ -24,7 +24,7 @@ export class NowPlaying extends Command {
 
         if(!guild) return this.editReply(int, embedify("This command cannot be used in DM's")); 
 
-        const manager = getManager();
+        const manager = getMusicManager();
 
         const player = manager.get(guild.id);
 
@@ -59,7 +59,7 @@ export class NowPlaying extends Command {
             if(i.user.id !== int.user.id) return;
 
             const djCheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
-            if(djCheck) return;
+            if(djCheck) return this.followUpReply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"), true);
 
             if(!player || !player.queue.current) return;
 
@@ -85,6 +85,11 @@ export class NowPlaying extends Command {
                 player.queue.shuffle();
                 break;
             }
+        });
+
+        button.on("timeout", async () => {
+            await this.deleteReply(int);
+            button.destroy();
         });
 
         await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});

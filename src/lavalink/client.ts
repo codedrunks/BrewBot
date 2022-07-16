@@ -1,10 +1,11 @@
 import { Client } from "discord.js";
-import { Manager, NodeOptions, Plugin, VoicePacket } from "erela.js";
+import { Manager, NodeOptions, Plugin, Track, VoicePacket } from "erela.js";
 import Spotify from "better-erela.js-spotify";
 import { queueEnd } from "@src/lavalink/lib/queueEnd";
 import { trackStart } from "@src/lavalink/lib/trackStart";
 import { trackEnd } from "@src/lavalink/lib/trackEnd";
 import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
+import { playerMove } from "./lib/playerMove";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -31,7 +32,8 @@ process.env.LAVALINK_HOSTS?.split(",").map((v) => {
     nodes.push({
         host: host,
         port: 2333,
-        password: pass
+        password: pass,
+        retryDelay: 5000
     });
 });
 
@@ -57,7 +59,8 @@ function initializeManagerFromClient(cl: Client): Manager {
             const guild = cl.guilds.cache.get(id);
             if (guild) guild.shard.send(payload);
         },
-        plugins
+        plugins,
+        autoPlay: false
     });
 
     manager.on("nodeConnect", (node) => console.log(`\nNode ${node.options.identifier} connected.`))
@@ -69,11 +72,20 @@ function initializeManagerFromClient(cl: Client): Manager {
         })
         .on("trackEnd", (player, track, payload) => {
             trackEnd(player, track, payload, client);
+        })
+        .on("playerMove", (player, oldChannel, newChannel) => {
+            playerMove(player, oldChannel, newChannel, client);
         });
 
     return manager;
 }
 
-export function getManager(): Manager {
+export function getMusicManager(): Manager {
     return manager;
 }
+
+export function reduceSongsLength(tracks: Track[]): number {
+    return tracks.reduce((p, c) => p + c.duration, 0);
+}
+
+export const four_hours = 14_400_000;

@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { Queue as ErelaQueue, Track, UnresolvedTrack } from "erela.js";
 import { BtnMsg } from "@src/BtnMsg";
@@ -29,7 +29,7 @@ export class Queue extends Command {
 
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
 
-        const manager = getManager();
+        const manager = getMusicManager();
 
         const player = manager.get(guild.id);
 
@@ -61,11 +61,16 @@ export class Queue extends Command {
 
                 button.on("press", async (b, i) => {
 
+                    if(i.user.id !== int.user.id) return;
+
                     await i.deferUpdate();
 
                     if(!player || !player.queue.current) return;
 
                     const maxPage = Math.ceil(player.queue.length / multiple);
+
+                    // if there is no longer enough tracks to have buttons, delete embed, send new embed without buttons with a timeout of 15 seconds
+                    // set page variables and shiz
 
                     if(b.label == "Previous") {
                         if(page !== 1) page--;

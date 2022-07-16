@@ -10,4 +10,8 @@ export function trackEnd(player: Player, track: Track, payload: TrackEndEvent, c
     if((voiceChannel as Collection<string, GuildMember>).size <= 1 && player.queue.totalSize > 1) {
         player.destroy();
     }
+
+    setTimeout(() => {
+        player.play();
+    }, 200);
 }

@@ -1,7 +1,7 @@
 import { isDJOnlyandhasDJRole } from "@database/music";
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 
 export class Pause extends Command {
@@ -18,7 +18,7 @@ export class Pause extends Command {
 
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
 
-        const manager = getManager();
+        const manager = getMusicManager();
 
         const player = manager.get(guild.id);
 

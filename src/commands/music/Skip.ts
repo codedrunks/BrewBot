@@ -1,6 +1,6 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
-import { getManager } from "@src/lavalink/client";
+import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
 
@@ -40,7 +40,7 @@ export class Skip extends Command {
 
         if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
         
-        const manager = getManager();
+        const manager = getMusicManager();
 
         const player = manager.get(guild.id);
 

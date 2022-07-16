@@ -8,6 +8,7 @@
     - [General](#general)
     - [Prisma](#prisma)
 - [Debugging](#debugging)
+- [Redis](#redis)
 - [Discord API quirks](#discord-api-quirks)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
@@ -63,6 +64,29 @@ All database utils can be found in `/src/database`, the functions are organized 
   
 See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node client library [here.](https://www.prisma.io/docs/reference)
 
+### Redis:
+Redis is an in-memory cache to keep highly accessed values in a place that is fast to access and update.
+Setting up redis is easy for your distro of linux and if you are developing on Windows, can be installed through WSL, see docs for installation [here.](https://redis.io/docs/getting-started/installation/)
+
+Launching redis is as simple as running `redis-server`.
+
+When launching to production, you want redis to be daemonized, this can be done with systemd[^1] by default on most linux distributions using `sudo systemctl start redis` and `sudo systemctl enable redis` to enable launch on reboot, or you can do that with something like [pm2](https://pm2.keymetrics.io/) or [screen](https://linuxize.com/post/how-to-use-linux-screen/), but can also be done manually with some configuration, see details [here.](https://redis.io/docs/getting-started/)
+
+In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in `%UserProfile%\.wslconfig`, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
+
+Another thing is to have a config for your instance of Redis, in testing/development you can do something like this to have an instance that does not save to disk. On WSL, you must do this because redis will not have write permissions to save to disk.
+```sh
+cd ~
+mkdir redis
+cd redis
+touch redis.conf
+redis-server redis.conf # run this in a separate window
+redis-cli config set save ""
+redis-cli config rewrite
+```
+
+[^1]: If you are using systemd, create a `redis.conf` in `/etc/redis/redis.conf` and make sure to add the line `supervised systemd`.
+
 <br>
 
 ## CLI
@@ -72,9 +96,11 @@ See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node 
 - `npm run lint` : lints the code with eslint
 - `npm run test` : runs the script at `src/test.ts`
 - `npm run clearCommands` : clears all global and guild commands (takes a few minutes)
+- `npm run deploy` : runs prisma deployment scripts and launches the bot
 
 ### Prisma
-- `npx prisma migrate dev --name "describe_change_short"` : creates a database migration and updates the local database if there is one, use this everytime you update the schema.prisma file with a change
+- `npx prisma db push` : this will update your local db to reflect any changes in your schema.prisma file, use this while making changes that you want to see
+- `npx prisma migrate dev --name "describe_change_short"` : creates a database migration and updates the local database if there is one, use this once your changes to the schema.prisma file are done, do not use constantly for little changes, use the above command instead
 - `npx prisma migrate deploy` : this will deploy any changes to the local database, this is how you deploy migrations in production
 - `npx prisma migrate reset` : this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset
 - `npx prisma migrate dev --create-only` : not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file
