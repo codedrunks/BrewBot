@@ -1,13 +1,14 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { setCoins, getCoins } from "@src/database/economy";
+import { getCoins } from "@src/database/economy";
 import { embedify } from "@src/util";
+import { createNewUser } from "@src/database/users";
 
 export class Account extends Command {
     constructor() {
         super({
             name: "account",
-            desc: "Opens a coin account with Bot Bank :tm:",
+            desc: "View details about your user account with the bot",
             category: "economy",
             subcommands: [
                 {
@@ -40,7 +41,7 @@ export class Account extends Command {
             let coins = await getCoins(user.id, int.guild.id);
         
             if(!coins && coins != 0) {
-                await setCoins(user.id, guildid, 0);
+                await createNewUser(user.id, guildid, 0);
                 coins = 0;
             }
     
