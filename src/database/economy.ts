@@ -53,7 +53,7 @@ export async function setCoins(userId: string, guildId: string, coins: number) {
 export async function addCoins(userId: string, guildId: string, coins: number) {
     const checkRedis = await redis.get(`coins_${guildId}${userId}`);
 
-    if(checkRedis) await redis.set(`coins_${guildId}${userId}`, coins + checkRedis, { "EX": 300 });
+    if(checkRedis) await redis.set(`coins_${guildId}${userId}`, coins + parseInt(checkRedis), { "EX": 300 });
 
     await prisma.coins.upsert({
         where: {
