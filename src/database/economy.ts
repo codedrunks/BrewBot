@@ -95,27 +95,6 @@ export async function subCoins(userId: string, guildId: string, coins: number) {
     });
 }
 
-/** Decrement user coin amount without going to a negative value */
-export async function subCoinsSafe(userId: string, guildId: string, coins: number) {
-    const currentCoinAmount = await getCoins(userId, guildId);
-
-    if(!currentCoinAmount) return;
-
-    if(coins > currentCoinAmount) coins = currentCoinAmount;
-
-    await prisma.coins.update({
-        where: {
-            guildId_userId: {
-                guildId,
-                userId
-            }
-        },
-        data: {
-            amount: { decrement: coins }
-        }
-    });
-}
-
 /** Gets last daily timestamp */
 export async function getLastDaily(userId: string, guildId: string): Promise<number | null | undefined> {
     const lastDaily = await prisma.bonus.findUnique({
