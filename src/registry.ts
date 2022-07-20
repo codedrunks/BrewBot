@@ -8,8 +8,8 @@ import { commands } from "@src/commands";
 import { CtxMenu } from "@src/CtxMenu";
 import { contextMenus } from "@src/context";
 import { events } from "@src/events";
-import { BtnMsg } from "@src/BtnMsg";
-import { Modal } from "@src/Modal";
+import { BtnMsg } from "@utils/BtnMsg";
+import { Modal } from "@utils/Modal";
 
 import { initHelp } from "@commands/util/Help";
 

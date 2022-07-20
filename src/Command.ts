@@ -3,7 +3,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 import k from "kleur";
-import { embedify } from "./util";
+import { embedify } from "@utils/embedify";
 import { settings } from "./settings";
 
 export interface Command {

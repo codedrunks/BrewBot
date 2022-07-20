@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { getCommands } from "@src/registry";
 import { Command } from "@src/Command";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { CommandMeta } from "@src/types";
 
 const commandObj: Record<string, CommandMeta[]> = {

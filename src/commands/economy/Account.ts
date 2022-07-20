@@ -1,7 +1,7 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { setCoins, getCoins } from "@src/database/economy";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 
 export class Account extends Command {
     constructor() {

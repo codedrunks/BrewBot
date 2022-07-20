@@ -1,6 +1,6 @@
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { ModalSubmitInteraction, CacheType, TextInputComponent } from "discord.js";
-import { Modal } from "@src/Modal";
+import { Modal } from "@utils/Modal";
 import { addContest } from "@database/contest";
 import { DatabaseError } from "@database/util";
 

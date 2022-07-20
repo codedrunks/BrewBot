@@ -1,7 +1,7 @@
 import axios from "axios";
 import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
-import { BtnMsg, ButtonOpts  } from "@src/BtnMsg";
+import { BtnMsg, ButtonOpts } from "@utils/BtnMsg";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 

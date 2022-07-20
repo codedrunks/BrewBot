@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
-import { embedify, formatSeconds, nowInSeconds } from "@src/util";
+import { embedify, formatSeconds, nowInSeconds } from "@utils/index";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
 import { createNewUser, getUser } from "@database/users";
 import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";

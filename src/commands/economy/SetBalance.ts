@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { setCoins } from "@database/economy";
 import { settings } from "@src/settings";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 
 const { devs } = settings;

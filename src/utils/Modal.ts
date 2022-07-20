@@ -16,7 +16,7 @@ export interface Modal {
 
 /** Base class for all Modals */
 export abstract class Modal extends EventEmitter {
-    readonly id: string = randomUUID({ disableEntropyCache: true });
+    readonly id: string = randomUUID();
     private readonly internalModal: DjsModal;
 
     /** Base class for all Modals */

@@ -22,7 +22,9 @@
         "paths": {
             "@src/*": ["./src/*"],
             "@commands/*": ["./src/commands/*"],
-            "@database/*": ["./src/database/*"]
+            "@database/*": ["./src/database/*"],
+            "@utils/*": ["./src/utils/*"],
+            "@assets/*": ["./src/assets/*"],
         }
     },
     "files": [

@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { embedify, useEmbedify } from "@src/util";
+import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 
