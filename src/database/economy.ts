@@ -75,6 +75,11 @@ export async function addCoins(userId: string, guildId: string, coins: number) {
 
 /** Decrement user coin amount by x amount, use subCoinsSafe for non-zero op */
 export async function subCoins(userId: string, guildId: string, coins: number) {
+
+    const redisCheck = await redis.get(`coins_${guildId}${userId}`);
+
+    if(redisCheck) redis.set(`coins_${guildId}${userId}`, parseInt(redisCheck) - coins, { "EX": 300 });
+
     await prisma.coins.update({
         where: {
             guildId_userId: {
