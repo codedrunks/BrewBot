@@ -10,8 +10,11 @@
 - [Debugging](#debugging)
 - [Redis](#redis)
 - [Discord API quirks](#discord-api-quirks)
+    - [Length limits](#length-limits)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
+    - [Modal](#modal)
+    - [PageEmbed](#pageembed)
 
 <br><br>
 
@@ -25,12 +28,11 @@ https://discord.com/oauth2/authorize?client_id=__CLIENT_ID__&permissions=8&scope
 ## Installation:
 1. Install Node.js (v14+), npm (v8+) and Postgres
 2. Install GTK2 and libjpeg-turbo by following [this guide](https://github.com/Automattic/node-canvas/wiki/Installation:-Windows#2-installing-gtk-2)
-3. Set up a psql user and DB schema for the bot
-4. Run `npx prisma migrate reset` to initialize the DB schema
-5. Copy `.env.template` to `.env` and enter all values
-6. Run `npm i` to install dependencies
-
-<!-- TODO: add redis steps -->
+3. [Install Redis](#redis)
+4. Set up a psql user and DB schema for the bot
+5. Run `npx prisma migrate reset` to initialize the DB schema
+6. Copy `.env.template` to `.env` and enter all values
+7. Run `npm i` to install dependencies
 
 <br>
 
@@ -91,21 +93,27 @@ redis-cli config rewrite
 
 ## CLI
 ### General
-- `npm start` : start the bot regularly
-- `npm run watch` : start the bot and watch for file changes to recompile automatically
-- `npm run lint` : lints the code with eslint
-- `npm run test` : runs the script at `src/test.ts`
-- `npm run clearCommands` : clears all global and guild commands (takes a few minutes)
-- `npm run deploy` : runs prisma deployment scripts and launches the bot
+| Command | Description |
+| --- | --- |
+| `npm start` | start the bot regularly |
+| `npm run watch` | start the bot and watch for file changes to recompile automatically |
+| `npm run lint` | lints the code with eslint |
+| `npm test` | runs the script at `src/test.ts` |
+| `npm run clearCommands` | clears all global and guild commands (takes a few minutes) |
+| `npm run deploy` | runs prisma deployment scripts and launches the bot without watching |
+
+<br>
 
 ### Prisma
-- `npx prisma db push` : this will update your local db to reflect any changes in your schema.prisma file, use this while making changes that you want to see
-- `npx prisma migrate dev --name "describe_change_short"` : creates a database migration and updates the local database if there is one, use this once your changes to the schema.prisma file are done, do not use constantly for little changes, use the above command instead
-- `npx prisma migrate deploy` : this will deploy any changes to the local database, this is how you deploy migrations in production
-- `npx prisma migrate reset` : this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset
-- `npx prisma migrate dev --create-only` : not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file
-- `npx prisma format` : this formats the schema.prisma file and can also auto-complete foreign key association
-- `npx prisma db seed` : this command seeds the database according to `prisma/seed.ts`
+| Command | Description |
+| --- | --- |
+| `npx prisma db push` | this will update your local db to reflect any changes in your schema.prisma file, use this while making changes that you want to see |
+| `npx prisma migrate dev --name "describe_change_short"` | creates a database migration and updates the local database if there is one, use this once your changes to the schema.prisma file are done, do not use constantly for little changes, use the above command instead |
+| `npx prisma migrate deploy` | this will deploy any changes to the local database, this is how you deploy migrations in production |
+| `npx prisma migrate reset` | this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a  |reset
+| `npx prisma migrate dev --create-only` | not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file |
+| `npx prisma format` | this formats the schema.prisma file and can also auto-complete foreign key association |
+| `npx prisma db seed` | this command seeds the database according to `prisma/seed.ts` |
 
 <br>
 
@@ -161,3 +169,34 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 > - `press` is emitted whenever the button is pressed by a user and gets passed the MessageButton and ButtonInteraction instances  
 > - `timeout` is emitted when the timeout of the BtnMsg, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called  
 > - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive evetns again.  
+
+<br>
+
+<!-- TODO: -->
+
+> ### Modal
+> The modal is a configurable form dialog that gets shown to a user.  
+> Modals only work in the desktop client, not the mobile app.  
+>   
+> This is an abstract class, so you need to create a sub-class extending `Modal`
+> 
+> #### Methods:
+> - `submit()` is executed when the user submitted the modal - this method needs to be overridden in a sub-class
+> - `getInternalModal()` returns the modal object that needs to be passed to an interaction's `showModal()` method
+> 
+> #### Events:
+> - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance
+
+<br>
+
+> ### PageEmbed
+> This is a helper class that manages a MessageEmbed with multiple pages, which are navigable by buttons.  
+> The pages are dynamic and can be modified at any time.
+> 
+> #### Methods:
+> - ``
+> 
+> #### Events:
+> - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance
+
+<br>
