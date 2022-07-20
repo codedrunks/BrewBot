@@ -12,6 +12,8 @@ export interface PersistentData
     reactionMessages?: ReactionMsg[];
     /** Color of previously ran log command, used to help visually separate log sets */
     lastLogColor?: ColorResolvable;
+    /** Chess message ID to edit on each turn */
+    chessEmbedId?: string;
     /** Bot logs channel */
     botLogs: {
         guild: string;

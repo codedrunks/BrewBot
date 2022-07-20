@@ -5,12 +5,13 @@ import path from "path";
 import axios from "axios";
 import { Command } from "../../Command";
 import { settings } from "../../settings";
+import persistentData from "../../persistentData";
 
 
 // const canvas = createCanvas(200, 200);
 // const ctx = canvas.getContext("2d");
 
-let gameState:Board | null = null;
+let gameBoard:Board | null = null;
 
 // PIECE CLASSES
 // TODO: strict types for properties
@@ -59,30 +60,33 @@ class Pawn extends Piece {
     validMoves()
     {
         const deltas = this.color === "w" ? [[-1, 0], [-2, 0], [-1, -1], [-1, 1]] :
-            [[0, 1], [0, 2], [-1, 1], [1, 1]];
+            [[1, 0], [2, 0], [1, -1], [1, 1]];
 
         const moveList:Array<Array<number>> = [];
 
         deltas.forEach((d) => {
 
-            const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
-            const destinationTile = this.board.tiles[destination[0]][destination[1]];
+            if((this.pos[0] + d[0] < 8 && this.pos[0] + d[0] >= 0) && (this.pos[1] + d[1] < 8 && this.pos[1] + d[1] >= 0)) {
+                
+                const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
 
-            // check if pawn can be moved 2 ahead
-            if (d === deltas[1] &&
-            destinationTile.constructor.name === "Empty" &&
-            this.pos[0] === (this.color === "w" ? 6 : 1)) {
-                moveList.push(destination);
-            // check if pawn can be moved 1 ahead
-            } else if (d === deltas[0] &&
-            destinationTile.constructor.name === "Empty") {
-                moveList.push(destination);
-            // check if pawn can capture a piece
-            } else if ((d === deltas[2] || d === deltas[3]) && 
-            destinationTile.constructor.name !== "Empty" &&
-            destinationTile.color === (this.color === "w" ? "b" : "w")) {
-                moveList.push(destination);
-                console.log(destinationTile);
+                // check if pawn can be moved 2 ahead
+                if (d === deltas[1] &&
+                destinationTile.constructor.name === "Empty" &&
+                this.pos[0] === (this.color === "w" ? 6 : 1)) {
+                    moveList.push(destination);
+                // check if pawn can be moved 1 ahead
+                } else if (d === deltas[0] &&
+                destinationTile.constructor.name === "Empty") {
+                    moveList.push(destination);
+                // check if pawn can capture a piece
+                } else if ((d === deltas[2] || d === deltas[3]) && 
+                destinationTile.constructor.name !== "Empty" &&
+                destinationTile.color === (this.color === "w" ? "b" : "w")) {
+                    moveList.push(destination);
+                    console.log(destinationTile);
+                }
             }
         });
 
@@ -103,12 +107,42 @@ class Knight extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+        
+        const moveList:Array<Array<number>> = [];
+
+        deltas.forEach((d, i) => {
+
+            console.log("Currently iterating delta: " + d.toString());
+            console.log("Current position" + this.pos.toString());
+
+            if((this.pos[0] + d[0] < 8 && this.pos[0] + d[0] >= 0) && (this.pos[1] + d[1] < 8 && this.pos[1] + d[1] >= 0)) {
+
+                const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
+
+                console.log("curr position: " + this.pos.toString());
+                console.log("valid board position: " + destination.toString());
+
+
+                
+                if (deltas.some((dx) => dx === deltas[i]) && 
+                    (destinationTile.color === (this.color === "w" ? "b" : "w") ||
+                    destinationTile.constructor.name === "Empty")) {
+                    const position = [this.pos[0] + d[0], this.pos[1] + d[1]];
+
+                    console.log("Added a move to list: " + position.toString());
+
+                    moveList.push(position);
+                }
+            }
+        });
+
+        return moveList;
     }
 
     getPieceGraphic()
-    {
+    {   
         return "♞";
     }
 }
@@ -121,8 +155,43 @@ class Rook extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+
+        const moveList:Array<Array<number>> = [];
+
+        let i = 0;
+        for(const d of deltas) {
+
+            console.log("Currently iterating delta: " + d.toString());
+            console.log("Current position" + this.pos.toString());
+            
+            let dx = d[0];
+            let dy = d[1];
+            
+            let count = 1;
+            while((this.pos[0] + dx < 8 && this.pos[0] + dx >= 0) && (this.pos[1] + dy < 8 && this.pos[1] + dy >= 0)) {
+                count++;
+                
+                const destination = [this.pos[0] + dx, this.pos[1] + dy];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
+                
+                if (deltas.some((d) => d === deltas[i]) && 
+                (destinationTile.color === (this.color === "w" ? "b" : "w") ||
+                destinationTile.constructor.name === "Empty")) {
+                                        
+                    moveList.push([this.pos[0] + dx, this.pos[1] + dy]);
+
+                    dx = d[0] * (count);
+                    dy = d[1] * (count);
+                } else {
+                    break;
+                }
+            }
+
+            i++;
+        }
+
+        return moveList;
     }
 
     getPieceGraphic()
@@ -139,8 +208,43 @@ class Bishop extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+
+        const moveList:Array<Array<number>> = [];
+
+        let i = 0;
+        for(const d of deltas) {
+
+            console.log("Currently iterating delta: " + d.toString());
+            console.log("Current position" + this.pos.toString());
+            
+            let dx = d[0];
+            let dy = d[1];
+            
+            let count = 1;
+            while((this.pos[0] + dx < 8 && this.pos[0] + dx >= 0) && (this.pos[1] + dy < 8 && this.pos[1] + dy >= 0)) {
+                count++;
+                
+                const destination = [this.pos[0] + dx, this.pos[1] + dy];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
+                
+                if (deltas.some((d) => d === deltas[i]) && 
+                (destinationTile.color === (this.color === "w" ? "b" : "w") ||
+                destinationTile.constructor.name === "Empty")) {
+                                        
+                    moveList.push([this.pos[0] + dx, this.pos[1] + dy]);
+
+                    dx = d[0] * (count);
+                    dy = d[1] * (count);
+                } else {
+                    break;
+                }
+            }
+
+            i++;
+        }
+
+        return moveList;
     }
 
     getPieceGraphic()
@@ -157,8 +261,43 @@ class Queen extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+
+        const moveList:Array<Array<number>> = [];
+
+        let i = 0;
+        for(const d of deltas) {
+
+            console.log("Currently iterating delta: " + d.toString());
+            console.log("Current position" + this.pos.toString());
+            
+            let dx = d[0];
+            let dy = d[1];
+            
+            let count = 1;
+            while((this.pos[0] + dx < 8 && this.pos[0] + dx >= 0) && (this.pos[1] + dy < 8 && this.pos[1] + dy >= 0)) {
+                count++;
+                
+                const destination = [this.pos[0] + dx, this.pos[1] + dy];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
+                
+                if (deltas.some((d) => d === deltas[i]) && 
+                (destinationTile.color === (this.color === "w" ? "b" : "w") ||
+                destinationTile.constructor.name === "Empty")) {
+                                        
+                    moveList.push([this.pos[0] + dx, this.pos[1] + dy]);
+
+                    dx = d[0] * (count);
+                    dy = d[1] * (count);
+                } else {
+                    break;
+                }
+            }
+
+            i++;
+        }
+
+        return moveList;
     }
 
     getPieceGraphic()
@@ -175,8 +314,31 @@ class King extends Piece {
 
     validMoves()
     {
-        const moveDirs = [[]];
-        return null;
+        const deltas = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+
+        const moveList:Array<Array<number>> = [];
+
+        deltas.forEach((d, i) => {
+
+            console.log("Currently iterating delta: " + d.toString());
+            console.log("Current position" + this.pos.toString());
+            
+            if((this.pos[0] + d[0] < 8 && this.pos[0] + d[0] >= 0) && (this.pos[1] + d[1] < 8 && this.pos[1] + d[1] >= 0)) {
+                
+                const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
+                const destinationTile = this.board.tiles[destination[0]][destination[1]];
+                
+                if (deltas.some((d) => d === deltas[i]) && 
+                (destinationTile.color === (this.color === "w" ? "b" : "w") ||
+                destinationTile.constructor.name === "Empty")) {
+                                        
+                    moveList.push([this.pos[0] + d[0], this.pos[1] + d[1]]);
+
+                }
+            }
+        });
+
+        return moveList;
     }
 
     getPieceGraphic()
@@ -189,12 +351,17 @@ class King extends Piece {
 // BOARD CLASS
 class Board {
     // grid: any;
+    initialized: boolean;
     canvas: any;
     tiles: any;
     currPlayer: string;
+    whiteScore: number;
+    blackScore: number;
 
     constructor()
     {
+        this.initialized = false;
+
         const layout = 
         [
             ["r", "h", "b", "q", "k", "b", "h", "r"],
@@ -208,6 +375,8 @@ class Board {
         ];
 
         this.currPlayer = "w";
+        this.whiteScore = 0;
+        this.blackScore = 0;
 
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
@@ -224,7 +393,7 @@ class Board {
         {
             return Array(...Array(8)).map(function (x, y) 
             {
-                const color = b >= 4 ? "w" : "b";
+                const color:string = b >= 4 ? "w" : "b";
                 
                 switch(layout[b][y]) {
                 case "p":
@@ -280,7 +449,7 @@ class Board {
                     ctx.font = "78px Impact";
                     ctx.fillStyle = "white";
                     ctx.fillStyle = "center";
-                    ctx.fillText(letters[y], ((y + 1) * 250), 60);
+                    ctx.fillText(letters[y], (((y + 1) * 250) - 40), 80);
                 }
             
                 this.renderGrid();
@@ -309,20 +478,24 @@ class Board {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
 
-        console.log([p2[0], p2[1]]);
-        console.log(this.tiles[p1[0]][p1[1]].validMoves());
-        console.log(this.tiles[p1[0]][p1[1]].validMoves().includes([p2[0], p2[1]]));
+        // console.log([p1[0], p1[1]]);
+        // console.log(this.tiles[p1[0]][p1[1]].validMoves());
 
         const movesStringified = JSON.stringify(this.tiles[p1[0]][p1[1]].validMoves());
         const currStringified = JSON.stringify([p2[0], p2[1]]);
+        // console.log(currStringified);
+        // console.log("-----");
 
-        if(gameState && this.tiles[p1[0]][p1[1]].constructor.name !== "Empty" && 
-            movesStringified.indexOf(currStringified)) {
+        const currPiece = this.tiles[p1[0]][p1[1]];
 
-            const temp = this.tiles[p1[0]][p1[1]];
+        if(gameBoard && currPiece.color === this.currPlayer && currPiece.constructor.name !== "Empty" && 
+            movesStringified.indexOf(currStringified) !== -1) {
+
+            const temp = currPiece;
             this.tiles[p2[0]][p2[1]] = temp;
+            this.tiles[p2[0]][p2[1]].pos = [p2[0], p2[1]];
 
-            this.tiles[p1[0]][p1[1]] = new Empty(gameState.currPlayer, [p1[0], p1[1]], self);
+            this.tiles[p1[0]][p1[1]] = new Empty(gameBoard.currPlayer, [p1[0], p1[1]], self);
             this.renderGrid();
         } else {
             throw Error("Invalid move!");
@@ -377,42 +550,77 @@ export class Chess extends Command
         const args = opt.options;
         const { channel } = int;
 
-        // let gameState:null | Board = null;
+        await this.deferReply(int, true);
 
-        function update() {
-            const canvas = gameState?.canvas;
-            if(canvas && gameState) {
+        // let gameBoard:null | Board = null;
+
+        async function update() {
+            const canvas = gameBoard?.canvas;
+
+            if(canvas && gameBoard) {
                 const imgOut = fs.createWriteStream(__dirname + "/test.jpeg");
                 const stream = canvas.createJPEGStream();
                 stream.pipe(imgOut);
 
-                channel?.send({
-                    embeds: [
-                        {
-                            image: {
-                                url: "attachment://test.jpeg"
+                // const message: void | undefined = undefined;
+                // let messageId: string | undefined = "997622859247665282";
+            
+
+                if(!gameBoard.initialized) {
+                    gameBoard.initialized = true;
+
+                    await channel?.send({
+                        embeds: [
+                            {
+                                image: {
+                                    url: "attachment://test.jpeg"
+                                }
                             }
+                        ],
+                        files: [{
+                            attachment: __dirname + "/test.jpeg",
+                            name: "test.jpeg",
+                            description: "A description of the file"
+                        }]
+                    })
+                        .then((message) => {
+                            // int.deferReply({ephemeral: true});
+                            persistentData.set("chessEmbedId", message.id);
+                        })
+                        .catch(console.error);
+                } else {
+                    const messageId = persistentData.get("chessEmbedId");
+                    if(messageId) {
+                        const message = channel?.messages.fetch(messageId);
+
+                        if(message) {
+                            (await message).edit({embeds: [
+                                {
+                                    image: {
+                                        url: "attachment://test.jpeg"
+                                    }
+                                }
+                            ],
+                            files: [{
+                                attachment: __dirname + "/test.jpeg",
+                                name: "test.jpeg",
+                                description: "A description of the file"
+                            }]
+                            });
                         }
-                    ],
-                    files: [{
-                        attachment: __dirname + "/test.jpeg",
-                        name: "test.jpeg",
-                        description: "A description of the file"
-                    }]
-                })
-                    .then(console.log)
-                    .catch(console.error);
-            } else {
-                throw(new Error("Board not initialized..."));
+                    }
+                }
             }
         }
 
         if(opt.name === "start") {
-            gameState = new Board();
+            gameBoard = new Board();
+
             update();
+            await int.editReply("Game Started!");
         }
         
-        if (opt.name === "move" && gameState) {
+        if (opt.name === "move" && gameBoard) {
 
             if (args && args.length === 2) {
                 const pos1 = args[0].value;
@@ -425,27 +633,34 @@ export class Chess extends Command
                     const startPos = pos1.split("");
 
                     const x1 = letters.indexOf(startPos[0].toUpperCase());
-                    const y1 = 8 - (parseInt(startPos[1]));
+                    const y1 = 8 - parseInt(startPos[1]);
                     
                     const endPos = pos2.split("");
 
                     const x2 = letters.indexOf(endPos[0].toUpperCase());
                     const y2 = 8 - parseInt(endPos[1]);
 
-                    // console.log(y1);
-                    // console.log(y2);
-
-                    // console.log(gameState.tiles[y1][x1].validMoves());
+                    let status = "";
                     
-                    gameState.move([y1, x1], [y2, x2]);
+                    try {
+                        status = `You moved ${pos1} ${gameBoard.tiles[y1][x1].constructor.name} to ${pos2}${gameBoard.tiles[y2][x2].constructor.name !== "Empty" ? ", taking their " +  gameBoard.tiles[y2][x2].constructor.name: ""}`;
+                        
+                        gameBoard.move([y1, x1], [y2, x2]);
 
-                    if (gameState.currPlayer === "w") {
-                        gameState.currPlayer = "b";
-                    } else {
-                        gameState.currPlayer = "w";
+                        if (gameBoard.currPlayer === "w") {
+                            gameBoard.currPlayer = "b";
+                        } else {
+                            gameBoard.currPlayer = "w";
+                        }
+
+                        update();
+
+                    } catch(err) {
+                        console.log(err);
+                        status = "Invalid move. Are you using the correct format? (b2, c5, h1, etc.)";
+                    } finally {
+                        await int.editReply({content: status});
                     }
-
-                    update();
                 }
             }
         }

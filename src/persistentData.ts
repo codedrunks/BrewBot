@@ -8,7 +8,8 @@ const defaultData: Partial<PersistentData> = {
         guild: "693878197107949572", // BAC
         channel: "696108019146293360", // #bot-logs
     },
-    lastLogColor: "#294765"
+    lastLogColor: "#294765",
+    chessEmbedId: "#294765"
 };
 
 
