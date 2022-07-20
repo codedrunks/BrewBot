@@ -53,7 +53,7 @@ export async function setCoins(userId: string, guildId: string, coins: number) {
 export async function addCoins(userId: string, guildId: string, coins: number) {
     const checkRedis = await redis.get(`coins_${guildId}${userId}`);
 
-    if(checkRedis) await redis.set(`coins_${guildId}${userId}`, coins + checkRedis, { "EX": 300 });
+    if(checkRedis) await redis.set(`coins_${guildId}${userId}`, coins + parseInt(checkRedis), { "EX": 300 });
 
     await prisma.coins.upsert({
         where: {
@@ -75,6 +75,11 @@ export async function addCoins(userId: string, guildId: string, coins: number) {
 
 /** Decrement user coin amount by x amount, use subCoinsSafe for non-zero op */
 export async function subCoins(userId: string, guildId: string, coins: number) {
+
+    const redisCheck = await redis.get(`coins_${guildId}${userId}`);
+
+    if(redisCheck) redis.set(`coins_${guildId}${userId}`, parseInt(redisCheck) - coins, { "EX": 300 });
+
     await prisma.coins.update({
         where: {
             guildId_userId: {
@@ -86,27 +91,6 @@ export async function subCoins(userId: string, guildId: string, coins: number) {
             amount: {
                 decrement: coins
             }
-        }
-    });
-}
-
-/** Decrement user coin amount without going to a negative value */
-export async function subCoinsSafe(userId: string, guildId: string, coins: number) {
-    const currentCoinAmount = await getCoins(userId, guildId);
-
-    if(!currentCoinAmount) return;
-
-    if(coins > currentCoinAmount) coins = currentCoinAmount;
-
-    await prisma.coins.update({
-        where: {
-            guildId_userId: {
-                guildId,
-                userId
-            }
-        },
-        data: {
-            amount: { decrement: coins }
         }
     });
 }

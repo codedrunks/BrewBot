@@ -22,7 +22,7 @@ export async function deleteUser(userId: string) {
 }
 
 /** Add new user to the database if they do not exist already */
-export async function createNewUser(userId: string, guildId: string) {
+export async function createNewUser(userId: string, guildId: string, coins?: number) {
     await prisma.user.upsert({
         where: {
             id: userId
@@ -33,7 +33,7 @@ export async function createNewUser(userId: string, guildId: string) {
             coins: {
                 create: {
                     guildId,
-                    amount: 0
+                    amount: coins ?? 0
                 }
             },
             bonus: {

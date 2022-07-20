@@ -15,7 +15,9 @@ export class Volume extends Command {
                     name: "volume",
                     desc: "how loud the bot should play music (1-100)",
                     type: "number",
-                    required: true
+                    required: true,
+                    max: 100,
+                    min: 1
                 }
             ]
         });

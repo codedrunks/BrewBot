@@ -6,6 +6,7 @@ import { trackStart } from "@src/lavalink/lib/trackStart";
 import { trackEnd } from "@src/lavalink/lib/trackEnd";
 import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
 import { playerMove } from "./lib/playerMove";
+import { playerCreate } from "./lib/playerCreate";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -75,6 +76,9 @@ function initializeManagerFromClient(cl: Client): Manager {
         })
         .on("playerMove", (player, oldChannel, newChannel) => {
             playerMove(player, oldChannel, newChannel, client);
+        })
+        .on("playerCreate", (player) => {
+            playerCreate(player, client);
         });
 
     return manager;
