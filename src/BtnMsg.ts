@@ -11,8 +11,8 @@ interface BtnMsgOpts {
 }
 
 export type ButtonOpts = {
-    style?: MessageButtonStyleResolvable,
-    label?: string,
+    label: string,
+    style: MessageButtonStyleResolvable,
     emoji?: EmojiIdentifierResolvable,
     url?: string,
 }[];
@@ -38,6 +38,8 @@ export class BtnMsg extends EventEmitter
     readonly msg: string | MessageEmbed[];
 
     readonly opts: BtnMsgOpts;
+
+    private destroyed = false;
 
     /**
      * Wrapper for discord.js' `MessageButton`  
@@ -91,6 +93,10 @@ export class BtnMsg extends EventEmitter
     /** Removes all listeners and triggers the registry to delete its reference to this instance */
     public destroy()
     {
+        if(this.destroyed)
+            return;
+
+        this.destroyed = true;
         this.emit("destroy", this.btns.map(b => b.customId));
 
         this.removeAllListeners("press");
@@ -104,9 +110,9 @@ export class BtnMsg extends EventEmitter
     }
 
     /**
-     * Returns reply options that can be passed to the `CommandInteraction.reply()` function
+     * Returns reply options that can be passed to `CommandInteraction.reply()`
      * @example ```ts
-     * await int.reply(new BtnMsg(...).getReplyOpts())
+     * await int.reply(new BtnMsg().getReplyOpts())
      * ```
      */
     public getReplyOpts(): InteractionReplyOptions
@@ -117,7 +123,7 @@ export class BtnMsg extends EventEmitter
     /**
      * Returns message options that can be passed to the `TextBasedChannel.send()` function
      * @example ```ts
-     * await channel.send(new BtnMsg(...).getMsgOpts())
+     * await channel.send(new BtnMsg().getMsgOpts())
      * ```
      */
     public getMsgOpts(): MessageOptions
