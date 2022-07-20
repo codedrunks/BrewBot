@@ -82,6 +82,13 @@ export class Play extends Command {
 
         const manager = getMusicManager();
 
+        const player = manager.get(guild.id) ?? manager.create({
+            guild: guild.id,
+            voiceChannel: voice,
+            textChannel: int.channel.id,
+            selfDeafen: true
+        });
+
         let res: SearchResult;
 
         if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
@@ -94,16 +101,11 @@ export class Play extends Command {
             }, int.user);
         }
 
+        if(voice !== player.voiceChannel) return this.editReply(int, embedify("You must be in the same voice channel as the bot"));
+
         if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("That URL type is not supported or something went wrong"));
         
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
-
-        const player = manager.get(guild.id) ?? manager.create({
-            guild: guild.id,
-            voiceChannel: voice,
-            textChannel: int.channel.id,
-            selfDeafen: true
-        });
 
         // there was no pretty way of doing this tbh but illusion is a fucking whore so, so be it ig
         if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours 
