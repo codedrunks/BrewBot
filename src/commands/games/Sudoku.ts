@@ -210,16 +210,6 @@ export class Sudoku extends Command
     }
 
     checkWin(game: Game): boolean {
-        const filled = game.userInput.reduce((a, item) => {
-            return a + item.reduce((b, item) => {
-                return b + Number(item !== 0);
-            }, 0);
-        }, 0);
-
-        if (filled !== 41) {
-            return false;
-        }
-
         for (let i = 0; i < game.userInput.length; i++) {
             for (let j = 0; j < game.userInput.length; j++) {
                 if (game.userInput[i][j] === 0) {
