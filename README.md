@@ -30,9 +30,10 @@ https://discord.com/oauth2/authorize?client_id=__CLIENT_ID__&permissions=8&scope
 2. Install GTK2 and libjpeg-turbo by following [this guide](https://github.com/Automattic/node-canvas/wiki/Installation:-Windows#2-installing-gtk-2)
 3. [Install Redis](#redis)
 4. Set up a psql user and DB schema for the bot
-5. Run `npx prisma migrate reset` to initialize the DB schema
-6. Copy `.env.template` to `.env` and enter all values
-7. Run `npm i` to install dependencies
+5. Run `npm i` to install dependencies
+6. Run `npx prisma migrate reset` to initialize the DB schema
+7. Copy `.env.template` to `.env` and enter all values
+8. See [CLI](#cli) for further commands
 
 <br>
 
