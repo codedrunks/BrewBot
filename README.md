@@ -111,7 +111,7 @@ redis-cli config rewrite
 | `npx prisma db push` | this will update your local db to reflect any changes in your schema.prisma file, use this while making changes that you want to see |
 | `npx prisma migrate dev --name "describe_change_short"` | creates a database migration and updates the local database if there is one, use this once your changes to the schema.prisma file are done, do not use constantly for little changes, use the above command instead |
 | `npx prisma migrate deploy` | this will deploy any changes to the local database, this is how you deploy migrations in production |
-| `npx prisma migrate reset` | this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a  |reset
+| `npx prisma migrate reset` | this will reset the localdatabase and re-apply any migrations, use this in testing if you make breaking changes or need a reset |
 | `npx prisma migrate dev --create-only` | not usually needed, this will create a migration without applying it incase you need to manually change the SQL in the migration file |
 | `npx prisma format` | this formats the schema.prisma file and can also auto-complete foreign key association |
 | `npx prisma db seed` | this command seeds the database according to `prisma/seed.ts` |
