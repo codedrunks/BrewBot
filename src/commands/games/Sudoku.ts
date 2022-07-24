@@ -212,7 +212,7 @@ export class Sudoku extends Command
     checkWin(game: Game): boolean {
         for (let i = 0; i < game.userInput.length; i++) {
             for (let j = 0; j < game.userInput.length; j++) {
-                if (game.userInput[i][j] === 0) {
+                if (game.board[i][j] !== 0) {
                     continue;
                 }
 
