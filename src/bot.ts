@@ -41,11 +41,11 @@ async function init()
             status: "dnd",
             activities: [{ type: "PLAYING", name: "starting up..." }]
         });
-        
+
         await getRedis().connect();
-        
+
         botLogs.init(cl);
-        
+
         initRegistry(cl);
 
         const evts = registerEvents().filter(e => e.enabled);
