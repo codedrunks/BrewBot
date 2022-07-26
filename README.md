@@ -102,7 +102,7 @@ redis-cli config rewrite
 | `npm test` | runs the script at `src/test.ts` |
 | `npm run clearCommands` | clears all global and guild commands (takes a few minutes) |
 | `npm run deploy` | runs prisma deployment scripts and launches the bot without watching |
-| `npm run win-redis` | is run by bot.ts on Windows devices to launch redis-server in a WSL window |
+| `npm run win-redis` | use this command on Windows devices to launch redis-server in a WSL window |
 
 <br>
 
