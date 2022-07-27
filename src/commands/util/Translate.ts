@@ -1,10 +1,11 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { allOfType } from "svcorelib";
+import svcorelib from "svcorelib";
+const { allOfType } = svcorelib;
 import axios from "axios";
 import Fuse from "fuse.js";
 
 import { Command } from "@src/Command";
-import languages from "@src/languages.json";
+import languages from "@src/languages.json" assert { type: "json" };
 import { embedify } from "@src/util";
 import { settings } from "@src/settings";
 

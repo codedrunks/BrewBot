@@ -1,8 +1,9 @@
 {
   "name": "bot",
   "version": "0.2.0",
+  "type": "module",
   "scripts": {
-    "start": "tsc && tsc-alias && node out/bot.js",
+    "start": "tsc && tsc-alias && node --experimental-specifier-resolution=node out/bot.js",
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
     "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
@@ -26,9 +27,9 @@
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13.0",
     "nodemon": "^2.0.18",
-    "ts-node": "^10.7.0",
+    "ts-node": "^10.9.1",
     "tsc-alias": "^1.6.11",
-    "typescript": "^4.6.3"
+    "typescript": "^4.7.4"
   },
   "dependencies": {
     "@discordjs/builders": "^0.15.0",

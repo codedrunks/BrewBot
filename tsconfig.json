@@ -2,11 +2,13 @@
     "compilerOptions": {
         "baseUrl": ".",
         "target": "es2022",
-        "module": "CommonJS",
+        "module": "esnext",
         "rootDir": "./src/",
         "outDir": "./out/",
         "strict": true,
+        "lib": ["ES2022"],
         "moduleResolution": "node",
+        "resolveJsonModule": true,
         "importHelpers": true,
         "experimentalDecorators": true,
         "esModuleInterop": true,
@@ -20,9 +22,9 @@
         ],
         "sourceMap": true,
         "paths": {
-            "@src/*": ["./src/*"],
-            "@commands/*": ["./src/commands/*"],
-            "@database/*": ["./src/database/*"]
+            "@src/*": ["./src/*", "./out/src/*"],
+            "@commands/*": ["./src/commands/*", "./out/src/commands/*"],
+            "@database/*": ["./src/database/*", "./out/src/database/*"]
         }
     },
     "files": [

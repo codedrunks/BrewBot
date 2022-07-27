@@ -1,5 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { randRange } from "svcorelib";
+import svcorelib from "svcorelib";
+const { randRange } = svcorelib;
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 

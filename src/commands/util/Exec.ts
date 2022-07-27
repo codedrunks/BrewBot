@@ -1,6 +1,7 @@
 import { CommandInteraction, MessageEmbed, MessageButton, ModalSubmitInteraction, TextInputComponent } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { unused } from "svcorelib";
+import svcorelib from "svcorelib";
+const { unused } = svcorelib;
 
 import { Command } from "@src/Command";
 import { BtnMsg } from "@src/BtnMsg";

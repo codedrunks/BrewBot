@@ -1,7 +1,8 @@
 import { Client } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
-import { allOfType, system, Stringifiable } from "svcorelib";
+import svcorelib, { Stringifiable } from "svcorelib";
+const { allOfType, system } = svcorelib;
 
 import persistentData from "@src/persistentData";
 import botLogs from "@src/botLogs";

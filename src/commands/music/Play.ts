@@ -4,7 +4,8 @@ import { Command } from "@src/Command";
 import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
-import { randomizeArray, randRange } from "svcorelib";
+import svcorelib from "svcorelib";
+const { randomizeArray, randRange } = svcorelib;
 
 export class Play extends Command {
     constructor() {

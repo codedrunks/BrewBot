@@ -2,7 +2,8 @@ import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from 
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString } from "@src/util";
-import { formatDuration, parseDuration } from "svcorelib";
+import svcorelib from "svcorelib";
+const { formatDuration, parseDuration } = svcorelib;
 import { BtnMsg } from "@src/BtnMsg";
 import { isDJOnlyandhasDJRole } from "@src/database/music";
 

@@ -1,5 +1,7 @@
-import { files } from "svcorelib";
-import { readFile, watch, writeFile } from "fs-extra";
+import svcorelib from "svcorelib";
+const { files } = svcorelib;
+import fsExtra from "fs-extra";
+const { readFile, watch, writeFile } = fsExtra;
 import { PersistentData, DataKey } from "@src/types";
 
 

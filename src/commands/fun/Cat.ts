@@ -1,6 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import { randomItem } from "svcorelib";
-import axios, { AxiosError } from "axios";
+import svcorelib from "svcorelib";
+const { randomItem } = svcorelib;
+import * as axiosPkg from "axios";
+const { AxiosError, default: axios } = axiosPkg;
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 

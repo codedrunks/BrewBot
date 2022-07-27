@@ -4,7 +4,8 @@ import { embedify, formatSeconds, nowInSeconds } from "@src/util";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
 import { createNewUser, getUser } from "@database/users";
 import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
-import { randomItem } from "svcorelib";
+import svcorelib from "svcorelib";
+const { randomItem } = svcorelib;
 
 const secs4hours = 14400;
 

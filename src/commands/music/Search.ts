@@ -4,7 +4,8 @@ import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/cl
 import { embedify } from "@src/util";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { SearchQuery, SearchResult } from "erela.js";
-import { randRange } from "svcorelib";
+import svcorelib from "svcorelib";
+const { randRange } = svcorelib;
 
 const activeSearches: Set<string> = new Set();
 

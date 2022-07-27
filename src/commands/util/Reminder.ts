@@ -1,6 +1,7 @@
 import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import parseRelativeTime from "parse-relative-time";
-import { readableArray } from "svcorelib";
+import svcorelib from "svcorelib";
+const { readableArray } = svcorelib;
 import { Command } from "@src/Command";
 import persistentData from "@src/persistentData";
 import { settings } from "@src/settings";
