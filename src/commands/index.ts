@@ -1,5 +1,6 @@
 import { Cat } from "@commands/fun/Cat";
 import { Cheese } from "@commands/fun/Cheese";
+import { Chess } from "@commands/fun/Chess";
 import { Coinflip } from "@commands/fun/Coinflip";
 import { Fact } from "@commands/fun/Fact";
 import { Ferret } from "@commands/fun/Ferret";
@@ -53,6 +54,7 @@ export const commands = [
     // fun
     Cat,
     Cheese,
+    Chess,
     Coinflip,
     Contest,
     Fact,
