@@ -73,8 +73,10 @@ Setting up redis is easy for your distro of linux and if you are developing on W
 
 Launching redis is as simple as running `redis-server`.
 
-When launching to production, you want redis to be daemonized, this can be done with systemd[^1] by default on most linux distributions using `sudo systemctl start redis` and `sudo systemctl enable redis` to enable launch on reboot, or you can do that with something like [pm2](https://pm2.keymetrics.io/) or [screen](https://linuxize.com/post/how-to-use-linux-screen/), but can also be done manually with some configuration, see details [here.](https://redis.io/docs/getting-started/)
-
+When launching to production, you want redis to be daemonized, this can be done with systemd[^1] by default on most linux distributions using `sudo systemctl start redis` and `sudo systemctl enable redis` to enable launch on reboot, or you can do that with something like [pm2](https://pm2.keymetrics.io/) or [screen](https://linuxize.com/post/how-to-use-linux-screen/) or Windows Task Scheduler (see below), but can also be done manually with some configuration, see details [here.](https://redis.io/docs/getting-started/)
+  
+[^1]: If you are using systemd, create a `redis.conf` in `/etc/redis/redis.conf` and make sure to add the line `supervised systemd`.  
+  
 In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in `%UserProfile%\.wslconfig`, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
 
 Another thing is to have a config for your instance of Redis, in testing/development you can do something like this to have an instance that does not save to disk. On WSL, you must do this because redis will not have write permissions to save to disk.
@@ -87,8 +89,12 @@ redis-server redis.conf # run this in a separate window
 redis-cli config set save ""
 redis-cli config rewrite
 ```
-
-[^1]: If you are using systemd, create a `redis.conf` in `/etc/redis/redis.conf` and make sure to add the line `supervised systemd`.
+  
+After it was installed on the default WSL shell, if you want Redis to automatically launch and run in the background on Windows, follow these steps:
+1. Create a new task in Task Scheduler that runs `src/tools/redis.bat` whenever your user logs on, [see guide](https://winaero.com/run-app-or-script-at-logon-with-task-scheduler-in-windows-10/#How_to_Run_App_or_Script_at_Logon_with_Task_Scheduler_in_Windows_10)
+2. Under "General > Security options", click "Change User or Group", type in `SYSTEM` in the bottom text field and click Ok
+    - Note that this grants the .bat file full admin perms
+3. Right-click the finished task and click "Run", now you can start the bot as usual
 
 <br>
 

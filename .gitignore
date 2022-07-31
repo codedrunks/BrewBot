@@ -6,3 +6,4 @@ src/test.js
 data.json
 application.yml
 logs/
+dump.rdb
