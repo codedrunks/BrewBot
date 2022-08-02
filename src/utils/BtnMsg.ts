@@ -1,8 +1,9 @@
 import { randomUUID } from "crypto";
 import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
-import EventEmitter from "events";
+
 
 import { registerBtnMsg } from "@src/registry";
+import { EmitterBase } from "@utils/EmitterBase";
 
 
 interface BtnMsgOpts {
@@ -32,7 +33,7 @@ export interface BtnMsg {
  * Wrapper for discord.js' `MessageButton`  
  * Contains convenience methods for easier creation of messages with attached buttons
  */
-export class BtnMsg extends EventEmitter
+export class BtnMsg extends EmitterBase
 {
     readonly id: string = randomUUID();
 
@@ -40,8 +41,6 @@ export class BtnMsg extends EventEmitter
     readonly msg: string | MessageEmbed[];
 
     readonly opts: BtnMsgOpts;
-
-    private destroyed = false;
 
     /**
      * Wrapper for discord.js' `MessageButton`  
@@ -54,7 +53,7 @@ export class BtnMsg extends EventEmitter
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
-        super({ captureRejections: true });
+        super();
 
         this.msg = message instanceof MessageEmbed ? [message] : message;
 
@@ -99,11 +98,11 @@ export class BtnMsg extends EventEmitter
             return;
 
         this.destroyed = true;
+
         this.emit("destroy", this.btns.map(b => b.customId));
 
-        this.removeAllListeners("press");
-        this.removeAllListeners("timeout");
-        this.removeAllListeners("destroy");
+        this.eventNames()
+            .forEach(e => this.removeAllListeners(e));
     }
 
     public getBtn(customId: string)

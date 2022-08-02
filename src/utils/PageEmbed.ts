@@ -1,6 +1,6 @@
 import { Message, MessageEmbed, ButtonInteraction, MessageEmbedOptions, TextBasedChannel } from "discord.js";
-import EventEmitter from "events";
 import { clamp } from "svcorelib";
+import { EmitterBase } from "@utils/EmitterBase";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
@@ -18,16 +18,14 @@ interface PageEmbedSettings {
 }
 
 
-export interface PageEmbed {
+export interface PageEmbed extends EmitterBase {
     /** Emitted whenever a button was clicked */
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
     /** Emitted whenever this PageEmbed times out and is going to deregister and destroy itself */
     on(event: "timeout", listener: () => void): this;
-    /** Emitted on error and unhandled Promise rejection */
-    on(event: "error", listener: (err: Error) => void): this;
 }
 
-export class PageEmbed extends EventEmitter
+export class PageEmbed extends EmitterBase
 {
     public readonly pages: EbdPage[];
 
@@ -38,7 +36,7 @@ export class PageEmbed extends EventEmitter
 
     constructor(pages: EbdPage[], settings?: Partial<PageEmbedSettings>)
     {
-        super({ captureRejections: true });
+        super();
 
         this.pages = pages;
 
@@ -57,11 +55,13 @@ export class PageEmbed extends EventEmitter
         this.pageIdx = clamp(page, 0, this.pages.length - 1);
     }
 
+    /** Returns the current page index */
     public getPage()
     {
         return this.pageIdx;
     }
 
+    /** Returns properties that can be used to send or edit messages */
     public getMsgProps()
     {
         const opts = this.pages[this.pageIdx];
@@ -72,12 +72,6 @@ export class PageEmbed extends EventEmitter
         return { embeds: [
             new MessageEmbed(opts),
         ]};
-    }
-
-    public destroy()
-    {
-        this.removeAllListeners("press");
-        this.removeAllListeners("timeout");
     }
 
     public async sendIn(channel: TextBasedChannel)

@@ -1,8 +1,8 @@
-import EventEmitter from "events";
 import { MessageActionRow, TextInputComponent, Modal as DjsModal, ModalSubmitInteraction, MessageEmbed, MessageButton } from "discord.js";
 import { randomUUID } from "crypto";
 import { registerModal } from "@src/registry";
 import { Command } from "@src/Command";
+import { EmitterBase } from "./EmitterBase";
 
 interface ModalConstructor {
     title: string;
@@ -10,20 +10,20 @@ interface ModalConstructor {
 }
 
 export interface Modal {
-    /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
-    on(event: "destroy", listener: (btnIds: string[]) => void): this;
     /** Emitted on error and unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
+    /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
+    on(event: "destroy", listener: (btnIds: string[]) => void): this;
 }
 
 /** Base class for all Modals */
-export abstract class Modal extends EventEmitter {
+export abstract class Modal extends EmitterBase {
     readonly id: string = randomUUID();
     private readonly internalModal: DjsModal;
 
     /** Base class for all Modals */
     constructor(data: ModalConstructor) {
-        super({ captureRejections: true });
+        super();
 
         this.internalModal = new DjsModal()
             .setCustomId(this.id)
@@ -36,13 +36,6 @@ export abstract class Modal extends EventEmitter {
         this.internalModal.addComponents(...components);
 
         registerModal(this);
-    }
-
-    /** Removes all listeners and triggers the registry to delete its reference to this instance */
-    public destroy()
-    {
-        this.emit("destroy");
-        this.removeAllListeners("destroy");
     }
 
     /** Called when a user tries to submit this modal */
