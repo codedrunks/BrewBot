@@ -12,6 +12,8 @@ interface ModalConstructor {
 export interface Modal {
     /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
+    /** Emitted on error and unhandled Promise rejection */
+    on(event: "error", listener: (err: Error) => void): this;
 }
 
 /** Base class for all Modals */
@@ -21,7 +23,7 @@ export abstract class Modal extends EventEmitter {
 
     /** Base class for all Modals */
     constructor(data: ModalConstructor) {
-        super();
+        super({ captureRejections: true });
 
         this.internalModal = new DjsModal()
             .setCustomId(this.id)

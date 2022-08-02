@@ -23,19 +23,22 @@ export interface PageEmbed {
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
     /** Emitted whenever this PageEmbed times out and is going to deregister and destroy itself */
     on(event: "timeout", listener: () => void): this;
+    /** Emitted on error and unhandled Promise rejection */
+    on(event: "error", listener: (err: Error) => void): this;
 }
 
 export class PageEmbed extends EventEmitter
 {
-    private readonly pages: EbdPage[];
+    public readonly pages: EbdPage[];
+
     private readonly settings: PageEmbedSettings;
 
     private pageIdx = -1;
     private msg?: Message;
 
-    constructor(pages: EbdPage[], settings: Partial<PageEmbedSettings>)
+    constructor(pages: EbdPage[], settings?: Partial<PageEmbedSettings>)
     {
-        super();
+        super({ captureRejections: true });
 
         this.pages = pages;
 
@@ -48,6 +51,7 @@ export class PageEmbed extends EventEmitter
         this.settings = { ...defSett, ...(settings ?? {}) };
     }
 
+    /** Sets the current page index. Number is automatically clamped between 0 and max index. */
     public setPage(page: number)
     {
         this.pageIdx = clamp(page, 0, this.pages.length - 1);

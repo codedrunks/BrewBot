@@ -24,6 +24,8 @@ export interface BtnMsg {
     on(event: "timeout", listener: () => void): this;
     /** Gets emitted when this BtnMsg was destroyed and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
+    /** Emitted on error and unhandled Promise rejection */
+    on(event: "error", listener: (err: Error) => void): this;
 }
 
 /**
@@ -52,7 +54,7 @@ export class BtnMsg extends EventEmitter
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
-        super();
+        super({ captureRejections: true });
 
         this.msg = message instanceof MessageEmbed ? [message] : message;
 
