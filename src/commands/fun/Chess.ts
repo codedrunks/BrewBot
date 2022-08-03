@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption } from "discord.js";
+import { Collection, CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
 // import { time } from "@discordjs/builders";
 import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
@@ -6,21 +6,9 @@ import fs from "fs-extra";
 // import path from "path";
 // import axios from "axios";
 import { Command } from "../../Command";
-// import { settings } from "../../settings";
-// import persistentData from "../../persistentData";
-// import { time } from "@discordjs/builders";
-// import "lodash";
-// const _ = require("lodash");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const jsdom = require("jsdom");
-const dom = new jsdom.JSDOM("");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const deepClone = require("deepclonejs");
-// const jquery = require("jquery")(dom.window);
-// const canvas = createCanvas(200, 200);
-// const ctx = canvas.getContext("2d");
 
-let gameBoard:Board | null = null;
+// let gameBoard:Board | null = null;
+const games = new Map<string[], Board>();
 
 // PIECE CLASSES
 // TODO: strict types for properties
@@ -28,9 +16,11 @@ class Piece {
     color: string;
     pos: Array<number>;
     board: Board;
+    inCheck:boolean;
 
     constructor(color:string, pos:Array<number>, board:Board)
     {
+        this.inCheck = false;
         this.color = color;
         this.pos = pos;
         this.board = board;
@@ -73,9 +63,6 @@ class Pawn extends Piece {
                 
                 const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
                 const destinationTile = this.board.tiles[destination[0]][destination[1]];
-
-                console.log(destinationTile);
-                console.log(this.color);
 
                 // check if pawn can be moved 2 ahead
                 if (d === deltas[1] &&
@@ -218,10 +205,13 @@ class Bishop extends Piece {
                 const destinationTile = this.board.tiles[destination[0]][destination[1]];
                 
                 if (deltas.some((d) => d === deltas[i]) && 
-                (destinationTile.color !== this.color ||
-                destinationTile.constructor.name === "Empty")) {
+                destinationTile.color !== this.color) {
                                         
                     moveList.push([this.pos[0] + dx, this.pos[1] + dy]);
+
+                    if(destinationTile.constructor.name !== "Empty") {
+                        break;
+                    }
 
                     dx = d[0] * (count);
                     dy = d[1] * (count);
@@ -305,19 +295,15 @@ class King extends Piece {
         const moveList:Array<Array<number>> = [];
 
         deltas.forEach((d, i) => {
-            // console.log(d);
             
             if((this.pos[0] + d[0] < 8 && this.pos[0] + d[0] >= 0) && (this.pos[1] + d[1] < 8 && this.pos[1] + d[1] >= 0)) {
                 
                 const destination = [this.pos[0] + d[0], this.pos[1] + d[1]];
                 const destinationTile = this.board.tiles[destination[0]][destination[1]];
-                // console.log("trying:");
-                // console.log(destination);
-                // console.log("----");
+
                 if (deltas.some((d) => d === deltas[i]) && 
                     (destinationTile.color !== this.color ||
                     destinationTile.constructor.name === "Empty")) {
-                    // console.log("inside of move function");
                     moveList.push([this.pos[0] + d[0], this.pos[1] + d[1]]);
                 }
             }
@@ -332,11 +318,11 @@ class King extends Piece {
     }
 }
 
-
 // BOARD CLASS
 class Board {   
     // grid: any;
     initialized: boolean;
+    players: Array<User>;
     canvas: Canvas;
     tiles: Array<Array<Empty|Pawn|Knight|Rook|Bishop|Queen|King>>;
     currPlayer: string;
@@ -348,7 +334,7 @@ class Board {
     lastMove: Array<string>|undefined;
     embedId: string|undefined;
 
-    constructor()
+    constructor(p1:User, p2:User)
     {
         this.initialized = false;
 
@@ -356,15 +342,15 @@ class Board {
         [
             ["r", "h", "b", "q", "k", "b", "h", "r"],
             ["p", "p", "p", "p", "p", "p", "p", "p"],
+            ["n", "n", "n", "n", "b", "n", "n", "n"],
             ["n", "n", "n", "n", "n", "n", "n", "n"],
-            ["n", "n", "n", "b", "n", "n", "n", "n"],
-            ["n", "n", "n", "n", "p", "n", "n", "n"],
+            ["n", "n", "n", "n", "n", "n", "n", "n"],
             ["n", "n", "n", "n", "n", "k", "n", "n"],
             ["p", "p", "p", "p", "p", "p", "p", "p"],
             ["r", "h", "b", "q", "p", "b", "h", "r"]
         ];
 
-        this.currPlayer = "white";
+        this.currPlayer = "black";
         this.prevPlayer = "";
         this.whiteScore = 0;
         this.blackScore = 0;
@@ -373,6 +359,7 @@ class Board {
         this.lastMove = undefined;
         this.embedId = "";
         this.tiles = [];
+        this.players = [p1, p2];
 
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
@@ -447,13 +434,19 @@ class Board {
     }
 
     renderGrid() {
+        const inCheck = this.checkForCheck(this);
+
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 8; y++) {
                 const ctx = this.canvas.getContext("2d");
 
-
-                ctx.fillStyle = (x + y) % 2 == 0 ? "rgb(230, 185, 142)" : "rgb(143, 96, 50)";
+                if(inCheck[0] === y && inCheck[1] === x) {
+                    ctx.fillStyle = "red";
+                } else {
+                    ctx.fillStyle = (x + y) % 2 == 0 ? "rgb(230, 185, 142)" : "rgb(143, 96, 50)";
+                }
                 ctx.fillRect((x * 250) + 100, (y * 250) + 100, 250, 250);
+                
                 ctx.fillStyle = this.tiles[y][x].color === "white" ? "white" : "black";
 
                 // this is what will render the pieces
@@ -464,7 +457,6 @@ class Board {
     }
 
     move(p1:number[], p2:number[]) {
-
         const movesStringified = JSON.stringify(this.tiles[p1[0]][p1[1]].validMoves());
         const currStringified = JSON.stringify([p2[0], p2[1]]);
 
@@ -480,103 +472,137 @@ class Board {
             this.tiles[p1[0]][p1[1]] = new Empty(this.currPlayer, [p1[0], p1[1]], this);
             this.renderGrid();
         } else {
-            throw Error("Invalid move!");
+
+            class MoveError extends Error {
+                constructor(message:string) {
+                    super(message);
+                    this.name = "MoveError";
+                }
+            }
+
+            throw new MoveError("Invalid move. Are you using the correct format? (b2, a5, etc.)");
         }
     }
 
-    checkForCheck(p1:number[], p2:number[]) {
+    moveIntoCheck(p1:number[], p2:number[], gameBoard:Board) {
 
-        // const currStringified = JSON.stringify(p2);
         const currPiece = this.tiles[p1[0]][p1[1]];
         const targetPiece = this.tiles[p2[0]][p2[1]];
 
-        if(gameBoard) {
+        let temp = undefined;
+        let temp2 = undefined;
 
-            let temp = undefined;
-            let temp2 = undefined;
+        switch(currPiece.constructor.name) {
+        case "Pawn": 
+            temp = new Pawn(currPiece.color, p1, this);
+            break;
+        case "Knight":
+            temp = new Knight(currPiece.color, p1, this);
+            break;
+        case "Rook":
+            temp = new Rook(currPiece.color, p1, this);
+            break;
+        case "Bishop":
+            temp = new Bishop(currPiece.color, p1, this);
+            break;
+        case "Queen":
+            temp = new Queen(currPiece.color, p1, this);
+            break;
+        case "King":
+            temp = new King(currPiece.color, p1, this);
+            break;
+        default:
+            temp = new Empty("", p1, this);
+            break;
+        }
 
-            switch(currPiece.constructor.name) {
-            case "Pawn": 
-                temp = new Pawn(currPiece.color, p1, this);
-                break;
-            case "Knight":
-                temp = new Knight(currPiece.color, p1, this);
-                break;
-            case "Rook":
-                temp = new Rook(currPiece.color, p1, this);
-                break;
-            case "Bishop":
-                temp = new Bishop(currPiece.color, p1, this);
-                break;
-            case "Queen":
-                temp = new Queen(currPiece.color, p1, this);
-                break;
-            case "King":
-                temp = new King(currPiece.color, p1, this);
-                break;
-            default:
-                temp = new Empty("", p1, this);
-                break;
+        switch(targetPiece.constructor.name) {
+        case "Pawn": 
+            temp2 = new Pawn(targetPiece.color, p2, this);
+            break;
+        case "Knight":
+            temp2 = new Knight(targetPiece.color, p2, this);
+            break;
+        case "Rook":
+            temp2 = new Rook(targetPiece.color, p2, this);
+            break;
+        case "Bishop":
+            temp2 = new Bishop(targetPiece.color, p2, this);
+            break;
+        case "Queen":
+            temp2 = new Queen(targetPiece.color, p2, this);
+            break;
+        case "King":
+            temp2 = new King(targetPiece.color, p2, this);
+            break;
+        default:
+            temp2 = new Empty("", p2, this);
+            break;
+        }
+
+        this.tiles[p2[0]][p2[1]] = temp;
+        this.tiles[p2[0]][p2[1]].pos = p2;
+        this.tiles[p1[0]][p1[1]] = new Empty(this.currPlayer, [p1[0], p1[1]], this);
+        
+        const movesToBeChecked:Array<Array<Array<number>>> = [];
+
+        let kingPos:Array<number>|undefined = undefined;
+
+        this.tiles.flat().forEach((tile) => {
+            if(tile.constructor.name === "King" && tile.color === currPiece.color) {
+                kingPos = tile.pos;
             }
-
-            switch(targetPiece.constructor.name) {
-            case "Pawn": 
-                temp2 = new Pawn(targetPiece.color, p2, this);
-                break;
-            case "Knight":
-                temp2 = new Knight(targetPiece.color, p2, this);
-                break;
-            case "Rook":
-                temp2 = new Rook(targetPiece.color, p2, this);
-                break;
-            case "Bishop":
-                temp2 = new Bishop(targetPiece.color, p2, this);
-                break;
-            case "Queen":
-                temp2 = new Queen(targetPiece.color, p2, this);
-                break;
-            case "King":
-                temp2 = new King(targetPiece.color, p2, this);
-                break;
-            default:
-                temp2 = new Empty("", p2, this);
-                break;
-            }
-
-            this.tiles[p2[0]][p2[1]] = temp;
-            this.tiles[p2[0]][p2[1]].pos = p2;
-            this.tiles[p1[0]][p1[1]] = new Empty(this.currPlayer, [p1[0], p1[1]], this);
+        });
+        
+        gameBoard.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
+            const validMoves = tile.validMoves();
             
-            const movesToBeChecked:Array<Array<Array<number>>> = [];
+            if(tile.color !== this.currPlayer && tile.constructor.name !== "Empty" && validMoves.length > 0) {
+                movesToBeChecked.push(validMoves);
+            }
+        });
 
-            let kingPos:Array<number>|undefined = undefined;
+        this.tiles[p1[0]][p1[1]] = temp;
+        this.tiles[p2[0]][p2[1]] = temp2;
+        this.tiles[p1[0]][p1[1]].pos = p1;
+        this.tiles[p2[0]][p2[1]].pos = p2;
 
-            this.tiles.flat().forEach((tile) => {
-                if(tile.constructor.name === "King" && tile.color === currPiece.color) {
-                    kingPos = tile.pos;
-                }
-            });
+        if(movesToBeChecked.flat().some((move) => JSON.stringify(move) === JSON.stringify(kingPos))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    checkForCheck(gameBoard:Board) {
+        let result:Array<number> = [];
+
+        ["white", "black"].forEach((player) => {
+
+            const possibleMoves:Array<Array<Array<number>>> = [];
+            let kingPos:Array<number> = [];
             
             gameBoard.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
-                const validMoves = tile.validMoves();
+                if(tile.constructor.name === "King" && tile.color === player) {
+                    kingPos = tile.pos;
+                }
                 
-                if(tile.color !== this.currPlayer && tile.constructor.name !== "Empty" && validMoves.length > 0) {
-                    movesToBeChecked.push(validMoves);
+                if(tile.color !== player && tile.constructor.name !== "Empty") {
+                    const validMoves = tile.validMoves();
+                    
+                    if(validMoves.length > 0) {
+                        possibleMoves.push(validMoves);
+                    }
                 }
             });
 
-            this.tiles[p1[0]][p1[1]] = temp;
-            this.tiles[p2[0]][p2[1]] = temp2;
-            this.tiles[p1[0]][p1[1]].pos = p1;
-            this.tiles[p2[0]][p2[1]].pos = p2;
-
-            
-            // console.log(movesToBeChecked.flat()[0]);
-            // console.log(kingPos);
-            if(movesToBeChecked.flat().some((move) => JSON.stringify(move) === JSON.stringify(kingPos))) {
-                throw new Error("Move would leave you in check.");
+            if(possibleMoves.flat().some((move) => JSON.stringify(move) === JSON.stringify(kingPos))) {
+                result = kingPos;
+                return result;
             }
-        }
+        });
+        
+        return result;
     }
 }
 
@@ -626,11 +652,12 @@ export class Chess extends Command
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
     {
         const args = opt.options;
+        
         const { channel } = int;
 
         await this.deferReply(int, true);
 
-        async function updateDescription() {
+        async function updateDescription(gameBoard: Board) {
             if(gameBoard?.embedId) {
                 const message = channel?.messages.fetch(gameBoard.embedId);
 
@@ -650,8 +677,8 @@ export class Chess extends Command
                     (await message).edit({embeds: [
                         {
                             description: `${gameBoard.lastMove ? lastMoveStr + `
-                            `: ""}${gameBoard.currPlayer === "white" ? "**Username1 (white)**  `" + whiteFormattedMinutes + ":" + whiteFormattedSeconds + "`": "Username1 (white)  `" + whiteFormattedMinutes + ":" + whiteFormattedSeconds + "`"}
-                            ${gameBoard.currPlayer === "black" ? "**Username2 (black)**  `" + blackFormattedMinutes + ":" + blackFormattedSeconds + "`" : "Username2 (black)  `" + blackFormattedMinutes + ":" + blackFormattedSeconds + "`"}`
+                            `: ""}${gameBoard.currPlayer === "white" ? `**${gameBoard.players[0].username} (white)**  \`` + whiteFormattedMinutes + ":" + whiteFormattedSeconds + "`": `${gameBoard.players[0].username} (white)  \`` + whiteFormattedMinutes + ":" + whiteFormattedSeconds + "`"}
+                            ${gameBoard.currPlayer === "black" ? `**${gameBoard.players[1].username} (black)**  \`` + blackFormattedMinutes + ":" + blackFormattedSeconds + "`" : `${gameBoard.players[1].username} (black)  \`` + blackFormattedMinutes + ":" + blackFormattedSeconds + "`"}`
                         }
                     ],
                     });
@@ -659,7 +686,7 @@ export class Chess extends Command
             }
         }
 
-        async function update() {
+        async function update(gameBoard: Board) {
             const canvas = gameBoard?.canvas;
 
             if(canvas && gameBoard && gameBoard.currPlayer) {
@@ -679,18 +706,12 @@ export class Chess extends Command
                             gameBoard.blackTimeBank -= 5;
                         }
                             
-                        updateDescription();
+                        updateDescription(gameBoard);
     
                     }, 5000);
 
                     await channel?.send({
-                        embeds: [
-                            {
-                                image: {
-                                    url: "attachment://test.png"
-                                },
-                            }   
-                        ],
+                        content: `${gameBoard.players[0].username} vs. ${gameBoard.players[1].username}`,
                         files: [{
                             attachment: (__dirname + "/test.png"),
                             name: "test.png",
@@ -698,10 +719,8 @@ export class Chess extends Command
                         }]
                     })
                         .then((message) => {
-                            if(gameBoard) {
-                                gameBoard.embedId = message.id;
-                                updateDescription();
-                            }
+                            gameBoard.embedId = message.id;
+                            updateDescription(gameBoard);
                         })
                         .catch(console.error);
 
@@ -725,7 +744,7 @@ export class Chess extends Command
                                 description: "A description of the file"
                             }]
                             }).then(() => {
-                                updateDescription();
+                                updateDescription(gameBoard);
                             });
                         }
                     }
@@ -733,64 +752,129 @@ export class Chess extends Command
             }
         }
 
-        if(opt.name === "start") {
-            gameBoard = new Board();
+        if(opt.name === "start" && args && args[0].value) {
+            const p1 = int.user;
+            let p2:User|undefined = undefined;
 
-            update();
-            await int.editReply("Game Started!");
+            args.forEach((arg) => {
+                if(arg.name === "user") {
+                    p2 = arg.user;
+                }
+            });
+
+            let gameBoard = null;
+
+
+            await channel?.send({
+                content: `${int.user} has challenged ${p2} to a game of chess.`
+            }).then((message) => {
+                const filter = (reaction:MessageReaction, user:User) => user.id === p2?.id;
+
+                message.react("✅");
+                message.react("❌");
+
+                message.awaitReactions({filter, max: 1, time: 60000}).then((collected) => {
+                    let userReaction:MessageReaction|undefined = undefined;
+
+                    collected.forEach((reaction) => {
+                        if(p2 && !userReaction) {
+                            userReaction = reaction;
+                            
+                            if(userReaction.emoji.name === "✅") {
+
+                                gameBoard = new Board(p1, p2);
+                                games.set([p1.id, p2.id], gameBoard);
+                                update(gameBoard);
+                            } else {
+                                class AcceptError extends Error {
+                                    constructor(message:string) {
+                                        super(message);
+                                        this.name = "AcceptError";
+                                    }
+                                }
+                                throw new AcceptError("Opponent has rejected the match");
+                            }
+                        }
+                    });
+                });
+            })
+                .catch(console.error);
         }
         
-        if (opt.name === "move" && gameBoard) {
+        if (opt.name === "move" && args && args.length === 2) {
+            const caller = int.user.id;
+            let gameBoard:Board = new Board(int.user, int.user);
 
-            if (args && args.length === 2) {
-                const pos1 = args[0].value;
-                const pos2 = args[1].value;
+            games.forEach((game, key) => {
+                if(key.includes(caller)) {
+                    gameBoard = game;
+                }
+            });
+            
+            if (args && args[0].value && args[1].value && args.length === 2) {
+                const pos1 = args[0].value.toString();
+                const pos2 = args[1].value.toString();
 
-                if(typeof(pos1) === "string" && typeof(pos2) === "string") {
+                const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-                    const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+                const startPos = pos1.split("");
 
-                    const startPos = pos1.split("");
+                const x1 = letters.indexOf(startPos[0].toUpperCase());
+                const y1 = 8 - parseInt(startPos[1]);
+                
+                const endPos = pos2.split("");
 
-                    const x1 = letters.indexOf(startPos[0].toUpperCase());
-                    const y1 = 8 - parseInt(startPos[1]);
-                    
-                    const endPos = pos2.split("");
+                const x2 = letters.indexOf(endPos[0].toUpperCase());
+                const y2 = 8 - parseInt(endPos[1]);
 
-                    const x2 = letters.indexOf(endPos[0].toUpperCase());
-                    const y2 = 8 - parseInt(endPos[1]);
-
-                    let status = "";
-                    
-                    try {
+                let status = "";
+                
+                try {
+                    if(gameBoard) {
                         status = `You moved ${pos1} ${gameBoard.tiles[y1][x1].constructor.name} to ${pos2}${gameBoard.tiles[y2][x2].constructor.name !== "Empty" ? ", taking their " +  gameBoard.tiles[y2][x2].constructor.name: ""}`;
+                        
+                        const inCheck = gameBoard.moveIntoCheck([y1, x1], [y2, x2], gameBoard);
+                        
+                        if(!inCheck) {
 
-                        if (gameBoard.tiles[y2][x2].constructor.name !== "Empty") {
-                            gameBoard.lastMove = [pos1, pos2, gameBoard.tiles[y2][x2].constructor.name];
+                            let lastMove: Array<string>|undefined;
+                            if (gameBoard.tiles[y2][x2].constructor.name !== "Empty") {
+                                lastMove = [pos1, pos2, gameBoard.tiles[y2][x2].constructor.name];
+                            } else {
+                                lastMove = [pos1, pos2];
+                            }
+                            
+                            gameBoard.move([y1, x1], [y2, x2]);
+                            gameBoard.lastMove = lastMove;
+
+                            if (gameBoard.currPlayer === "white") {
+                                gameBoard.currPlayer = "black";
+                                gameBoard.prevPlayer = "white";
+                            } else {
+                                gameBoard.currPlayer = "white";
+                                gameBoard.prevPlayer = "black";
+                            }
+
+                            update(gameBoard);
                         } else {
-                            gameBoard.lastMove = [pos1, pos2];
+                            class CheckError extends Error {
+                                constructor(message:string) {
+                                    super(message);
+                                    this.name = "CheckError";
+                                }
+                            }
+
+                            throw new CheckError("Move would leave you in check");
                         }
-
-                        gameBoard.checkForCheck([y1, x1], [y2, x2]);
-                        gameBoard.move([y1, x1], [y2, x2]);
-
-                        if (gameBoard.currPlayer === "white") {
-                            gameBoard.currPlayer = "black";
-                            gameBoard.prevPlayer = "white";
-                        } else {
-                            gameBoard.currPlayer = "white";
-                            gameBoard.prevPlayer = "black";
-                        }
-
-
-                        update();
-
-                    } catch(err) {
-                        console.log(err);
-                        status = "Invalid move. Are you using the correct format? (b2, c5, h1, etc.)";
-                    } finally {
-                        await int.editReply({content: status});
                     }
+
+                } catch(err) {
+                    console.log(err);
+                    if(err instanceof Error) {
+                        status = err.message;
+                    }
+                } finally {
+                    await int.editReply({content: status});
                 }
             }
         }
