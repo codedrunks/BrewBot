@@ -3,6 +3,7 @@ import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { skipVotes } from "./global.skips";
 
 export class Skip extends Command {
     constructor() {
@@ -46,15 +47,60 @@ export class Skip extends Command {
 
         if(!player || !player.paused && !player.playing) return this.reply(int, embedify("There is no music playing in this server"), true);
 
-        const voice = guild.members.cache.get(int.user.id)?.voice.channel?.id;
+        const voice = guild.members.cache.get(int.user.id)?.voice.channel;
 
         if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"), true);
 
-        if(voice !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
+        if(voice.id !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
 
         const title = player.queue.current?.title;
 
-        player.stop(args.to ? total - 1 : total);
-        return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${args.to ? total - 1 : total} tracks were skipped`));
+        // amount of people in VC minus bot
+        const memberCount = voice.members.size - 1;
+
+        if(memberCount == 1) {
+            player.stop(args.to ? total - 1 : total);
+
+            if(skipVotes[voice.id]) delete skipVotes[voice.id];
+
+            return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${args.to ? total - 1 : total} tracks were skipped`));
+        }
+        
+        if(!skipVotes[voice.id]) {
+            skipVotes[voice.id]= {
+                votes: 1,
+                amount: args.to ? total - 1 : total,
+                initiator: int.user,
+                skippers: new Set([int.user.id])
+            };
+        } else {
+            if(skipVotes[voice.id].skippers.has(int.user.id)) return this.reply(int, embedify("You already voted to skip"), true);
+            
+            skipVotes[voice.id].votes++;
+            skipVotes[voice.id].skippers.add(int.user.id);
+        }
+
+        let remainingVotes: number;
+
+        if(memberCount > 8) {
+            skipVotes[voice.id].votes >= (Math.floor(memberCount * .5)) ? remainingVotes = 0 : remainingVotes = (Math.floor(memberCount * .5)) - skipVotes[voice.id].votes;
+        } else if(memberCount >= 5) {
+            skipVotes[voice.id].votes >= (Math.floor(memberCount * .6)) ? remainingVotes = 0 : remainingVotes = (Math.floor(memberCount * .6)) - skipVotes[voice.id].votes;
+        } else {
+            remainingVotes = skipVotes[voice.id].votes == 2 ? 0 : 1;
+        }
+
+        if(remainingVotes == 0) {
+            player.stop(skipVotes[voice.id].amount);
+
+            this.reply(int, embedify(skipVotes[voice.id].amount == 1 ? `\`${title}\` was skipped` : `${skipVotes[voice.id].amount} tracks were skipped`));
+
+            delete skipVotes[voice.id];
+
+            return;
+        } else {
+            this.reply(int, embedify("You voted to skip"), true);
+            int.channel?.send({ embeds: [ embedify(`<@${skipVotes[voice.id].initiator.id}> wants to skip${skipVotes[voice.id].amount > 1 ? ` to \`${player.queue.at(skipVotes[voice.id].amount - 1)?.title}\`` : ""}.\n\n${remainingVotes} more votes needed to skip.`) ]});
+        }
     }
 }
