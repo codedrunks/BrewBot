@@ -53,6 +53,8 @@ export class Skip extends Command {
 
         if(voice.id !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
 
+        if(args.to && Math.abs(parseInt(args.to)) > player.queue.length || args.amount && Math.abs(parseInt(args.amount)) > player.queue.length) return this.reply(int, embedify("You cannot skip more than the length of the queue"), true);
+
         const title = player.queue.current?.title;
 
         // amount of people in VC minus bot
