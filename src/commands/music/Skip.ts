@@ -93,6 +93,10 @@ export class Skip extends Command {
         if(remainingVotes == 0) {
             player.stop(skipVotes[voice.id].amount);
 
+            if(skipVotes[voice.id].lastMessage) {
+                skipVotes[voice.id].lastMessage?.delete();
+            }
+
             this.reply(int, embedify(skipVotes[voice.id].amount == 1 ? `\`${title}\` was skipped` : `${skipVotes[voice.id].amount} tracks were skipped`));
 
             delete skipVotes[voice.id];
@@ -100,7 +104,14 @@ export class Skip extends Command {
             return;
         } else {
             this.reply(int, embedify("You voted to skip"), true);
-            int.channel?.send({ embeds: [ embedify(`<@${skipVotes[voice.id].initiator.id}> wants to skip${skipVotes[voice.id].amount > 1 ? ` to \`${player.queue.at(skipVotes[voice.id].amount - 1)?.title}\`` : ""}.\n\n${remainingVotes} more votes needed to skip.`) ]});
+
+            if(skipVotes[voice.id].lastMessage) {
+                skipVotes[voice.id].lastMessage?.delete();
+            }
+
+            const msg = await int.channel?.send({ embeds: [ embedify(`<@${skipVotes[voice.id].initiator.id}> wants to skip${skipVotes[voice.id].amount > 1 ? ` to \`${player.queue.at(skipVotes[voice.id].amount - 1)?.title}\`` : ""}.\n\n${remainingVotes} more vote${remainingVotes == 1 ? "" : "s"} needed to skip.`) ]});
+
+            skipVotes[voice.id].lastMessage = msg;
         }
     }
 }
