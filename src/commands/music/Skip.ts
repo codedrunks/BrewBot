@@ -90,6 +90,8 @@ export class Skip extends Command {
             remainingVotes = skipVotes[voice.id].votes == 2 ? 0 : 1;
         }
 
+        if(!djcheck) remainingVotes = 0;
+
         if(remainingVotes == 0) {
             player.stop(skipVotes[voice.id].amount);
 
