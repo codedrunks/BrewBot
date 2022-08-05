@@ -13,10 +13,10 @@
             "overviewRulerColor": "#ed0"
         },
         "(#MARKER)": { // #MARKER test
-            "backgroundColor": "#f41",
+            "backgroundColor": "#c31",
             "color": "#fff",
             "isWholeLine": true,
-            "overviewRulerColor": "#f41"
+            "overviewRulerColor": "#c31"
         },
         "(#SECTION ([^\\S\\r\\n]*[\\w,.\\-_&]+)*[:]*)": { // #SECTION test, 123 & foo
             "backgroundColor": "#44f",
