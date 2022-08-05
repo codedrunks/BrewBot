@@ -122,6 +122,12 @@ export class Define extends Command
                 .replace(/\s(\(|\))\s/gm, " ")
                 .replace(/a/gm, "a");
 
+            const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
+                reason === "offline"
+                    ? "Couldn't reach Wikipedia. Please try again later."
+                    : "Couldn't find that term.",
+                settings.embedColors.error));
+
             const searchWiki = async (searchTerm: string): Promise<void> => {
                 const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(searchTerm)}`);
 
@@ -130,12 +136,6 @@ export class Define extends Command
                     return await searchWiki(searchReq.data.query.searchinfo.suggestion);
 
                 const searchResults = searchReq.data?.query?.search as WikiArticle[] | undefined;
-
-                const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
-                    reason === "offline"
-                        ? "Couldn't reach Wikipedia. Please try again later."
-                        : "Couldn't find that term.",
-                    settings.embedColors.error));
 
                 if(searchReq.status < 200 || searchReq.status >= 300)
                     return await errored("offline");
@@ -315,16 +315,23 @@ export class Define extends Command
             }
         });
 
-        coll.on("end", async (_c, reason) => {
-            if(reason === "time")
-            {
-                await m.reactions.removeAll();
-                return await this.editReply(int, "No article was selected in time. Please try again.");
-            }
-        });
+        try
+        {
+            coll.on("end", async (_c, reason) => {
+                if(reason === "time" && !mDeleted)
+                {
+                    await m.reactions.removeAll();
+                    return await this.editReply(int, "No article was selected in time. Please try again.");
+                }
+            });
 
-        for await(const e of emList)
-            !mDeleted && await m.react(e);
+            for await(const e of emList)
+                !mDeleted && await m.react(e);
+        }
+        catch(err)
+        {
+            void err;
+        }
     }
 }
 
