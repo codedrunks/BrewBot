@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@src/util";
 import { isDJOnlyandhasDJRole } from "@database/music";
-import { skipVotes } from "./global.skips";
+import { skipVotes } from "./global.music";
 
 export class Skip extends Command {
     constructor() {

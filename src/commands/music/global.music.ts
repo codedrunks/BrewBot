@@ -9,3 +9,5 @@ interface ISkip {
 }
 
 export const skipVotes: Record<string, ISkip> = {};
+
+export const filterTurnOff: Set<string> = new Set();
