@@ -3,6 +3,7 @@ import axios from "axios";
 import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+import { rankVotes } from "@src/utils";
 
 type WikiArticle = {
     title: string;
@@ -76,9 +77,8 @@ export class Define extends Command
         {
             const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
 
-            // TODO: use better sorting algo
             const results = req.data?.list?.sort(
-                (a: Record<string, number>, b: Record<string, number>) => (a.thumbs_up - a.thumbs_down) < (b.thumbs_up - b.thumbs_down) ? 1 : -1
+                (a: Record<string, number>, b: Record<string, number>) => rankVotes(a.thumbs_up, a.thumbs_down) < rankVotes(b.thumbs_up, b.thumbs_down) ? 1 : -1
             );
 
             if(req.status < 200 || req.status >= 300)
