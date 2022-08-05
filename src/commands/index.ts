@@ -47,6 +47,7 @@ import { DJ } from "@commands/music/Dj";
 import { Premium } from "@commands/music/Premium";
 import { Remove } from "@commands/music/Remove";
 import { Sudoku } from "@commands/games/Sudoku";
+import { Test } from "./Test";
 
 /** Every command in here will get registered when the bot starts up */
 export const commands = [
@@ -103,5 +104,7 @@ export const commands = [
     Volume,
     DJ,
     Premium,
-    Remove
+    Remove,
+
+    Test
 ];
