@@ -13,7 +13,7 @@ type EbdPage = APIEmbed | MessageEmbed;
 interface PageEmbedSettings {
     /** Whether the "first" and "last" buttons are enabled - defaults to true */
     firstLastBtns: boolean;
-    /** After how many milliseconds this PageEmbed times out, after which it deregisters and destroys itself */
+    /** After how many milliseconds this PageEmbed times out, after which it deregisters and destroys itself - defaults to 30 minutes */
     timeout: number;
     /** Whether the pages automatically overflow at the beginning and end - defaults to true */
     overflow: boolean;
@@ -30,6 +30,8 @@ export interface PageEmbed extends EmitterBase
     on(event: "error", listener: (err: Error) => void): this;
     /** Gets emitted when this PageEmbed has finished */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
+    /** Gets emitted when this PageEmbed is about to be edited */
+    on(event: "update", listener: () => void): this;
 }
 
 export class PageEmbed extends EmitterBase
@@ -57,19 +59,25 @@ export class PageEmbed extends EmitterBase
 
     //#SECTION pages
 
+    /** Overrides the current set of pages. Automatically lowers the page index if necessary. */
     public setPages(pages: EbdPage[])
     {
         this.pages = pages.map(p => p instanceof MessageEmbed ? p.toJSON() : p);
+
+        if(this.pageIdx > this.pages.length - 1)
+            this.setPageIdx(this.pages.length - 1);
     }
 
     /** Sets the current page index. Number is automatically clamped between 0 and max index. */
-    public setPage(page: number)
+    public setPageIdx(page: number)
     {
         this.pageIdx = clamp(page, 0, this.pages.length - 1);
+
+        this.emit("update");
     }
 
-    /** Returns the current page index */
-    public getPage()
+    /** Returns the current page index - defaults to -1 */
+    public getPageIdx()
     {
         return this.pageIdx;
     }
@@ -79,7 +87,7 @@ export class PageEmbed extends EmitterBase
     /** Goes to the first page */
     public first()
     {
-        this.setPage(0);
+        this.setPageIdx(0);
     }
 
     /** Goes to the previous page. Overflows automatically according to the settings. */
@@ -91,7 +99,7 @@ export class PageEmbed extends EmitterBase
             newIdx = this.pages.length - 1;
         else return;
 
-        this.setPage(newIdx);
+        this.setPageIdx(newIdx);
     }
 
     /** Goes to the next page. Overflows automatically according to the settings. */
@@ -103,13 +111,13 @@ export class PageEmbed extends EmitterBase
             newIdx = 0;
         else return;
 
-        this.setPage(newIdx);
+        this.setPageIdx(newIdx);
     }
 
     /** Goes to the last page */
     public last()
     {
-        this.setPage(this.pages.length - 1);
+        this.setPageIdx(this.pages.length - 1);
     }
 
     //#SECTION props
@@ -163,12 +171,22 @@ export class PageEmbed extends EmitterBase
     /** Sends this PageEmbed in the specified `channel` */
     public async sendIn(channel: TextBasedChannel)
     {
-        return this.msg = await channel.send({ ...this.getMsgProps() });
+        this.pageIdx = 0;
+        return this.msg = await channel.send(this.getMsgProps());
+    }
+
+    /** Edits the message with the currently stored local `msg` */
+    protected async updateMsg()
+    {
+        return this.msg ? await this.msg.edit(this.getMsgProps()) : undefined;
     }
 
     /** If you send the message yourself, make sure to call this function so this instance has a reference to it! */
     public setMessage(msg: Message)
     {
+        if(this.pageIdx === -1)
+            this.pageIdx = 0;
+
         this.msg = msg;
     }
 }
