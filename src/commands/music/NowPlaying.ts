@@ -22,7 +22,7 @@ export class NowPlaying extends Command {
 
         const guild = int.guild;
 
-        if(!guild) return this.editReply(int, embedify("This command cannot be used in DM's")); 
+        if(!guild) return this.editReply(int, embedify("This command cannot be used in DM's"));
 
         const manager = getMusicManager();
 
