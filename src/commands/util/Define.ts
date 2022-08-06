@@ -75,11 +75,19 @@ export class Define extends Command
         //#SECTION urbandict
         case "urbandictionary":
         {
-            const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
+            const getDefs = async (term: string) => {
+                const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
 
-            const results = req.data?.list?.sort(
-                (a: Record<string, number>, b: Record<string, number>) => rankVotes(a.thumbs_up, a.thumbs_down) < rankVotes(b.thumbs_up, b.thumbs_down) ? 1 : -1
-            );
+                return {
+                    req,
+                    results: req.data?.list?.sort(
+                        (a: Record<string, number>, b: Record<string, number>) =>
+                            rankVotes(a.thumbs_up, a.thumbs_down) < rankVotes(b.thumbs_up, b.thumbs_down) ? 1 : -1
+                    ),
+                };
+            };
+
+            const { req, results } = await getDefs(term);
 
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
@@ -88,7 +96,25 @@ export class Define extends Command
 
             const obj = results?.at(0);
 
-            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
+            // const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
+            const replaceLinks = async (str: string) => {
+                const regex = /\[([\w\s\d_\-.'`´’*+#]+)\]/gm;
+                const matches = str.match(regex);
+            
+                if(!matches) return str;
+            
+                for await(const match of matches)
+                {
+                    const term = match.replace(regex, "$1");
+            
+                    const { results } = await getDefs(term);
+                    const re = results?.[0];
+            
+                    str = str.replace(match, re ? `[${term}](${re.permalink})` : term);
+                }
+            
+                return str;
+            };
 
             const { definition, example, author, thumbs_up, thumbs_down, permalink } = obj;
 
@@ -97,7 +123,7 @@ export class Define extends Command
             const ex = example.replace(/(\r?\n){1,2}/gm, "\n> ");
 
             embed.setTitle(`Urban Dictionary definition for **${term}**:`)
-                .setDescription(`Definition:\n${normalize(def)}\n${ex && ex.length > 0 ? `\n> Example:\n> ${normalize(ex)}\n` : ""}`);
+                .setDescription(`**Definition:**\n${await replaceLinks(def)}\n${ex && ex.length > 0 ? `\n> **Example:**\n> ${await replaceLinks(ex)}\n` : ""}`);
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
