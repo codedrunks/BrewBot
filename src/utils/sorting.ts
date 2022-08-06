@@ -1,4 +1,5 @@
 import { probit } from "simple-statistics";
+import memoize from "fast-memoize";
 
 /**
  * Uses black magic and "Wilson score confidence interval for a Bernoulli parameter" to calculate a sortable score from upvotes and downvotes.  
@@ -12,7 +13,7 @@ export function rankVotes(upvotes: number, downvotes: number, confidence = 0.95)
     if(votesAmt === 0) return 0;
 
     // for performance purposes you might consider memoize the calcuation for z
-    const z = probit(1 - (1 - confidence) / 2);
+    const z = memoize(probit)(1 - (1 - confidence) / 2);
 
     // p̂, the fraction of upvotes
     const phat = 1.0 * upvotes / votesAmt;
