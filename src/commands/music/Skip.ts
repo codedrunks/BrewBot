@@ -14,11 +14,15 @@ export class Skip extends Command {
             args: [
                 {
                     name: "amount",
-                    desc: "amount of songs to skip, including current song"
+                    desc: "amount of songs to skip, including current song",
+                    type: "number",
+                    min: 1
                 },
                 {
                     name: "to",
-                    desc: "song to skip to in queue"
+                    desc: "song to skip to in queue",
+                    type: "number",
+                    min: 1
                 }
             ]
         });
@@ -92,7 +96,7 @@ export class Skip extends Command {
             remainingVotes = skipVotes[voice.id].votes == 2 ? 0 : 1;
         }
 
-        if(!djcheck) remainingVotes = 0;
+        if(djcheck) remainingVotes = 0;
 
         if(remainingVotes == 0) {
             player.stop(skipVotes[voice.id].amount);
