@@ -16,7 +16,7 @@ export class Exec extends Command
             args: [
                 {
                     name: "ephemeral",
-                    desc: "ephemeral",
+                    desc: "ephemeral - default false",
                     type: "boolean",
                 }
             ],
@@ -31,7 +31,7 @@ export class Exec extends Command
     {
         const ephemeral = int.options.getBoolean("ephemeral");
 
-        const modal = new ExecModal(ephemeral ?? true);
+        const modal = new ExecModal(ephemeral ?? false);
 
         return await int.showModal(modal.getInternalModal());
     }

@@ -46,7 +46,9 @@ export class ExecModal extends Modal
         {
             const lines = [
                 "const { MessageEmbed, MessageButton } = require(\"discord.js\");",
-                "const { BtnMsg } = require(\"../../BtnMsg\");",
+                "const { BtnMsg } = require(\"../utils/BtnMsg\");",
+                "const { embedify, useEmbedify } = require(\"../utils/embedify\");",
+                "const { PageEmbed } = require(\"../utils/PageEmbed\");",
                 code,
             ];
             result = eval(lines.join("\n"));
