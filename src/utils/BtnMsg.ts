@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
 
 
-import { registerBtnMsg } from "@src/registry";
+import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
 
 
@@ -47,7 +47,7 @@ export class BtnMsg extends EmitterBase
      * Contains convenience methods for easier creation of messages with attached buttons  
      * Use `.on("press")` to listen for button presses
      * @param message The message or reply content
-     * @param buttons One or up to 5 MessageButton instances
+     * @param buttons Up to 5 MessageButton instances - customIDs will be managed by this BtnMsg
      */
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
@@ -78,7 +78,7 @@ export class BtnMsg extends EmitterBase
 
         this.btns = this.btns.map((b, i) => {
             if(!b.url)
-                b.customId = `${this.id}@${i}`;
+                b.setCustomId(`${this.id}@${i}`);
             return b;
         });
 
@@ -88,10 +88,14 @@ export class BtnMsg extends EmitterBase
 
         this.opts = { ...defaultOpts, ...options };
 
-        registerBtnMsg(this);
+        btnListener.addBtns(this.btns);
+        btnListener.on("press", (int, btn) => {
+            if(this.btns.find(b => b.customId === btn.customId))
+                this.emit("press", btn, int);
+        });
     }
 
-    /** Removes all listeners and triggers the registry to delete its reference to this instance */
+    /** Removes all listeners and triggers the registry to delete its reference to the buttons of this instance */
     public destroy()
     {
         if(this.destroyed)
@@ -103,6 +107,8 @@ export class BtnMsg extends EmitterBase
 
         this.eventNames()
             .forEach(e => this.removeAllListeners(e));
+
+        btnListener.delBtns(this.btns.map(b => b.customId ?? "_"));
     }
 
     public getBtn(customId: string)

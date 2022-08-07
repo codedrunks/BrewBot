@@ -3,11 +3,13 @@ import { clamp } from "svcorelib";
 import { APIEmbed } from "discord-api-types/v10";
 import { EmitterBase } from "@utils/EmitterBase";
 import { Command } from "@src/Command";
+import * as registry from "@src/registry";
+import { randomUUID } from "crypto";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
 
-/** A page of a PageEmbed instance, defined as a MessageEmbedOptions object. Footer prop will be overridden. */
+/** A page of a PageEmbed instance, defined as an array of MessageEmbed or APIEmbed (or MessageEmbedOptions). */
 type EbdPage = APIEmbed | MessageEmbed;
 
 interface PageEmbedSettings {
@@ -39,8 +41,12 @@ export class PageEmbed extends EmitterBase
     private readonly settings: PageEmbedSettings;
 
     private msg?: Message;
+    private btns: MessageButton[];
+
     private pages: APIEmbed[] = [];
     private pageIdx = -1;
+
+    private readonly btnId = randomUUID();
 
     constructor(pages: EbdPage[], settings?: Partial<PageEmbedSettings>)
     {
@@ -55,6 +61,29 @@ export class PageEmbed extends EmitterBase
         };
 
         this.settings = { ...defSett, ...(settings ?? {}) };
+
+        this.btns = this.createBtns();
+
+        registry.btnListener.addBtns(this.btns);
+        registry.btnListener.on("press", (int, btn) => {
+            const btns2 = ["prev", "next"];
+            const btns4 = ["first", ...btns2, "last"];
+
+            let btIdx;
+            this.btns.forEach(({ customId }, i) => {
+                if(customId === btn.customId)
+                    btIdx = i;
+            });
+
+            btIdx !== undefined && this.emit("press", int, (this.settings.firstLastBtns ? btns4 : btns2)[btIdx]);
+        });
+    }
+
+    /** Destroys this instance, emits the "destroy" event, then removes all event listeners */
+    public destroy()
+    {
+        this._destroy();
+        registry.btnListener.delBtns(this.btns.map(b => b.customId));
     }
 
     //#SECTION pages
@@ -122,7 +151,7 @@ export class PageEmbed extends EmitterBase
 
     //#SECTION props
 
-    public getBtns()
+    private createBtns()
     {
         const btns: MessageButton[] = [
             new MessageButton()
@@ -149,7 +178,7 @@ export class PageEmbed extends EmitterBase
             );
         }
 
-        return btns;
+        return btns.map((b, i) => b.setCustomId(`${this.btnId}@${i}`));
     }
 
     /** Returns properties that can be used to send or edit messages */
@@ -162,7 +191,7 @@ export class PageEmbed extends EmitterBase
 
         return {
             embeds: [ page ],
-            ...Command.useButtons(this.getBtns()),
+            ...Command.useButtons(this.btns),
         };
     }
 

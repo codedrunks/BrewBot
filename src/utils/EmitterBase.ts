@@ -12,6 +12,11 @@ export abstract class EmitterBase extends EventEmitter
     /** Destroys this instance, emits the "destroy" event, then removes all event listeners */
     public destroy()
     {
+        this._destroy();
+    }
+
+    protected _destroy()
+    {
         if(this.destroyed)
             return;
 
