@@ -40,10 +40,6 @@ export class Skip extends Command {
         const guild = int.guild;
         
         if(!guild) return this.reply(int, embedify("This command cannot be used in DM's"));
-
-        const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
-
-        if(djcheck) return this.reply(int, embedify("Your server is currently set to DJ only, and you do not have a DJ role"));
         
         const manager = getMusicManager();
 
@@ -58,6 +54,8 @@ export class Skip extends Command {
         if(voice.id !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
 
         if(args.to && Math.abs(parseInt(args.to)) > player.queue.length || args.amount && Math.abs(parseInt(args.amount)) > player.queue.length) return this.reply(int, embedify("You cannot skip more than the length of the queue"), true);
+
+        const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
 
         const title = player.queue.current?.title;
 
@@ -96,9 +94,7 @@ export class Skip extends Command {
             remainingVotes = skipVotes[voice.id].votes == 2 ? 0 : 1;
         }
 
-        if(djcheck) remainingVotes = 0;
-
-        if(remainingVotes == 0) {
+        if(remainingVotes == 0 || !djcheck) {
             player.stop(skipVotes[voice.id].amount);
 
             if(skipVotes[voice.id].lastMessage) {
