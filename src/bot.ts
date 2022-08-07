@@ -5,7 +5,7 @@ import { allOfType, system, Stringifiable } from "svcorelib";
 
 import persistentData from "@src/persistentData";
 import botLogs from "@src/botLogs";
-import { initRegistry, registerGuildCommands, registerEvents, getCommands, btnPressed, modalSubmitted, getCtxMenus } from "@src/registry";
+import { initRegistry, registerGuildCommands, registerEvents, getCommands, modalSubmitted, getCtxMenus, btnListener } from "@src/registry";
 import { commands as slashCmds } from "@src/commands";
 import { settings } from "@src/settings";
 import { prisma } from "@database/client";
@@ -162,14 +162,14 @@ async function registerCommands(client: Client)
                 await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
             else if(int.isButton())
-                await btnPressed(int);
+                btnListener.emitBtnPressed(int);
             else if(int.isModalSubmit())
                 await modalSubmitted(int);
             else if(int.isContextMenu())
             {
-                const cm = ctxMenus.find(c => c.meta.name === int.commandName);
-
-                cm && cm.run(int);
+                ctxMenus
+                    .find(c => c.meta.name === int.commandName)
+                    ?.run(int);
             }
         });
     }

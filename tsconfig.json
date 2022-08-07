@@ -35,7 +35,8 @@
     ],
     "exclude": [
         "node_modules",
-        "out"
+        "out",
+        "src/test.ts"
     ],
     "tsc-alias": {
         "replacers": {
