@@ -1,4 +1,5 @@
 import { prisma } from "@database/client";
+import { PrismaPromise } from "@prisma/client";
 import { getRedis } from "@src/redis";
 import { nowInSeconds } from "@utils/time";
 
@@ -199,4 +200,30 @@ export async function incrementTotalWorks(userId: string, guildId: string, by?: 
             totalworks: { increment: by ?? 1 }
         }
     });
+}
+
+export async function addOrSubCoinsToMultipleUsers(users: string[], guildId: string, coins: number): Promise<void> {
+
+    const txQueue: PrismaPromise<any>[] = []; // eslint-disable-line
+
+    for(let i = 0; i < users.length; i++) {
+        txQueue.push(
+            prisma.coins.upsert({
+                where: {
+                    guildId_userId: {
+                        guildId: guildId,
+                        userId: users[i]
+                    }
+                },
+                create: {
+                    amount: coins,
+                    userId: users[i],
+                    guildId
+                },
+                update: { amount: { increment: coins }}
+            })
+        );
+    }
+
+    prisma.$transaction(txQueue);
 }

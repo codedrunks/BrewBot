@@ -6,6 +6,7 @@ import { Ferret } from "@commands/fun/Ferret";
 import { HigherLower } from "@commands/games/HigherLower";
 import { Joke } from "@commands/fun/Joke";
 import { Mock } from "@commands/fun/Mock";
+import { Sudoku } from "@commands/games/Sudoku";
 
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
@@ -46,7 +47,8 @@ import { Volume } from "@commands/music/Volume";
 import { DJ } from "@commands/music/Dj";
 import { Premium } from "@commands/music/Premium";
 import { Remove } from "@commands/music/Remove";
-import { Sudoku } from "@commands/games/Sudoku";
+import { Filter } from "@commands/music/Filter";
+
 
 /** Every command in here will get registered when the bot starts up */
 export const commands = [
@@ -103,5 +105,6 @@ export const commands = [
     Volume,
     DJ,
     Premium,
-    Remove
+    Remove,
+    Filter
 ];
