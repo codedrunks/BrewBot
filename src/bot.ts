@@ -167,9 +167,12 @@ async function registerCommands(client: Client)
                 await modalSubmitted(int);
             else if(int.isContextMenu())
             {
-                ctxMenus
+                const run = ctxMenus
                     .find(c => c.meta.name === int.commandName)
                     ?.run(int);
+
+                if(run instanceof Promise)
+                    await run;
             }
         });
     }

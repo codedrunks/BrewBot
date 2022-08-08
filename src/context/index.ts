@@ -1,6 +1,11 @@
-import { TestMenu } from "./TestMenu";
+import { DeleteMessage } from "./DeleteMessage";
+import { ResetNickname } from "./ResetNickname";
 
 /** Every context menu in here will get registered when the bot starts up */
 export const contextMenus = [
-    TestMenu,
+    // message
+    DeleteMessage,
+
+    // user
+    ResetNickname,
 ];
