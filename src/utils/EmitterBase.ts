@@ -15,14 +15,14 @@ export abstract class EmitterBase extends EventEmitter
         this._destroy();
     }
 
-    protected _destroy()
+    protected _destroy(emitDestroy = true)
     {
         if(this.destroyed)
             return;
 
         this.destroyed = true;
 
-        this.emit("destroy");
+        emitDestroy && this.emit("destroy");
 
         this.eventNames()
             .forEach(e => this.removeAllListeners(e));
