@@ -1,14 +1,11 @@
-import { Collection, CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
-// import { time } from "@discordjs/builders";
+import { CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
 import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
-// import os from "os";
-// import path from "path";
-// import axios from "axios";
 import { Command } from "../../Command";
+import { clearInterval } from "timers";
 
-// let gameBoard:Board | null = null;
 const games = new Map<string[], Board>();
+const interactions = new Map<string, Array<CommandInteraction|any>>;
 
 // PIECE CLASSES
 // TODO: strict types for properties
@@ -205,13 +202,10 @@ class Bishop extends Piece {
                 const destinationTile = this.board.tiles[destination[0]][destination[1]];
                 
                 if (deltas.some((d) => d === deltas[i]) && 
-                destinationTile.color !== this.color) {
+                (destinationTile.color !== this.color ||
+                destinationTile.constructor.name === "Empty")) {
                                         
                     moveList.push([this.pos[0] + dx, this.pos[1] + dy]);
-
-                    if(destinationTile.constructor.name !== "Empty") {
-                        break;
-                    }
 
                     dx = d[0] * (count);
                     dy = d[1] * (count);
@@ -321,18 +315,23 @@ class King extends Piece {
 // BOARD CLASS
 class Board {   
     // grid: any;
+    active: boolean;
     initialized: boolean;
     players: Array<User>;
     canvas: Canvas;
     tiles: Array<Array<Empty|Pawn|Knight|Rook|Bishop|Queen|King>>;
     currPlayer: string;
     prevPlayer: string;
+    inCheck: Array<number>;
     whiteScore: number;
     blackScore: number;
     whiteTimeBank: number;
     blackTimeBank: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    timer: any|undefined;
     lastMove: Array<string>|undefined;
     embedId: string|undefined;
+    startInteraction: CommandInteraction|undefined;
 
     constructor(p1:User, p2:User)
     {
@@ -340,18 +339,20 @@ class Board {
 
         const layout = 
         [
-            ["r", "h", "b", "q", "k", "b", "h", "r"],
-            ["p", "p", "p", "p", "p", "p", "p", "p"],
-            ["n", "n", "n", "n", "b", "n", "n", "n"],
-            ["n", "n", "n", "n", "n", "n", "n", "n"],
-            ["n", "n", "n", "n", "n", "n", "n", "n"],
-            ["n", "n", "n", "n", "n", "k", "n", "n"],
-            ["p", "p", "p", "p", "p", "p", "p", "p"],
-            ["r", "h", "b", "q", "p", "b", "h", "r"]
+            ["R", "N", "B", "Q", "K", "B", "N", "R"],
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["-", "-", "-", "-", "-", "-", "-", "-"],
+            ["-", "-", "-", "-", "-", "-", "-", "-"],
+            ["-", "-", "-", "-", "-", "-", "-", "-"],
+            ["-", "-", "-", "-", "-", "-", "-", "-"],
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
         ];
 
-        this.currPlayer = "black";
+        this.active = false;
+        this.currPlayer = "white";
         this.prevPlayer = "";
+        this.inCheck = [];
         this.whiteScore = 0;
         this.blackScore = 0;
         this.whiteTimeBank = 1800;
@@ -379,17 +380,17 @@ class Board {
                 const color:string = b >= 4 ? "white" : "black";
                 
                 switch(layout[b][y]) {
-                case "p":
+                case "P":
                     return new Pawn(color, [b, y], self);
-                case "h":
+                case "N":
                     return new Knight(color, [b, y], self);
-                case "r":
+                case "R":
                     return new Rook(color, [b, y], self);
-                case "b":
+                case "B":
                     return new Bishop(color, [b, y], self);
-                case "q":
+                case "Q":
                     return new Queen(color, [b, y], self);
-                case "k":
+                case "K":
                     return new King(color, [b, y], self);
                 default:
                     return new Empty("", [b, y], self);
@@ -428,23 +429,22 @@ class Board {
                     ctx.fillText(letters[y], (((y + 1) * 250) - 40), 80);
                 }
             
-                this.renderGrid();
+                this.render();
             }
         }
     }
 
-    renderGrid() {
-        const inCheck = this.checkForCheck(this);
-
+    render() {
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 8; y++) {
                 const ctx = this.canvas.getContext("2d");
 
-                if(inCheck[0] === y && inCheck[1] === x) {
+                if(this.inCheck[0] === y && this.inCheck[1] === x) {
                     ctx.fillStyle = "red";
                 } else {
                     ctx.fillStyle = (x + y) % 2 == 0 ? "rgb(230, 185, 142)" : "rgb(143, 96, 50)";
                 }
+                
                 ctx.fillRect((x * 250) + 100, (y * 250) + 100, 250, 250);
                 
                 ctx.fillStyle = this.tiles[y][x].color === "white" ? "white" : "black";
@@ -470,7 +470,8 @@ class Board {
             this.tiles[p2[0]][p2[1]].pos = [p2[0], p2[1]];
 
             this.tiles[p1[0]][p1[1]] = new Empty(this.currPlayer, [p1[0], p1[1]], this);
-            this.renderGrid();
+
+            this.render();
         } else {
 
             class MoveError extends Error {
@@ -574,7 +575,7 @@ class Board {
         }
     }
 
-    checkForCheck(gameBoard:Board) {
+    checkForCheck() {
         let result:Array<number> = [];
 
         ["white", "black"].forEach((player) => {
@@ -582,7 +583,7 @@ class Board {
             const possibleMoves:Array<Array<Array<number>>> = [];
             let kingPos:Array<number> = [];
             
-            gameBoard.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
+            this.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
                 if(tile.constructor.name === "King" && tile.color === player) {
                     kingPos = tile.pos;
                 }
@@ -590,7 +591,7 @@ class Board {
                 if(tile.color !== player && tile.constructor.name !== "Empty") {
                     const validMoves = tile.validMoves();
                     
-                    if(validMoves.length > 0) {
+                    if(validMoves.every((move) => !this.moveIntoCheck(tile.pos, move, this))) {
                         possibleMoves.push(validMoves);
                     }
                 }
@@ -603,6 +604,11 @@ class Board {
         });
         
         return result;
+    }
+
+    stopGame() {
+        clearInterval(this.timer);
+        this.active = false;
     }
 }
 
@@ -652,10 +658,9 @@ export class Chess extends Command
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
     {
         const args = opt.options;
+        const caller = int.user.id;
         
         const { channel } = int;
-
-        await this.deferReply(int, true);
 
         async function updateDescription(gameBoard: Board) {
             if(gameBoard?.embedId) {
@@ -697,8 +702,9 @@ export class Chess extends Command
                 
                 if(!gameBoard.initialized) {       
                     gameBoard.initialized = true;
+                    gameBoard.active = true;
 
-                    setInterval(() => {
+                    const timeBankInterval = setInterval(() => {
     
                         if(gameBoard && gameBoard.currPlayer === "white") {
                             gameBoard.whiteTimeBank -= 5;
@@ -707,15 +713,16 @@ export class Chess extends Command
                         }
                             
                         updateDescription(gameBoard);
-    
+                        gameBoard.render();
                     }, 5000);
 
+                    gameBoard.timer = timeBankInterval;
+
                     await channel?.send({
-                        content: `${gameBoard.players[0].username} vs. ${gameBoard.players[1].username}`,
+                        content: `**${gameBoard.players[0].username}** vs. **${gameBoard.players[1].username}**`,
                         files: [{
                             attachment: (__dirname + "/test.png"),
-                            name: "test.png",
-                            description: "A description of the file"
+                            name: "test.png"
                         }]
                     })
                         .then((message) => {
@@ -740,8 +747,7 @@ export class Chess extends Command
                             ],
                             files: [{
                                 attachment: (__dirname + "/test.png"),
-                                name: "test.png",
-                                description: "A description of the file"
+                                name: "test.png"
                             }]
                             }).then(() => {
                                 updateDescription(gameBoard);
@@ -753,6 +759,8 @@ export class Chess extends Command
         }
 
         if(opt.name === "start" && args && args[0].value) {
+            await int.deferReply().then(() => int.deleteReply());
+
             const p1 = int.user;
             let p2:User|undefined = undefined;
 
@@ -763,7 +771,6 @@ export class Chess extends Command
             });
 
             let gameBoard = null;
-
 
             await channel?.send({
                 content: `${int.user} has challenged ${p2} to a game of chess.`
@@ -781,6 +788,10 @@ export class Chess extends Command
                             userReaction = reaction;
                             
                             if(userReaction.emoji.name === "✅") {
+
+                                if(interactions.get(caller)) {
+                                    interactions.delete(caller);
+                                }
 
                                 gameBoard = new Board(p1, p2);
                                 games.set([p1.id, p2.id], gameBoard);
@@ -802,7 +813,29 @@ export class Chess extends Command
         }
         
         if (opt.name === "move" && args && args.length === 2) {
-            const caller = int.user.id;
+            
+            let originalInt:CommandInteraction = int;
+            const reply = interactions.get(caller);
+            
+            // no existing interaction for this user, set a new one.
+            // deletes itself after 14 minutes, so a new one can be created on next command before expiring
+            if(!reply) {
+                const editTimer = setInterval(() => {
+                    originalInt.editReply({content: "Message has expired. Please refer to the new reply below."});
+                    interactions.delete(caller);
+                }, 840000);
+                interactions.set(caller, [int, editTimer]);
+
+                await originalInt.reply({ephemeral: true, content: "Thinking..."});
+
+            // previous interaction exists, set originalInteraction to it.
+            // additionally, defer and delete reply for current interaction
+            } else if(reply) {
+
+                await int.deferReply().then(() => int.deleteReply());
+                originalInt = reply[0];
+            }
+
             let gameBoard:Board = new Board(int.user, int.user);
 
             games.forEach((game, key) => {
@@ -811,7 +844,7 @@ export class Chess extends Command
                 }
             });
             
-            if (args && args[0].value && args[1].value && args.length === 2) {
+            if (gameBoard.active && args && args[0].value && args[1].value && args.length === 2) {
                 const pos1 = args[0].value.toString();
                 const pos2 = args[1].value.toString();
 
@@ -827,15 +860,15 @@ export class Chess extends Command
                 const x2 = letters.indexOf(endPos[0].toUpperCase());
                 const y2 = 8 - parseInt(endPos[1]);
 
-                let status = "";
+                let status = `You moved ${pos1} ${gameBoard.tiles[y1][x1].constructor.name} to ${pos2}${gameBoard.tiles[y2][x2].constructor.name !== "Empty" ? ", taking their " +  gameBoard.tiles[y2][x2].constructor.name: ""}`;
                 
+
+                // logic code
                 try {
-                    if(gameBoard) {
-                        status = `You moved ${pos1} ${gameBoard.tiles[y1][x1].constructor.name} to ${pos2}${gameBoard.tiles[y2][x2].constructor.name !== "Empty" ? ", taking their " +  gameBoard.tiles[y2][x2].constructor.name: ""}`;
+                    if(gameBoard) {                        
+                        const moveIntoCheck = gameBoard.moveIntoCheck([y1, x1], [y2, x2], gameBoard);
                         
-                        const inCheck = gameBoard.moveIntoCheck([y1, x1], [y2, x2], gameBoard);
-                        
-                        if(!inCheck) {
+                        if(!moveIntoCheck) {
 
                             let lastMove: Array<string>|undefined;
                             if (gameBoard.tiles[y2][x2].constructor.name !== "Empty") {
@@ -847,6 +880,18 @@ export class Chess extends Command
                             gameBoard.move([y1, x1], [y2, x2]);
                             gameBoard.lastMove = lastMove;
 
+                            const inCheck = gameBoard.checkForCheck();
+
+                            if(inCheck.length === 2 && gameBoard.tiles[inCheck[0]][inCheck[1]].color !== gameBoard.currPlayer) {
+                                gameBoard.inCheck = inCheck;
+
+                                gameBoard.render();
+                                update(gameBoard);
+                                
+                                gameBoard.stopGame();
+                                throw new Error(`Game over. ${gameBoard.currPlayer[0].toUpperCase() + gameBoard.currPlayer.substring(1)} wins.`);
+                            }
+
                             if (gameBoard.currPlayer === "white") {
                                 gameBoard.currPlayer = "black";
                                 gameBoard.prevPlayer = "white";
@@ -855,8 +900,30 @@ export class Chess extends Command
                                 gameBoard.prevPlayer = "black";
                             }
 
+                            gameBoard.inCheck = inCheck;
+                            gameBoard.render();
+
                             update(gameBoard);
+
+                            const updatedInteraction = interactions.get(caller);
+
+                            if(updatedInteraction) {
+                                originalInt = updatedInteraction[0];
+                            }
+
+                            if(originalInt) {
+                                await originalInt.editReply({content: status});
+                            }
+
                         } else {
+
+                            const inCheck = gameBoard.checkForCheck();
+
+                            if(inCheck.length === 2 && gameBoard.tiles[inCheck[0]][inCheck[1]].color !== gameBoard.currPlayer && gameBoard.tiles[inCheck[0]][inCheck[1]].validMoves().length === 0) {
+                                gameBoard.stopGame();
+                                throw new Error(`Game over. ${gameBoard.currPlayer.toUpperCase() + gameBoard.currPlayer.substring(1, gameBoard.prevPlayer.length)} wins.`);
+                            }
+                            
                             class CheckError extends Error {
                                 constructor(message:string) {
                                     super(message);
@@ -870,12 +937,14 @@ export class Chess extends Command
 
                 } catch(err) {
                     console.log(err);
+
                     if(err instanceof Error) {
                         status = err.message;
+                        await originalInt.editReply({content: status});
                     }
-                } finally {
-                    await int.editReply({content: status});
                 }
+            } else {
+                await originalInt.editReply("You are not currently playing a game.");
             }
         }
     }
