@@ -1,11 +1,34 @@
 import { CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
 import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
-import { Command } from "../../Command";
+import { Command } from "@src/Command";
 import { clearInterval } from "timers";
+import path from "path";
 
 const games = new Map<string[], Board>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const interactions = new Map<string, Array<CommandInteraction|any>>;
+
+class AcceptError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "AcceptError";
+    }
+}
+
+class MoveError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "MoveError";
+    }
+}
+
+class CheckError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "CheckError";
+    }
+}
 
 // PIECE CLASSES
 abstract class Piece {
@@ -392,8 +415,8 @@ class Board {
                 default:
                     return new Empty("", [b, y], this);
                 }
-            
-            });});
+            });
+        });
     }
 
     initializeGrid()
@@ -470,13 +493,6 @@ class Board {
 
             this.render();
         } else {
-
-            class MoveError extends Error {
-                constructor(message: string) {
-                    super(message);
-                    this.name = "MoveError";
-                }
-            }
 
             throw new MoveError("Invalid move. Are you using the correct format? (b2, a5, etc.)");
         }
@@ -695,7 +711,7 @@ export class Chess extends Command
                 
                 const buffer = canvas.toBuffer("image/png");
                 
-                await fs.writeFile((__dirname + "/test.png"), buffer);
+                await fs.writeFile(path.join(__dirname + "/test.png"), buffer);
                 
                 if(!gameBoard.initialized) {       
                     gameBoard.initialized = true;
@@ -794,12 +810,7 @@ export class Chess extends Command
                                 games.set([p1.id, p2.id], gameBoard);
                                 update(gameBoard);
                             } else {
-                                class AcceptError extends Error {
-                                    constructor(message: string) {
-                                        super(message);
-                                        this.name = "AcceptError";
-                                    }
-                                }
+
                                 throw new AcceptError("Opponent has rejected the match");
                             }
                         }
@@ -919,13 +930,6 @@ export class Chess extends Command
                             if(inCheck.length === 2 && gameBoard.tiles[inCheck[0]][inCheck[1]].color !== gameBoard.currPlayer && gameBoard.tiles[inCheck[0]][inCheck[1]].validMoves().length === 0) {
                                 gameBoard.stopGame();
                                 throw new Error(`Game over. ${gameBoard.currPlayer.toUpperCase() + gameBoard.currPlayer.substring(1, gameBoard.prevPlayer.length)} wins.`);
-                            }
-                            
-                            class CheckError extends Error {
-                                constructor(message: string) {
-                                    super(message);
-                                    this.name = "CheckError";
-                                }
                             }
 
                             throw new CheckError("Move would leave you in check");
