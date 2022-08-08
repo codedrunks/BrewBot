@@ -22,5 +22,5 @@ export abstract class CtxMenu
         this.ctxMenuJson = data.toJSON();
     }
 
-    public abstract run(int: ContextMenuInteraction): Promise<unknown>;
+    public abstract run<T>(int: ContextMenuInteraction): Promise<T>;
 }

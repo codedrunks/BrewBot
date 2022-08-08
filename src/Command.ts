@@ -379,5 +379,5 @@ export abstract class Command
      * @param opt If this command has subcommands, this argument is set
      * @abstract This method needs to be overridden in a sub-class
      */
-    protected abstract run(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>;
+    protected abstract run<T>(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<T>;
 }
