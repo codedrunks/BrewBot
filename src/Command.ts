@@ -218,7 +218,6 @@ export abstract class Command
         }
         catch(err)
         {
-            console.error(err);
             const embeds = [ embedify(`Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, settings.embedColors.error) ];
 
             if(typeof int.reply === "function" && !int.replied && !int.deferred)

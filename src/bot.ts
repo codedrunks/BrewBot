@@ -169,7 +169,7 @@ async function registerCommands(client: Client)
             {
                 const run = ctxMenus
                     .find(c => c.meta.name === int.commandName)
-                    ?.run(int);
+                    ?.tryRun(int);
 
                 if(run instanceof Promise)
                     await run;

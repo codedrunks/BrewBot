@@ -12,6 +12,8 @@ import { Modal } from "@utils/Modal";
 
 import { initHelp } from "@commands/util/Help";
 import EventEmitter from "events";
+import { embedify } from "./utils";
+import { settings } from "./settings";
 
 
 const rest = new REST({ version: "10" })
@@ -272,10 +274,21 @@ export function registerModal(modal: Modal)
  */
 export async function modalSubmitted(int: ModalSubmitInteraction)
 {
-    const modal = modals.get(int.customId);
-
-    if(modal)
+    try
     {
-        await modal.trySubmit(int);
+        const modal = modals.get(int.customId);
+
+        if(modal)
+            await modal.trySubmit(int);
+    }
+    catch(err)
+    {
+        const embeds = [ embedify(`Couldn't run this modal due to an error${err instanceof Error ? `: ${err.message}` : "."}`, settings.embedColors.error) ];
+
+        if(typeof int.reply === "function" && !int.replied && !int.deferred)
+            return await int.reply({ embeds, ephemeral: true });
+
+        if(typeof int.editReply === "function" && (int.deferred || int.replied))
+            return await int.editReply({ embeds });
     }
 }
