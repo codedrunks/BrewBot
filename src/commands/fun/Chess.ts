@@ -8,14 +8,13 @@ const games = new Map<string[], Board>();
 const interactions = new Map<string, Array<CommandInteraction|any>>;
 
 // PIECE CLASSES
-// TODO: strict types for properties
-class Piece {
+abstract class Piece {
     color: string;
     pos: Array<number>;
     board: Board;
-    inCheck:boolean;
+    inCheck: boolean;
 
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         this.inCheck = false;
         this.color = color;
@@ -23,26 +22,28 @@ class Piece {
         this.board = board;
     }
 
-    getPieceGraphic()
-    {
-        return "";
-    }
+    abstract validMoves(): Array<Array<number>>;
+    abstract getPieceGraphic(): string;
 }
 
 class Empty extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
-
+    
     validMoves()
     {
         return [];
     }
+
+    getPieceGraphic() {
+        return "";
+    }
 }
 
 class Pawn extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -52,7 +53,7 @@ class Pawn extends Piece {
         const deltas = this.color === "white" ? [[-1, 0], [-2, 0], [-1, -1], [-1, 1]] :
             [[1, 0], [2, 0], [1, -1], [1, 1]];
 
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         deltas.forEach((d) => {
 
@@ -89,7 +90,7 @@ class Pawn extends Piece {
 }
 
 class Knight extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -98,7 +99,7 @@ class Knight extends Piece {
     {
         const deltas = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         deltas.forEach((d, i) => {
 
@@ -127,7 +128,7 @@ class Knight extends Piece {
 }
 
 class Rook extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -136,7 +137,7 @@ class Rook extends Piece {
     {
         const deltas = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         let i = 0;
         for(const d of deltas) {
@@ -177,7 +178,7 @@ class Rook extends Piece {
 }
 
 class Bishop extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -186,7 +187,7 @@ class Bishop extends Piece {
     {
         const deltas = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
 
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         let i = 0;
         for(const d of deltas) {
@@ -227,7 +228,7 @@ class Bishop extends Piece {
 }
 
 class Queen extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -236,7 +237,7 @@ class Queen extends Piece {
     {
         const deltas = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
 
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         let i = 0;
         for(const d of deltas) {
@@ -277,7 +278,7 @@ class Queen extends Piece {
 }
 
 class King extends Piece {
-    constructor(color:string, pos:Array<number>, board:Board)
+    constructor(color: string, pos: Array<number>, board: Board)
     {
         super(color, pos, board);
     }
@@ -286,7 +287,7 @@ class King extends Piece {
     {
         const deltas = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
 
-        const moveList:Array<Array<number>> = [];
+        const moveList: Array<Array<number>> = [];
 
         deltas.forEach((d, i) => {
             
@@ -314,7 +315,6 @@ class King extends Piece {
 
 // BOARD CLASS
 class Board {   
-    // grid: any;
     active: boolean;
     initialized: boolean;
     players: Array<User>;
@@ -333,7 +333,7 @@ class Board {
     embedId: string|undefined;
     startInteraction: CommandInteraction|undefined;
 
-    constructor(p1:User, p2:User)
+    constructor(p1: User, p2: User)
     {
         this.initialized = false;
 
@@ -367,33 +367,30 @@ class Board {
         this.initializeGrid();
     }
 
-    initializeTiles(layout:Array<string[]>)
+    initializeTiles(layout: Array<string[]>)
     {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const self = this;
 
-        // TODO: fill each tile with object
-        this.tiles = Array(...Array(8)).map(function(a, b) 
+        this.tiles = Array(...Array(8)).map((a, b)  =>
         {
-            return Array(...Array(8)).map(function (x, y) 
+            return Array(...Array(8)).map((x, y)  =>
             {
-                const color:string = b >= 4 ? "white" : "black";
+                const color: string = b >= 4 ? "white" : "black";
                 
                 switch(layout[b][y]) {
                 case "P":
-                    return new Pawn(color, [b, y], self);
+                    return new Pawn(color, [b, y], this);
                 case "N":
-                    return new Knight(color, [b, y], self);
+                    return new Knight(color, [b, y], this);
                 case "R":
-                    return new Rook(color, [b, y], self);
+                    return new Rook(color, [b, y], this);
                 case "B":
-                    return new Bishop(color, [b, y], self);
+                    return new Bishop(color, [b, y], this);
                 case "Q":
-                    return new Queen(color, [b, y], self);
+                    return new Queen(color, [b, y], this);
                 case "K":
-                    return new King(color, [b, y], self);
+                    return new King(color, [b, y], this);
                 default:
-                    return new Empty("", [b, y], self);
+                    return new Empty("", [b, y], this);
                 }
             
             });});
@@ -456,7 +453,7 @@ class Board {
         }
     }
 
-    move(p1:number[], p2:number[]) {
+    move(p1: number[], p2: number[]) {
         const movesStringified = JSON.stringify(this.tiles[p1[0]][p1[1]].validMoves());
         const currStringified = JSON.stringify([p2[0], p2[1]]);
 
@@ -475,7 +472,7 @@ class Board {
         } else {
 
             class MoveError extends Error {
-                constructor(message:string) {
+                constructor(message: string) {
                     super(message);
                     this.name = "MoveError";
                 }
@@ -485,7 +482,7 @@ class Board {
         }
     }
 
-    moveIntoCheck(p1:number[], p2:number[], gameBoard:Board) {
+    moveIntoCheck(p1: number[], p2: number[], gameBoard: Board) {
 
         const currPiece = this.tiles[p1[0]][p1[1]];
         const targetPiece = this.tiles[p2[0]][p2[1]];
@@ -545,9 +542,9 @@ class Board {
         this.tiles[p2[0]][p2[1]].pos = p2;
         this.tiles[p1[0]][p1[1]] = new Empty(this.currPlayer, [p1[0], p1[1]], this);
         
-        const movesToBeChecked:Array<Array<Array<number>>> = [];
+        const movesToBeChecked: Array<Array<Array<number>>> = [];
 
-        let kingPos:Array<number>|undefined = undefined;
+        let kingPos: Array<number>|undefined = undefined;
 
         this.tiles.flat().forEach((tile) => {
             if(tile.constructor.name === "King" && tile.color === currPiece.color) {
@@ -555,7 +552,7 @@ class Board {
             }
         });
         
-        gameBoard.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
+        gameBoard.tiles.flat().forEach((tile: Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
             const validMoves = tile.validMoves();
             
             if(tile.color !== this.currPlayer && tile.constructor.name !== "Empty" && validMoves.length > 0) {
@@ -576,14 +573,14 @@ class Board {
     }
 
     checkForCheck() {
-        let result:Array<number> = [];
+        let result: Array<number> = [];
 
         ["white", "black"].forEach((player) => {
 
-            const possibleMoves:Array<Array<Array<number>>> = [];
-            let kingPos:Array<number> = [];
+            const possibleMoves: Array<Array<Array<number>>> = [];
+            let kingPos: Array<number> = [];
             
-            this.tiles.flat().forEach((tile:Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
+            this.tiles.flat().forEach((tile: Empty|Pawn|Knight|Rook|Bishop|Queen|King) => {
                 if(tile.constructor.name === "King" && tile.color === player) {
                     kingPos = tile.pos;
                 }
@@ -664,7 +661,7 @@ export class Chess extends Command
 
         async function updateDescription(gameBoard: Board) {
             if(gameBoard?.embedId) {
-                const message = channel?.messages.fetch(gameBoard.embedId);
+                const message = await channel?.messages.fetch(gameBoard.embedId);
 
                 if(gameBoard && message) {
                     let lastMoveStr = "";
@@ -734,7 +731,7 @@ export class Chess extends Command
                 } else {
                     const messageId = gameBoard.embedId;
                     if(messageId && gameBoard.lastMove) {
-                        const message = channel?.messages.fetch(messageId);
+                        const message = await channel?.messages.fetch(messageId);
 
                         if(message) {
 
@@ -762,7 +759,7 @@ export class Chess extends Command
             await int.deferReply().then(() => int.deleteReply());
 
             const p1 = int.user;
-            let p2:User|undefined = undefined;
+            let p2: User|undefined = undefined;
 
             args.forEach((arg) => {
                 if(arg.name === "user") {
@@ -775,13 +772,13 @@ export class Chess extends Command
             await channel?.send({
                 content: `${int.user} has challenged ${p2} to a game of chess.`
             }).then((message) => {
-                const filter = (reaction:MessageReaction, user:User) => user.id === p2?.id;
+                const filter = (reaction: MessageReaction, user: User) => user.id === p2?.id;
 
                 message.react("✅");
                 message.react("❌");
 
                 message.awaitReactions({filter, max: 1, time: 60000}).then((collected) => {
-                    let userReaction:MessageReaction|undefined = undefined;
+                    let userReaction: MessageReaction|undefined = undefined;
 
                     collected.forEach((reaction) => {
                         if(p2 && !userReaction) {
@@ -798,7 +795,7 @@ export class Chess extends Command
                                 update(gameBoard);
                             } else {
                                 class AcceptError extends Error {
-                                    constructor(message:string) {
+                                    constructor(message: string) {
                                         super(message);
                                         this.name = "AcceptError";
                                     }
@@ -814,7 +811,7 @@ export class Chess extends Command
         
         if (opt.name === "move" && args && args.length === 2) {
             
-            let originalInt:CommandInteraction = int;
+            let originalInt: CommandInteraction = int;
             const reply = interactions.get(caller);
             
             // no existing interaction for this user, set a new one.
@@ -836,7 +833,7 @@ export class Chess extends Command
                 originalInt = reply[0];
             }
 
-            let gameBoard:Board = new Board(int.user, int.user);
+            let gameBoard: Board = new Board(int.user, int.user);
 
             games.forEach((game, key) => {
                 if(key.includes(caller)) {
@@ -925,7 +922,7 @@ export class Chess extends Command
                             }
                             
                             class CheckError extends Error {
-                                constructor(message:string) {
+                                constructor(message: string) {
                                     super(message);
                                     this.name = "CheckError";
                                 }
