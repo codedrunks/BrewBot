@@ -2,7 +2,6 @@ import { CommandInteraction, CommandInteractionOption, MessageReaction, User } f
 import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
 import { Command } from "@src/Command";
-import { clearInterval } from "timers";
 import path from "path";
 
 const games = new Map<string[], Board>();
