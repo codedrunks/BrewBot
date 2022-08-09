@@ -112,6 +112,11 @@ After it was installed on the default WSL shell, if you want Redis to automatica
 <br>
 
 ## CLI
+Run `npm link` to globally register the `brewbot` command, which you can use for some special commands.  
+See `brewbot -h` for help.  
+
+<br>
+
 ### General
 | Command | Description |
 | --- | --- |
