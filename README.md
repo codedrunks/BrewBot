@@ -3,6 +3,7 @@
 - [Development](#development)
     - [Project structure](#project-structure)
     - [Slash commands](#slash-commands)
+    - [Context menu commands](#context-menu-commands)
     - [Other](#other)
 - [CLI](#cli)
     - [General](#general)
@@ -13,8 +14,8 @@
     - [Length limits](#length-limits)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
-    - [Modal](#modal)
     - [PageEmbed](#pageembed)
+    - [Modal](#modal)
 
 <br><br>
 
@@ -49,6 +50,18 @@ At the moment, `src/bot.ts` only sets guild-specific commands as these update pr
 The regular Discord client doesn't update the locally saved slash commands when the bot restarts, so it's sometimes necessary to reload the Discord app with `Ctrl+R`  
 If that still didn't work, or when you just want to remove a command or change its arguments, it's sometimes also necessary to delete them from Discord servers entirely.  
 The bot inserts a fresh copy of all commands at next startup. To clear all global commands and guild commands, use `npm run clearCommands`
+
+<br>
+
+### Context menu commands:
+There are two types of context menus; message and user. This dictates where they will be situated in the Discord client and what properties are passed.  
+Use `int.isUserContextMenu()` and `int.isMessageContextMenu()` to tell TS what type of context menu it's dealing with, then you will be able to access the `int.targetMessage` or `int.targetUser` and `int.targetMember` props.  
+Other than how the commands are sent and that a user can't pass any arguments, context commands are pretty much the same as slash commands.  
+  
+To create a new context menu, use the Template.ts in `src/context/` to create a sub-class of `src/CtxMenu.ts`  
+Make sure the file and class name are changed, and the meta object in the constructor is filled out.  
+To specify who can use the context command, use the `memberPerms` meta prop.  
+Lastly, as with slash commands, add the class to the array in `src/context/index.ts`
 
 <br>
 
@@ -180,7 +193,28 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 
 <br>
 
-<!-- TODO: -->
+> ### PageEmbed
+> This class is a wrapper for MessageEmbed that handles scrolling through multiple of them via MessageButtons.  
+> It offers lots of configurability and dynamically changeable pages.  
+>   
+> #### Methods:
+> - `sendIn()` sends this PageEmbed in the provided channel. If you want a custom message implementation, use `setMsg()` and `getMsg()`
+> - `getMsgOpts()` returns properties that can be passed to a `channel.send()` or `(msg | int).reply()` method
+> - `setPages()` is for dynamically changing the pages of the instance. If the current page index is out of range after the pages have changed, it gets lowered automatically.
+> - `first()`, `prev()`, `next()` and `last()` can be used just like the users use the MessageButtons to navigate the PageEmbed.
+> - `destroy()` edits the message to remove the buttons, emits the `destroy` event, removes all event listeners and deregisters the buttons
+> - `updateMsg()` can be called to update the message on the Discord API with what's currently stored in the PageEmbed.
+> - `setAllowAllUsers()` allows setting whether users other than the author can interact with the buttons
+> - `askGoToPage()` opens a prompt in a channel to type the new page number to navigate to.
+>   
+> #### Events:
+> Use `PageEmbed.on("name", (args) => {})` to subscribe to them
+> - `press` is emitted whenever a button is pressed by a user and gets passed the ButtonInteraction instance and a string telling you which button was pressed.  
+> - `timeout` is emitted when the timeout of the PageEmbed, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called.
+> - `destroy` is emitted whenever the `.destroy()` method is called.
+> - `update` is emitted after the associated message on the Discord API has been edited.
+
+<br>
 
 > ### Modal
 > The modal is a configurable form dialog that gets shown to a user.  

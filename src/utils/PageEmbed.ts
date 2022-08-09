@@ -198,6 +198,12 @@ export class PageEmbed extends EmitterBase
         this.allowAllUsers = allowAll;
     }
 
+    /** Returns the Message object that contains the PageEmbed */
+    public getMsg()
+    {
+        return this.msg;
+    }
+
     //#SECTION pages
 
     public getPages()
@@ -392,7 +398,7 @@ export class PageEmbed extends EmitterBase
     }
 
     /** Edits the message with the currently stored local `msg` */
-    private async updateMsg(removeButtons = false)
+    public async updateMsg(removeButtons = false)
     {
         if(this.timedOut)
             removeButtons = true;
@@ -404,8 +410,8 @@ export class PageEmbed extends EmitterBase
         }
     }
 
-    /** If you send the message yourself, make sure to call this function so this instance has a reference to it! */
-    public setMessage(msg: Message)
+    /** If you want to send the message yourself, make sure to call this function so this instance has a reference to it! */
+    public setMsg(msg: Message)
     {
         if(this.pageIdx === -1)
             this.pageIdx = 0;
