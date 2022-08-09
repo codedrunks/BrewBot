@@ -57,6 +57,7 @@ export const settings: Settings = {
         "194507254249160704",
         "415597358752071693"
     ],
+    devServer: "693878197107949572",
     commands: {
         execEnabled: envVarEquals("EXEC_CMD_ENABLED", false) ? false : true,
     },
@@ -93,6 +94,7 @@ interface Settings {
     guildID: string;
     messageLogChannel: string;
     devs: string[];
+    devServer: string;
     commands: {
         execEnabled: boolean;
     }

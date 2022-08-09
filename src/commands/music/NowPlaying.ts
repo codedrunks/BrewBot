@@ -4,7 +4,8 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString } from "@utils/index";
 import { formatDuration, parseDuration } from "svcorelib";
 import { BtnMsg } from "@utils/BtnMsg";
-import { isDJOnlyandhasDJRole } from "@src/database/music";
+import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
+import { fetchLyricsUrl } from "./global.music";
 
 const ten_secs = 10_000;
 
@@ -37,9 +38,17 @@ export class NowPlaying extends Command {
 
         const readableTime = musicReadableTimeString(currentTime, duration);
 
+        let lyricsLink = "";
+        if(await getPremium(int.guild.id))
+        {
+            const lyrics = await fetchLyricsUrl(current.title);
+            if(lyrics)
+                lyricsLink = `Lyrics: [click to open <:open_in_browser:994648843331309589>](${lyrics})\n`;
+        }
+
         const embed = embedify(
-            `Artist: \`${current.author}\`\n\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`
-        ).setThumbnail(`https://img.youtube.com/vi/${current?.identifier}/mqdefault.jpg`).setTitle(`${current?.title}`);
+            `Artist: \`${current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`
+        ).setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`).setTitle(`${current.title}`);
 
         if(current?.uri) embed.setURL(current.uri);
 
