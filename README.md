@@ -20,9 +20,7 @@
 <br><br>
 
 ### Invite URL
-```
-https://discord.com/oauth2/authorize?client_id=__CLIENT_ID__&permissions=8&scope=bot%20applications.commands
-```
+https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands
 
 <br>
 

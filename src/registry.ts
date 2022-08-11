@@ -65,17 +65,27 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
 
     try
     {
-        for(const CmdClass of commands)
-            !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(client));
+        if(cmds.length === 0)
+            for(const CmdClass of commands)
+                !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(client));
     }
     catch(err)
     {
-        console.error(err);
+        console.error("Error while registering guild commands:", err);
         process.exit(1);
     }
 
-    for(const CtxClass of contextMenus)
-        ctxMenus.push(new CtxClass());
+    try
+    {
+        if(contextMenus.length === 0)
+            for(const CtxClass of contextMenus)
+                ctxMenus.push(new CtxClass());
+    }
+    catch(err)
+    {
+        console.error("Error while registering context menu commands:", err);
+        process.exit(1);
+    }
 
     const slashCmds = cmds
         .filter(c => c.enabled)

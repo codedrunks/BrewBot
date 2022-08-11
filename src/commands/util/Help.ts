@@ -4,15 +4,7 @@ import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { CommandMeta } from "@src/types";
 
-const commandObj: Record<string, CommandMeta[]> = {
-    economy: [],
-    fun: [],
-    games: [],
-    mod: [],
-    music: [],
-    util: [],
-    restricted: [],
-};
+let commandObj: Record<string, CommandMeta[]>;
 
 const categoryNames: Record<string, string> = {
     economy: "Economy",
@@ -26,6 +18,16 @@ const categoryNames: Record<string, string> = {
 
 export function initHelp() {
     const commands = getCommands();
+
+    commandObj = {
+        economy: [],
+        fun: [],
+        games: [],
+        mod: [],
+        music: [],
+        util: [],
+        restricted: [],
+    };
 
     commands.forEach(({ meta }) => {
         const cat = meta.category;
