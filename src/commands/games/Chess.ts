@@ -1,5 +1,5 @@
 import { CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
-import { Canvas, createCanvas } from "canvas";
+import { Canvas, createCanvas, registerFont } from "canvas";
 import fs from "fs-extra";
 import { Command } from "@src/Command";
 import path from "path";
@@ -383,6 +383,8 @@ class Board {
         this.embedId = "";
         this.tiles = [];
         this.players = [p1, p2];
+
+        registerFont("assets/external/fonts/impact.ttf", {family: "Impact Condensed"});
 
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
