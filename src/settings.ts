@@ -38,10 +38,10 @@ export const settings: Settings = {
         ],
     },
     embedColors: {
-        default: "DARK_PURPLE",
+        default: "#faba05",
         gameWon: "GREEN",
         gameLost: "GREY",
-        warning: "ORANGE",
+        warning: "YELLOW",
         error: "DARK_RED",
         contestWinner: "GOLD",
     },
