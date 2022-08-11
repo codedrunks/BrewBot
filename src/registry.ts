@@ -90,7 +90,10 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     const slashCmds = cmds
         .filter(c => c.enabled)
         .map(c => c.slashCmdJson)
-        .concat(ctxMenus.map(c => c.ctxMenuJson));
+        .concat(ctxMenus
+            .filter(ctx => ctx.enabled)
+            .map(c => c.ctxMenuJson)
+        );
 
     initHelp();
 
