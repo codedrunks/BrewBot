@@ -10,6 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//#MARKER users
 model User {
   id        String     @id
   coins     Coins[]
@@ -18,13 +19,18 @@ model User {
 }
 
 model Reminder {
-  guild        String
+  reminderId   Int
+  guild        String?
+  channel      String?
   name         String
   dueTimestamp Int
-  User         User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String @id
+  User         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+
+  @@id([reminderId, userId])
 }
 
+//#MARKER economy
 // cooldowns for economy, this is how coins are 'minted'
 model Bonus {
   guildId    String
@@ -46,6 +52,7 @@ model Coins {
   @@id([guildId, userId])
 }
 
+//#MARKER guild
 model Guild {
   id               String    @id
   contestRoleId    String?
@@ -56,6 +63,7 @@ model Guild {
   contests         Contest[]
 }
 
+//#SECTION contest
 model Contest {
   id          Int
   guildId     String

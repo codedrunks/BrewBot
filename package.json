@@ -48,7 +48,6 @@
     "fs-extra": "^10.1.0",
     "fuse.js": "^6.6.2",
     "kleur": "^4.1.4",
-    "parse-relative-time": "^1.1.0",
     "prisma": "^3.15.1",
     "redis": "^4.2.0",
     "simple-statistics": "^7.7.5",

@@ -1,10 +1,11 @@
 import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
-import parseRelativeTime from "parse-relative-time";
-import { readableArray } from "svcorelib";
 import { Command } from "@src/Command";
 import persistentData from "@src/persistentData";
 import { settings } from "@src/settings";
 import { CommandMeta } from "@src/types";
+import { time } from "@discordjs/builders";
+import { getReminders, setReminder } from "@src/database/users";
+import { embedify } from "@src/utils";
 
 export class Reminder extends Command
 {
@@ -12,7 +13,7 @@ export class Reminder extends Command
     {
         super({
             name: "reminder",
-            desc: "Set a reminder to get DMed after a certain time passed",
+            desc: "Set a reminder to notify yourself after a certain time passed",
             category: "util",
             subcommands: [
                 {
@@ -26,28 +27,28 @@ export class Reminder extends Command
                         },
                         {
                             name: "days",
-                            desc: "How many days",
+                            desc: "In how many days",
                             type: "number",
                             min: 1,
                             max: 364,
                         },
                         {
                             name: "hours",
-                            desc: "How many hours",
+                            desc: "In how many hours",
                             type: "number",
                             min: 1,
                             max: 23,
                         },
                         {
                             name: "minutes",
-                            desc: "How many minutes",
+                            desc: "In how many minutes",
                             type: "number",
                             min: 1,
                             max: 59,
                         },
                         {
                             name: "seconds",
-                            desc: "How many seconds",
+                            desc: "In how many seconds",
                             type: "number",
                             min: 1,
                             max: 59,
@@ -61,6 +62,13 @@ export class Reminder extends Command
                 {
                     name: "delete",
                     desc: "Delete a reminder",
+                    args: [
+                        {
+                            name: "reminder",
+                            desc: "The name of the reminder or the ID shown with /reminder list",
+                            required: true,
+                        }
+                    ]
                 },
             ]
         });
@@ -75,29 +83,60 @@ export class Reminder extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
+        const getTime = (timeObj: Record<"days"|"hours"|"minutes"|"seconds", number>) => {
+            return 1000 * timeObj.seconds
+                + 1000 * 60 * timeObj.minutes
+                + 1000 * 60 * 60 * timeObj.hours
+                + 1000 * 60 * 60 * 24 * timeObj.days;
+        };
+
         switch(opt.name)
         {
         case "set":
         {
-            if(!int.member || !int.guild) return;
+            if(!int.member || !int.guild || !int.channel)
+            {
+                // TODO:
+                return await this.reply(int, embedify("Setting a reminder outside of a server is not yet supported.", settings.embedColors.error), true);
+            }
 
-            const { member, guild } = int;
+            const { member, guild, channel } = int;
 
-            const args = { name: "", days: 0, hours: 0, minutes: 0, seconds: 0, ...this.resolveArgs(int) };
-            const { name } = args;
-            const timeStrings = [];
+            const args = {
+                name: int.options.getString("name", true),
+                days: int.options.getNumber("days", false) ?? 0,
+                hours: int.options.getNumber("hours", false) ?? 0,
+                minutes: int.options.getNumber("minutes", false) ?? 0,
+                seconds: int.options.getNumber("seconds", false) ?? 0,
+            };
 
-            for(const key of ["days", "hours", "minutes", "seconds"])
-                timeStrings.push(`${parseInt(String(args[key as keyof typeof args]))} ${key}`);
+            const { name, ...timeObj } = args;
 
-            const dueInMs = timeStrings.reduce((acc, cur) => acc + parseRelativeTime(cur), 0);
+            const dueInMs = getTime(timeObj);
             const dueTimestamp = Date.now() + dueInMs;
 
-            const reminders = persistentData.get("reminders");
-            reminders?.push({ member: member.user.id, guild: guild.id, name, dueTimestamp });
-            reminders && await persistentData.set("reminders", reminders);
+            if(dueInMs < 1000 * 5)
+                return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);
 
-            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nIt will expire in **${readableArray(timeStrings)}** (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``, true);
+            const reminders = await getReminders(member.user.id);
+
+            let reminderId = 0;
+            if(reminders)
+            {
+                const rem = reminders.sort((a, b) => a.reminderId < b.reminderId ? 1 : -1).at(0);
+                reminderId = rem ? rem.reminderId + 1 : 0;
+            }
+
+            await setReminder({
+                name: args.name,
+                guild: guild.id,
+                userId: member.user.id,
+                channel: channel.id,
+                reminderId,
+                dueTimestamp,
+            });
+
+            return await this.reply(int, `I've set a timer with the name \`${name}\`.\nExpires: ${time(dueTimestamp, "F")} (${new Date(dueTimestamp).toUTCString()})\n\nTo list your reminders, use \`/reminder list\`\nTo delete reminders, use \`/reminder delete\``, true);
         }
         case "list":
         {
@@ -123,6 +162,15 @@ export class Reminder extends Command
         }
         case "delete":
         {
+            const rem = int.options.getString("reminder", true);
+            if(rem.match(/d+/))
+            {
+                console.log();
+            }
+            else
+            {
+                console.log();
+            }
             break;
         }
         }
