@@ -7,6 +7,7 @@ import { HigherLower } from "@commands/games/HigherLower";
 import { Joke } from "@commands/fun/Joke";
 import { Mock } from "@commands/fun/Mock";
 import { Sudoku } from "@commands/games/Sudoku";
+import { BlackJack } from "@commands/games/BlackJack";
 
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
@@ -65,6 +66,7 @@ export const commands = [
     Steam,
     Slots,
     Sudoku,
+    BlackJack,
 
     // mod
     Delete,
