@@ -452,7 +452,7 @@ export class Sudoku extends Command
     }
 
     drawNumber(box: number, cell: number, choice: number) {
-        this.ctx.font = "bold 40pt Roboco";
+        this.ctx.font = "bold 46pt Roboto";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "middle";
 
