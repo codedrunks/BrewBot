@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { createCanvas, CanvasRenderingContext2D, Canvas, registerFont } from "canvas";
+import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
 import fs from "fs-extra";
 import os from "os";
 import { settings } from "@src/settings";
@@ -82,7 +82,6 @@ export class Sudoku extends Command
                 }
             ],
         });
-        registerFont("assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
 
         const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         const ctx = canvas.getContext("2d");

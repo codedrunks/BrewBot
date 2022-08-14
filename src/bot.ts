@@ -12,6 +12,7 @@ import { prisma } from "@database/client";
 import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
 import { getRedis } from "@src/redis";
+import { registerFont } from "canvas";
 
 const { env, exit } = process;
 
@@ -23,6 +24,10 @@ async function init()
 
     if(!allOfType([ env.BOT_TOKEN, env.CLIENT_ID ], "string"))
         throw new Error("Missing environment variable(s). Please correct them according to the .env.template");
+
+    registerFont("assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
+    registerFont("assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
+    registerFont("assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
 
     await persistentData.init();
 

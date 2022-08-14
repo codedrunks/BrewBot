@@ -1,5 +1,5 @@
 import { CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
-import { Canvas, createCanvas, registerFont } from "canvas";
+import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
 import { Command } from "@src/Command";
 import path from "path";
@@ -384,9 +384,6 @@ class Board {
         this.tiles = [];
         this.players = [p1, p2];
 
-        registerFont("assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
-        registerFont("assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
-
         // TODO: find a more resonable size for this
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
@@ -653,6 +650,7 @@ export class Chess extends Command
                             name: "user",
                             type: "user",
                             desc: "Choose an opponent",
+                            required: true,
                         },
                     ]
                 },
