@@ -57,7 +57,6 @@ export class Define extends Command
         });
     }
 
-    // @TryCatchMethod((err, int) => int?.reply({ embeds: [ embedify("Something went wrong!") ], ephemeral: true }))
     async run(int: CommandInteraction): Promise<void>
     {
         const term = int.options.getString("term", true);
@@ -96,23 +95,22 @@ export class Define extends Command
 
             const obj = results?.at(0);
 
-            // const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
             const replaceLinks = async (str: string) => {
                 const regex = /\[([\w\s\d_\-.'`´’*+#]+)\]/gm;
                 const matches = str.match(regex);
-            
+
                 if(!matches) return str;
-            
+
                 for await(const match of matches)
                 {
                     const term = match.replace(regex, "$1");
-            
+
                     const { results } = await getDefs(term);
                     const re = results?.[0];
-            
+
                     str = str.replace(match, re ? `[${term}](${re.permalink})` : term);
                 }
-            
+
                 return str;
             };
 

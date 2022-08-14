@@ -27,9 +27,7 @@ const cmds: Command[] = [];
 const ctxMenus: CtxMenu[] = [];
 /** Array of all registered Event instances */
 const evts: Event[] = [];
-// /** Map of all registered BtnMsg instances */
-// const btnMsgs = new Collection<string, BtnMsg>();
-/** Map of all registered Modal instances */
+/** Collection of all registered Modal instances */
 const modals = new Collection<string, Modal>();
 
 
@@ -154,7 +152,7 @@ interface BtnListener {
     on(event: "press", listener: (int: ButtonInteraction, btn: MessageButton) => void): this;
 }
 
-// TODO: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
+// TODO:FIXME: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
 class BtnListener extends EventEmitter
 {
     private btns = new Collection<string, MessageButton>();
@@ -209,48 +207,6 @@ class BtnListener extends EventEmitter
 
 /** This instance manages all MessageButtons and emits events when they are clicked. */
 export const btnListener = new BtnListener();
-
-
-// export function getBtnMsgs()
-// {
-//     return btnMsgs;
-// }
-
-// /**
-//  * Registers a `BtnMsg` instance - this is done automatically in its constructor, don't run this function yourself!
-//  * @private
-//  */
-// export function registerBtnMsg(btnMsg: BtnMsg)
-// {
-//     const btIds = btnMsg.btns
-//         .map(b => b.style !== "LINK" ? b.customId : undefined)
-//         .filter(v => typeof v !== "undefined");
-
-//     for(const id of btIds)
-//     {
-//         if(!id) continue;
-
-//         btnMsgs.set(id, btnMsg);
-//     }
-
-//     btnMsg.opts.timeout > -1 && setTimeout(() => {
-//         btnMsg.emit("timeout");
-//         btnMsg.destroy();
-//     }, btnMsg.opts.timeout);
-
-//     btnMsg.on("destroy", ids => {
-//         ids.forEach(id => btnMsgs.delete(id));
-//     });
-// }
-
-// /**
-//  * Deletes a previously registered `BtnMsg` instance
-//  * @private
-//  */
-// export function deleteBtnMsg(btnMsg: BtnMsg)
-// {
-//     return btnMsgs.delete(btnMsg.id);
-// }
 
 
 //#MARKER modals
