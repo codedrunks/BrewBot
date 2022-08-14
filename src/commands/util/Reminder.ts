@@ -65,12 +65,12 @@ export class Reminder extends Command
             ]
         });
 
-        // if(!Command.isCommandMeta(client))
-        // {
-        //     // since the constructor is called exactly once at startup, this should work just fine
-        //     this.checkReminders(client);
-        //     setInterval(() => this.checkReminders(client), 1000);
-        // }
+        if(!Command.isCommandMeta(client))
+        {
+            // since the constructor is called exactly once at startup, this should work just fine
+            this.checkReminders(client);
+            setInterval(() => this.checkReminders(client), 1000);
+        }
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
