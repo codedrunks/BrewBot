@@ -107,7 +107,7 @@ class Pawn extends Piece {
 
     getPieceGraphic()
     {
-        return "\u{2659}";
+        return "\u265f";
     }
 }
 
@@ -245,7 +245,7 @@ class Bishop extends Piece {
 
     getPieceGraphic()
     {
-        return "♝";
+        return "\u265D";
     }
 }
 
@@ -384,8 +384,10 @@ class Board {
         this.tiles = [];
         this.players = [p1, p2];
 
-        registerFont("assets/external/fonts/impact.ttf", {family: "Impact Condensed"});
+        registerFont("assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
+        registerFont("assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
 
+        // TODO: find a more resonable size for this
         this.canvas = createCanvas(2100, 2100);
         this.initializeTiles(layout);
         this.initializeGrid();
@@ -430,24 +432,29 @@ class Board {
                 // number label
                 if (y === 0) {
                     ctx.fillStyle = "rgb(77, 51, 31)";
-                    ctx.fillRect(0, (x * 250) + 100, 100, 250);
+                    ctx.fillRect(0, (x * 250), 100, 350);
                     
-                    ctx.font = "78px Impact";
+                    ctx.font = "78px \"Noto Sans\"";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
                     ctx.fillStyle = "white";
                     ctx.fillStyle = "center";
-                    ctx.fillText((8 - x).toString(), 28, ((x + 1) * 250));
+                    ctx.fillText((8 - x).toString(), 50, ((x + 1) * 250) - 50);
                 }
 
                 //letter label
                 if (x === 0) {
+                    console.log(y);
                     const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
-                    ctx.fillStyle = "rgb(77, 51, 31)";
-                    ctx.fillRect((y * 250) + 100, 250, 100, 250);
+                    ctx.fillStyle = "rgb(70, 46, 25)";
+                    ctx.fillRect((y * 250) + 100, 0, 250, 100);
                     
-                    ctx.font = "78px Impact";
+                    ctx.font = "78px \"Noto Sans\"";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
                     ctx.fillStyle = "white";
                     ctx.fillStyle = "center";
-                    ctx.fillText(letters[y], (((y + 1) * 250) - 40), 80);
+                    ctx.fillText(letters[y], ((y * 250) + 125) + 100, 50);
                 }
             
                 this.render();
@@ -471,8 +478,10 @@ class Board {
                 ctx.fillStyle = this.tiles[y][x].color === "white" ? "white" : "black";
 
                 // this is what will render the pieces
-                ctx.font = "156px sans-serif";
-                ctx.fillText(this.tiles[y][x].getPieceGraphic(), (x * 250) + 150, (y * 250) + 275);
+                ctx.font = "156px \"Chrysanthi Unicode\"";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(this.tiles[y][x].getPieceGraphic(), (x * 250) + 225, (y * 250) + 225);
             }
         }
     }
