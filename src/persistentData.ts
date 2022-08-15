@@ -33,14 +33,20 @@ export async function init()
     });
 }
 
-/** Sets the property with the provided `key` to a new `value` */
+/**
+ * Sets the property with the provided `key` to a new `value`
+ * @deprecated ❗ Use prisma instead
+ */
 export async function set<T extends DataKey>(key: T, value: PersistentData[T])
 {
     persistentData[key] = value;
     await writePersistentData(persistentData);
 }
 
-/** Returns the value of the property with the provided `key` */
+/**
+ * Returns the value of the property with the provided `key`
+ * @deprecated ❗ Use prisma instead
+ */
 export function get<T extends DataKey>(key: T): PersistentData[T] | null
 {
     return persistentData?.[key] ?? null;

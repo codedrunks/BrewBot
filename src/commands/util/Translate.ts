@@ -4,9 +4,9 @@ import axios from "axios";
 import Fuse from "fuse.js";
 
 import { Command } from "@src/Command";
-import languages from "@src/languages.json";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { settings } from "@src/settings";
+import languages from "@assets/languages.json";
 
 export class Translate extends Command
 {

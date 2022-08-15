@@ -4,7 +4,7 @@ import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
 import fs from "fs-extra";
 import os from "os";
 import { settings } from "@src/settings";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import path from "path";
 
 interface Game {

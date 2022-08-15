@@ -2,7 +2,7 @@ import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { SearchQuery, SearchResult } from "erela.js";
 import { Command } from "@src/Command";
 import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/client";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { randomizeArray, randRange } from "svcorelib";
 

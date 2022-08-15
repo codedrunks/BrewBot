@@ -2,7 +2,7 @@ import { CommandInteraction, MessageEmbed } from "discord.js";
 import { Command } from "@src/Command";
 import { getTotalWorks } from "@database/economy";
 import { settings } from "@src/settings";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
 
 export class Job extends Command {

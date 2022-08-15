@@ -1,4 +1,4 @@
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { Client, TextChannel } from "discord.js";
 import { Player } from "erela.js";
 

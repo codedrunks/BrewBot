@@ -1,7 +1,7 @@
 import { Command } from "@src/Command";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
 import { getMusicManager } from "@src/lavalink/client";
-import { embedify } from "@src/util";
+import { embedify } from "@src/utils";
 import { CommandInteraction, Guild, GuildMemberRoleManager } from "discord.js";
 import { Player } from "erela.js";
 import { filterTurnOff } from "./global.music";

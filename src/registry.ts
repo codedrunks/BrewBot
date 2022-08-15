@@ -1,41 +1,43 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
-import { ButtonInteraction, Client, Collection, ModalSubmitInteraction } from "discord.js";
+import { ButtonInteraction, Client, Collection, MessageButton, ModalSubmitInteraction } from "discord.js";
 
 import { Command } from "@src/Command";
 import { Event } from "@src/Event";
 import { commands } from "@src/commands";
+import { CtxMenu } from "@src/CtxMenu";
+import { contextMenus } from "@src/context";
 import { events } from "@src/events";
-import { BtnMsg } from "@src/BtnMsg";
-import { Modal } from "@src/Modal";
+import { Modal } from "@utils/Modal";
 
 import { initHelp } from "@commands/util/Help";
+import EventEmitter from "events";
+import { embedify } from "./utils";
+import { settings } from "./settings";
 
 
-let rest: REST;
-let botClient: Client;
+const rest = new REST({ version: "10" })
+    .setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
+
+let client: Client;
 
 /** Array of all registered Command instances */
 const cmds: Command[] = [];
+/** Array of all registered CtxMenu instances */
+const ctxMenus: CtxMenu[] = [];
 /** Array of all registered Event instances */
 const evts: Event[] = [];
-/** Map of all registered BtnMsg instances */
-const btnMsgs = new Collection<string, BtnMsg>();
-/** Map of all registered Modal instances */
+/** Collection of all registered Modal instances */
 const modals = new Collection<string, Modal>();
 
 
-export function initRegistry(client: Client)
+export function initRegistry(cl: Client)
 {
-    botClient = client;
-
-    rest = new REST({
-        version: "10"
-    }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
+    client = cl;
 }
 
 
-//#MARKER commands
+//#MARKER commands & context menus
 
 
 export function getCommands()
@@ -43,12 +45,17 @@ export function getCommands()
     return cmds;
 }
 
+export function getCtxMenus()
+{
+    return ctxMenus;
+}
+
 /** Registers all slash commands for the specified guild or guilds */
 export async function registerGuildCommands(guildID: string[]): Promise<void>
 export async function registerGuildCommands(guildID: string): Promise<void>
 export async function registerGuildCommands(...guildIDs: (string|string[])[]): Promise<void>
 {
-    if(!botClient)
+    if(!client)
         throw new Error("Registry isn't initialized yet!");
 
     const gid = guildIDs[0];
@@ -57,7 +64,7 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     try
     {
         for(const CmdClass of commands)
-            !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(botClient));
+            !cmds.find(c => c.constructor.name === CmdClass.constructor.name) && cmds.push(new CmdClass(client));
     }
     catch(err)
     {
@@ -65,7 +72,13 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
         process.exit(1);
     }
 
-    const slashCmds = cmds.filter(c => c.enabled).map(c => c.getSlashCmdJson());
+    for(const CtxClass of contextMenus)
+        ctxMenus.push(new CtxClass());
+
+    const slashCmds = cmds
+        .filter(c => c.enabled)
+        .map(c => c.slashCmdJson)
+        .concat(ctxMenus.map(c => c.ctxMenuJson));
 
     initHelp();
 
@@ -109,7 +122,7 @@ export function getEvents()
  */
 export function registerEvents()
 {
-    if(!botClient)
+    if(!client)
         throw new Error("Registry isn't initialized yet!");
 
     events.forEach(EvtClass => evts.push(new EvtClass()));
@@ -121,7 +134,7 @@ export function registerEvents()
         if(!ev.enabled) continue;
 
         for(const evName of ev.names)
-            botClient.on(evName, async (...args) => void await ev.run(...args));
+            client.on(evName, async (...args) => void await ev.run(...args));
     }
 
     return evts;
@@ -131,58 +144,69 @@ export function registerEvents()
 //#MARKER buttons
 
 
-export function getBtnMsgs()
-{
-    return btnMsgs;
+interface BtnListener {
+    /**
+     * Emitted when a button is pressed. Gets passed the instance of the clicked button.  
+     * Make sure to check that you're responding to the correct `btn`'s interaction by validating the customId!
+     */
+    on(event: "press", listener: (int: ButtonInteraction, btn: MessageButton) => void): this;
 }
 
-/**
- * Registers a `BtnMsg` instance - this is done automatically in its constructor, don't run this function yourself!
- * @private
- */
-export function registerBtnMsg(btnMsg: BtnMsg)
+// TODO:FIXME: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
+class BtnListener extends EventEmitter
 {
-    const btIds = btnMsg.btns
-        .map(b => b.style !== "LINK" ? b.customId : undefined)
-        .filter(v => typeof v !== "undefined");
+    private btns = new Collection<string, MessageButton>();
 
-    for(const id of btIds)
+    constructor()
     {
-        if(!id) continue;
-
-        btnMsgs.set(id, btnMsg);
+        super({ captureRejections: true });
     }
 
-    btnMsg.opts.timeout > -1 && setTimeout(() => {
-        btnMsg.emit("timeout");
-        btnMsg.destroy();
-    }, btnMsg.opts.timeout);
-
-    btnMsg.on("destroy", ids => {
-        ids.forEach(id => btnMsgs.delete(id));
-    });
-}
-
-/**
- * Deletes a previously registered `BtnMsg` instance
- * @private
- */
-export function deleteBtnMsg(btnMsg: BtnMsg)
-{
-    return btnMsgs.delete(btnMsg.id);
-}
-
-export async function btnPressed(int: ButtonInteraction)
-{
-    const bm = btnMsgs.get(int.customId);
-    const idx = parseInt(String(int.customId.split("@").at(-1)));
-
-    if(bm && !isNaN(idx))
+    /** Adds multiple MessageButtons. Throws an error if there's no customId props! */
+    public addBtns(btns: MessageButton[]): void
+    /** Adds one MessageButton. Throws an error if there's no customId prop! */
+    public addBtns(btn: MessageButton): void
+    public addBtns(btns: MessageButton | MessageButton[]): void
     {
-        const btn = bm.btns.find(b => b.customId?.endsWith(String(idx)));
-        btn && bm.emit("press", btn, int);
+        btns = Array.isArray(btns) ? btns : [btns];
+
+        btns.forEach(bt => {
+            if(!bt.customId)
+                throw new TypeError(`MessageButton "${bt.label}/${bt.style}" doesn't have a customId`);
+            this.btns.set(bt.customId, bt);
+        });
+    }
+
+    /** Deletes multiple MessageButtons by their customId's. Invalid IDs are ignored. */
+    public delBtns(customIDs?: (string | null)[]): void
+    /** Deletes one  MessageButton by its customId. Invalid ID is ignored. */
+    public delBtns(customId?: string): void
+    public delBtns(customIDs?: string | (string | null)[]): void
+    {
+        const ids = Array.isArray(customIDs) ? customIDs : [customIDs];
+
+        ids.forEach(id => id && this.btns.delete(id));
+    }
+
+    /** Returns all buttons that are currently registered, as a Collection of customId and MessageButton instances */
+    public getBtns()
+    {
+        return this.btns;
+    }
+
+    /**
+     * Called by bot.ts to emit the "press" event on this BtnListener with the correct parameters.  
+     * ❗ Don't call this yourself ❗
+     */
+    public async emitBtnPressed(int: ButtonInteraction)
+    {
+        const bt = this.btns.get(int.customId);
+        bt && this.emit("press", int, bt);
     }
 }
+
+/** This instance manages all MessageButtons and emits events when they are clicked. */
+export const btnListener = new BtnListener();
 
 
 //#MARKER modals
@@ -206,10 +230,21 @@ export function registerModal(modal: Modal)
  */
 export async function modalSubmitted(int: ModalSubmitInteraction)
 {
-    const modal = modals.get(int.customId);
-
-    if(modal)
+    try
     {
-        await modal.trySubmit(int);
+        const modal = modals.get(int.customId);
+
+        if(modal)
+            await modal.trySubmit(int);
+    }
+    catch(err)
+    {
+        const embeds = [ embedify(`Couldn't run this modal due to an error${err instanceof Error ? `: ${err.message}` : "."}`, settings.embedColors.error) ];
+
+        if(typeof int.reply === "function" && !int.replied && !int.deferred)
+            return await int.reply({ embeds, ephemeral: true });
+
+        if(typeof int.editReply === "function" && (int.deferred || int.replied))
+            return await int.editReply({ embeds });
     }
 }

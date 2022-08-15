@@ -7,7 +7,8 @@
     "lint": "tsc --noEmit && eslint .",
     "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
     "clearCommands": "ts-node src/tools/clearCommands.ts",
-    "deploy": "npx prisma generate && npx prisma migrate deploy && tsc && tsc-alias && node out/bot.js"
+    "deploy": "npx prisma generate && npx prisma migrate deploy && tsc && tsc-alias && node out/bot.js",
+    "win-redis": "call src\\tools\\redis.bat"
   },
   "repository": {
     "type": "git",
@@ -41,12 +42,14 @@
     "discord.js": "^13.8.0",
     "dotenv": "^16.0.0",
     "erela.js": "^2.3.3",
+    "fast-memoize": "^2.5.2",
     "fs-extra": "^10.1.0",
     "fuse.js": "^6.6.2",
     "kleur": "^4.1.4",
     "parse-relative-time": "^1.1.0",
     "prisma": "^3.15.1",
     "redis": "^4.2.0",
+    "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
     "svcorelib": "^1.16.0"
   },

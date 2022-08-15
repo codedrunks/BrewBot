@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { settings } from "@src/settings";
 import { getPremium, togglePremium } from "@src/database/music";
 

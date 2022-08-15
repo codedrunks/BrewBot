@@ -1,9 +1,9 @@
 import { CommandInteraction, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { Queue as ErelaQueue, Track, UnresolvedTrack } from "erela.js";
-import { BtnMsg } from "@src/BtnMsg";
+import { BtnMsg } from "@utils/BtnMsg";
 
 interface QueuePage {
     [userid: string]: number,

@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { isDJOnlyandhasDJRole } from "@database/music";
 
 export class Volume extends Command {

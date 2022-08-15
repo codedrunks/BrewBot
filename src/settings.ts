@@ -1,6 +1,9 @@
-import { ColorResolvable, IntentsString } from "discord.js";
+import { GatewayIntentBits } from "discord-api-types/v10";
+import { ColorResolvable } from "discord.js";
 import dotenv from "dotenv";
 import { Stringifiable } from "svcorelib";
+
+const Intents = GatewayIntentBits;
 
 dotenv.config();
 
@@ -19,18 +22,19 @@ export const settings: Settings = {
         /**
          * List of intents the client requests from the gateway.  
          * Intents are like events the client needs to explicitly subscribe to or it will not receive the events from the API.  
-         * As long as the bot is in < 100 guilds, it will get granted any intent. After 100 guilds, it needs to be verified by Discord to get the intents granted.
+         * As long as the bot is in < 100 guilds, it will get granted any intent.  
+         * After 100 guilds, it needs to be verified by Discord to get some of the intents granted.
          */
         intents: [
-            "GUILDS",
-            "GUILD_MEMBERS",
-            "GUILD_INTEGRATIONS",
-            "GUILD_INVITES",
-            "GUILD_PRESENCES",
-            "GUILD_MESSAGES",
-            "GUILD_MESSAGE_REACTIONS",
-            "DIRECT_MESSAGES",
-            "GUILD_VOICE_STATES"
+            Intents.Guilds,
+            Intents.GuildMembers,
+            Intents.GuildIntegrations,
+            Intents.GuildInvites,
+            Intents.GuildVoiceStates,
+            Intents.GuildPresences,
+            Intents.GuildMessages,
+            Intents.GuildMessageReactions,
+            Intents.DirectMessages,
         ],
     },
     embedColors: {
@@ -58,8 +62,8 @@ export const settings: Settings = {
     },
 };
 
-/** Tests if the environment variable `varName` equals `value` - case insensitive! */
-function envVarEquals(varName: string, value: string | Stringifiable)
+/** Tests if the environment variable `varName` equals `value` - value is case insensitive */
+function envVarEquals(varName: string, value: Stringifiable)
 {
     return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
 }
@@ -74,7 +78,7 @@ interface Settings {
         warningsUntilNotice: number;
     }
     client: {
-        intents: IntentsString[];
+        intents: GatewayIntentBits[];
     }
     embedColors: {
         default: ColorResolvable;

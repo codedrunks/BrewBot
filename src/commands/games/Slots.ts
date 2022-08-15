@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { getCoins, subCoins, addCoins } from "@database/economy";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { createNewUser } from "@src/database/users";
 
 export class Slots extends Command

@@ -1,8 +1,9 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
 import axios from "axios";
-import { embedify, useEmbedify } from "@src/util";
+import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+import { rankVotes } from "@src/utils";
 
 type WikiArticle = {
     title: string;
@@ -56,7 +57,6 @@ export class Define extends Command
         });
     }
 
-    // @TryCatchMethod((err, int) => int?.reply({ embeds: [ embedify("Something went wrong!") ], ephemeral: true }))
     async run(int: CommandInteraction): Promise<void>
     {
         const term = int.options.getString("term", true);
@@ -74,17 +74,45 @@ export class Define extends Command
         //#SECTION urbandict
         case "urbandictionary":
         {
-            const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
+            const getDefs = async (term: string) => {
+                const req = await axios.get(`https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(term)}`);
 
-            const results = req.data?.list?.sort((a: Record<string, number>, b: Record<string, number>) => a.thumbs_up < b.thumbs_up ? 1 : -1);
-            const obj = results?.at(0);
+                return {
+                    req,
+                    results: req.data?.list?.sort(
+                        (a: Record<string, number>, b: Record<string, number>) =>
+                            rankVotes(a.thumbs_up, a.thumbs_down) < rankVotes(b.thumbs_up, b.thumbs_down) ? 1 : -1
+                    ),
+                };
+            };
+
+            const { req, results } = await getDefs(term);
 
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
             if(!Array.isArray(results) || results.length === 0)
                 return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
 
-            const normalize = (str: string) => str.replace(/\[([\w\s\d_\-.'`´’*+#]+)\]/gm, "$1");
+            const obj = results?.at(0);
+
+            const replaceLinks = async (str: string) => {
+                const regex = /\[([\w\s\d_\-.'`´’*+#]+)\]/gm;
+                const matches = str.match(regex);
+
+                if(!matches) return str;
+
+                for await(const match of matches)
+                {
+                    const term = match.replace(regex, "$1");
+
+                    const { results } = await getDefs(term);
+                    const re = results?.[0];
+
+                    str = str.replace(match, re ? `[${term}](${re.permalink})` : term);
+                }
+
+                return str;
+            };
 
             const { definition, example, author, thumbs_up, thumbs_down, permalink } = obj;
 
@@ -93,7 +121,7 @@ export class Define extends Command
             const ex = example.replace(/(\r?\n){1,2}/gm, "\n> ");
 
             embed.setTitle(`Urban Dictionary definition for **${term}**:`)
-                .setDescription(`Definition:\n${normalize(def)}\n${ex && ex.length > 0 ? `\n> Example:\n> ${normalize(ex)}\n` : ""}`);
+                .setDescription(`**Definition:**\n${await replaceLinks(def)}\n${ex && ex.length > 0 ? `\n> **Example:**\n> ${await replaceLinks(ex)}\n` : ""}`);
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
@@ -118,6 +146,12 @@ export class Define extends Command
                 .replace(/\s(\(|\))\s/gm, " ")
                 .replace(/a/gm, "a");
 
+            const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
+                reason === "offline"
+                    ? "Couldn't reach Wikipedia. Please try again later."
+                    : "Couldn't find that term.",
+                settings.embedColors.error));
+
             const searchWiki = async (searchTerm: string): Promise<void> => {
                 const searchReq = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=${encodeURIComponent(searchTerm)}`);
 
@@ -126,12 +160,6 @@ export class Define extends Command
                     return await searchWiki(searchReq.data.query.searchinfo.suggestion);
 
                 const searchResults = searchReq.data?.query?.search as WikiArticle[] | undefined;
-
-                const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
-                    reason === "offline"
-                        ? "Couldn't reach Wikipedia. Please try again later."
-                        : "Couldn't find that term.",
-                    settings.embedColors.error));
 
                 if(searchReq.status < 200 || searchReq.status >= 300)
                     return await errored("offline");
@@ -311,16 +339,23 @@ export class Define extends Command
             }
         });
 
-        coll.on("end", async (_c, reason) => {
-            if(reason === "time")
-            {
-                await m.reactions.removeAll();
-                return await this.editReply(int, "No article was selected in time. Please try again.");
-            }
-        });
+        try
+        {
+            coll.on("end", async (_c, reason) => {
+                if(reason === "time" && !mDeleted)
+                {
+                    await m.reactions.removeAll();
+                    return await this.editReply(int, "No article was selected in time. Please try again.");
+                }
+            });
 
-        for await(const e of emList)
-            !mDeleted && await m.react(e);
+            for await(const e of emList)
+                !mDeleted && await m.react(e);
+        }
+        catch(err)
+        {
+            void err;
+        }
     }
 }
 

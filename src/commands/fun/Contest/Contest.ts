@@ -2,7 +2,7 @@ import { settings } from "@src/settings";
 import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
 import { Command } from "@src/Command";
 import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "@database/contest";
-import { embedify } from "@src/util";
+import { embedify } from "@utils/embedify";
 import { bold, channelMention, hyperlink, userMention, inlineCode, roleMention, strikethrough, time, underscore } from "@discordjs/builders";
 import { ContestModal } from "@src/modals/contest";
 import { DatabaseError } from "@database/util";

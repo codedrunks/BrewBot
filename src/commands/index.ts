@@ -51,7 +51,7 @@ import { Remove } from "@commands/music/Remove";
 import { Filter } from "@commands/music/Filter";
 
 
-/** Every command in here will get registered as soon as client is ready */
+/** Every command in here will get registered when the bot starts up */
 export const commands = [
     // fun
     Cat,

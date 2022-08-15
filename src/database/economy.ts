@@ -1,7 +1,7 @@
 import { prisma } from "@database/client";
 import { PrismaPromise } from "@prisma/client";
 import { getRedis } from "@src/redis";
-import { nowInSeconds } from "@src/util";
+import { nowInSeconds } from "@utils/time";
 
 const redis = getRedis();
 

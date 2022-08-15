@@ -1,8 +1,9 @@
 import { randomUUID } from "crypto";
 import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
-import EventEmitter from "events";
 
-import { registerBtnMsg } from "@src/registry";
+
+import { btnListener } from "@src/registry";
+import { EmitterBase } from "@utils/EmitterBase";
 
 
 interface BtnMsgOpts {
@@ -11,8 +12,8 @@ interface BtnMsgOpts {
 }
 
 export type ButtonOpts = {
-    style?: MessageButtonStyleResolvable,
-    label?: string,
+    label: string,
+    style: MessageButtonStyleResolvable,
     emoji?: EmojiIdentifierResolvable,
     url?: string,
 }[];
@@ -24,13 +25,15 @@ export interface BtnMsg {
     on(event: "timeout", listener: () => void): this;
     /** Gets emitted when this BtnMsg was destroyed and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
+    /** Emitted on error and unhandled Promise rejection */
+    on(event: "error", listener: (err: Error) => void): this;
 }
 
 /**
  * Wrapper for discord.js' `MessageButton`  
  * Contains convenience methods for easier creation of messages with attached buttons
  */
-export class BtnMsg extends EventEmitter
+export class BtnMsg extends EmitterBase
 {
     readonly id: string = randomUUID();
 
@@ -44,7 +47,7 @@ export class BtnMsg extends EventEmitter
      * Contains convenience methods for easier creation of messages with attached buttons  
      * Use `.on("press")` to listen for button presses
      * @param message The message or reply content
-     * @param buttons One or up to 5 MessageButton instances
+     * @param buttons Up to 5 MessageButton instances - customIDs will be managed by this BtnMsg
      */
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
@@ -75,7 +78,7 @@ export class BtnMsg extends EventEmitter
 
         this.btns = this.btns.map((b, i) => {
             if(!b.url)
-                b.customId = `${this.id}@${i}`;
+                b.setCustomId(`${this.id}@${i}`);
             return b;
         });
 
@@ -85,17 +88,27 @@ export class BtnMsg extends EventEmitter
 
         this.opts = { ...defaultOpts, ...options };
 
-        registerBtnMsg(this);
+        btnListener.addBtns(this.btns);
+        btnListener.on("press", (int, btn) => {
+            if(this.btns.find(b => b.customId === btn.customId))
+                this.emit("press", btn, int);
+        });
     }
 
-    /** Removes all listeners and triggers the registry to delete its reference to this instance */
+    /** Removes all listeners and triggers the registry to delete its reference to the buttons of this instance */
     public destroy()
     {
+        if(this.destroyed)
+            return;
+
+        this.destroyed = true;
+
         this.emit("destroy", this.btns.map(b => b.customId));
 
-        this.removeAllListeners("press");
-        this.removeAllListeners("timeout");
-        this.removeAllListeners("destroy");
+        this.eventNames()
+            .forEach(e => this.removeAllListeners(e));
+
+        btnListener.delBtns(this.btns.map(b => b.customId ?? "_"));
     }
 
     public getBtn(customId: string)
@@ -104,9 +117,9 @@ export class BtnMsg extends EventEmitter
     }
 
     /**
-     * Returns reply options that can be passed to the `CommandInteraction.reply()` function
+     * Returns reply options that can be passed to `CommandInteraction.reply()`
      * @example ```ts
-     * await int.reply(new BtnMsg(...).getReplyOpts())
+     * await int.reply(new BtnMsg().getReplyOpts())
      * ```
      */
     public getReplyOpts(): InteractionReplyOptions
@@ -117,7 +130,7 @@ export class BtnMsg extends EventEmitter
     /**
      * Returns message options that can be passed to the `TextBasedChannel.send()` function
      * @example ```ts
-     * await channel.send(new BtnMsg(...).getMsgOpts())
+     * await channel.send(new BtnMsg().getMsgOpts())
      * ```
      */
     public getMsgOpts(): MessageOptions

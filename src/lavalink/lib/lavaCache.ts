@@ -1,5 +1,3 @@
-import { prisma } from "@database/client";
-
 export interface Cache {
     [guildId: string]: {
         djOnly: boolean,

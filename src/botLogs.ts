@@ -10,6 +10,7 @@ export function init(client: Client)
     botLogsChannel = client?.guilds.cache.find(g => g.id === botLogs?.guild)?.channels.cache.find(ch => ch.id === botLogs?.channel) as TextBasedChannel | undefined;
 }
 
+/** @deprecated This needs to be overhauled */
 export async function sendLogMsg(msg: string | MessageEmbed | MessageEmbed[])
 {
     if(botLogsChannel)
