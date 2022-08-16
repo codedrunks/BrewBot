@@ -11,6 +11,7 @@
 - [Debugging](#debugging)
 - [Redis](#redis)
 - [Discord API quirks](#discord-api-quirks)
+    - [Markdown reference](#markdown-reference)
     - [Length limits](#length-limits)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
@@ -122,6 +123,7 @@ See `brewbot -h` for help.
 | `npm test` | runs the script at `src/test.ts` |
 | `npm run clearCommands` | clears all global and guild commands (takes a few minutes) |
 | `npm run deploy` | runs prisma deployment scripts and launches the bot without watching |
+| `npm run predeploy` | only runs prisma deployment scripts without launching the bot |
 | `npm run win-redis` | use this command on Windows devices to launch redis-server in a WSL window |
 
 <br>
@@ -151,6 +153,28 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 - If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
 
 <br>
+
+### Markdown reference
+Discord has multiple subsets of markdown, depending on the type of message.  
+They can be combined, but monospace and code blocks need to be on the innermost "layer".  
+  
+All messages can have:
+- Bold (`**text**`), italic (`*text*`), underline (`__text__`), strikethrough (`~~text~~`)
+- Monospace (\`text\`), code blocks (\`\`\`text\`\`\`)
+- Quotes (`> text`), multiline quotes (`>>> text`)
+
+<br>
+
+Interaction replies and MessageEmbeds (title, fields & description) can have:
+- Hyperlinks (`[text](url)`)
+
+<br>
+
+Markdown that isn't allowed anywhere:
+- Tables
+- HTML mixins (`<details>` etc)
+
+<br><br>
 
 ### Length limits
 | What | Limit |
