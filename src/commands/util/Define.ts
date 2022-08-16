@@ -1,9 +1,8 @@
 import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
-import axios from "axios";
 import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-import { rankVotes } from "@src/utils";
+import { followRedirects, rankVotes, axios } from "@src/utils";
 
 type WikiArticle = {
     title: string;
@@ -129,7 +128,7 @@ export class Define extends Command
                     iconURL: icons.urbandictionary,
                 });
 
-            const redirLink = await grabRedirectUrl(permalink);
+            const redirLink = await followRedirects(permalink);
 
             btns.push(new MessageButton()
                 .setStyle("LINK")
@@ -356,21 +355,6 @@ export class Define extends Command
         {
             void err;
         }
-    }
-}
-
-/** Follows redirects of a `url` and returns the final URL */
-async function grabRedirectUrl(url: string): Promise<string | null>
-{
-    try
-    {
-        const { request } = await axios.get(url);
-
-        return request?.res?.responseUrl ?? null;
-    }
-    catch(err)
-    {
-        return null;
     }
 }
 

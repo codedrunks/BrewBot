@@ -1,8 +1,8 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { settings } from "@src/settings";
 import { Command } from "@src/Command";
-import axios, { AxiosError } from "axios";
-import { embedify } from "@src/utils";
+import { AxiosError } from "axios";
+import { axios, embedify } from "@src/utils";
 
 export class Avatar extends Command
 {

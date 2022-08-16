@@ -1,5 +1,5 @@
 import { Message, User } from "discord.js";
-import axios from "axios";
+import { axios } from "@src/utils";
 
 interface ISkip {
     amount: number;

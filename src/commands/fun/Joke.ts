@@ -1,6 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
-import axios from "axios";
 import { Command } from "@src/Command";
+import { axios } from "@src/utils";
 import { settings } from "@src/settings";
 
 export type JokeType = "single" | "twopart";

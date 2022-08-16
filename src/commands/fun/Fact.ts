@@ -1,8 +1,8 @@
-import axios from "axios";
 import { CommandInteraction, MessageEmbed } from "discord.js";
 import { randomItem } from "svcorelib";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+import { axios } from "@src/utils";
 
 const titles = [
     "One useless fact, coming up",

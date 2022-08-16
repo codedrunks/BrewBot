@@ -1,9 +1,8 @@
 import { CommandInteraction, CommandInteractionOption, MessageButton, MessageEmbed } from "discord.js";
-import axios from "axios";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { Nullable } from "discord-api-types/utils/internals";
-import { embedify } from "@src/utils";
+import { axios, embedify } from "@src/utils";
 
 interface CheeseObj {
     name: string;
