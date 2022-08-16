@@ -91,7 +91,7 @@ export class Define extends Command
             if(req.status < 200 || req.status >= 300)
                 return await this.editReply(int, embedify("Couldn't reach Urban Dictionary. Please try again later.", settings.embedColors.error));
             if(!Array.isArray(results) || results.length === 0)
-                return await this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
+                return await this.editReply(int, embedify(`Couldn't find the term \`${term}\``, settings.embedColors.error));
 
             const obj = results?.at(0);
 
@@ -149,7 +149,7 @@ export class Define extends Command
             const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
                 reason === "offline"
                     ? "Couldn't reach Wikipedia. Please try again later."
-                    : "Couldn't find that term.",
+                    : `Couldn't find the term \`${term}\``,
                 settings.embedColors.error));
 
             const searchWiki = async (searchTerm: string): Promise<void> => {
@@ -209,7 +209,7 @@ export class Define extends Command
         //#SECTION dictionary
         case "dictionary":
         {
-            const termNotFound = () => this.editReply(int, embedify("Couldn't find that term.", settings.embedColors.error));
+            const termNotFound = () => this.editReply(int, embedify(`Couldn't find the term \`${term}\``, settings.embedColors.error));
             let res;
 
             try

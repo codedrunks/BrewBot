@@ -47,7 +47,7 @@ export class Translate extends Command
         const res = fuse.search(lang);
 
         if(res.length === 0)
-            return await this.reply(int, embedify("Couldn't find that language", settings.embedColors.error), true);
+            return await this.reply(int, embedify(`Couldn't find the language \`${lang}\``, settings.embedColors.error), true);
 
         const resLang = res[0].item;
 
