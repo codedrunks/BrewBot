@@ -26,7 +26,6 @@ module.exports = {
         // see https://github.com/eslint/eslint/issues/14538#issuecomment-862280037
         "indent": ["error", 4, { "ignoredNodes": ["VariableDeclaration[declarations.length=0]"] }],
         "@typescript-eslint/no-non-null-assertion": "off",
-        // disable 
         "@typescript-eslint/no-unused-vars": ["warn", { "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }],
     }
 };
