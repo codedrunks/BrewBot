@@ -25,9 +25,9 @@ async function init()
     if(!allOfType([ env.BOT_TOKEN, env.CLIENT_ID ], "string"))
         throw new Error("Missing environment variable(s). Please correct them according to the .env.template");
 
-    registerFont("assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
-    registerFont("assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
-    registerFont("assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
+    registerFont("src/assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
+    registerFont("src/assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
+    registerFont("src/assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
 
     await persistentData.init();
 
