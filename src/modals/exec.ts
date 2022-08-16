@@ -4,6 +4,7 @@ import { unused } from "svcorelib";
 import { BtnMsg } from "@utils/BtnMsg";
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
+import { truncField } from "@src/utils";
 
 export class ExecModal extends Modal
 {
@@ -64,8 +65,6 @@ export class ExecModal extends Modal
         const ebd = new MessageEmbed()
             .setTitle(`Execution ${error ? "Error" : "Result"}`)
             .setColor(error ? settings.embedColors.error : settings.embedColors.gameWon);
-
-        const truncField = (str: string) => str.length >= 1000 ? str.substring(0, 1000) + "..." : str;
 
         if(!error)
         {
