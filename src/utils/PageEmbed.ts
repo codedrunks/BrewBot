@@ -103,8 +103,8 @@ export class PageEmbed extends EmitterBase
 
             if(btIdx !== undefined)
             {
-                await int.deferUpdate();
                 await this.onPress(int, btIdx);
+                !int.deferred && await int.deferUpdate();
             }
         });
 

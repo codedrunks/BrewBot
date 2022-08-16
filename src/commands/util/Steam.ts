@@ -1,8 +1,16 @@
-import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedFieldData, Message, MessageEmbed } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
-import { axios, BtnMsg, ButtonOpts } from "@src/utils";
+import { axios, BtnMsg, embedify, PageEmbed, truncStr } from "@src/utils";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+
+const sortChoices = [
+    { name: "Alphabetically",  value: "alphabetical", display: "alphabetically" },
+    { name: "Time played",     value: "time",         display: "by time played" },
+    { name: "Recent activity", value: "recent",       display: "by recent activity" },
+];
+
+type SortType = "alphabetical" | "time" | "recent";
 
 export class Steam extends Command
 {
@@ -23,21 +31,26 @@ export class Steam extends Command
                             name: "username",
                             desc: "Whose info to look up - case sensitive",
                             required: true,
-                        }
+                        },
                     ],
                 },
                 {
-                    name: "gamelist",
+                    name: "games",
                     desc: "Lists all the games of a Steam user",
                     args: [
                         {
                             name: "username",
                             desc: "Whose info to look up - case sensitive",
                             required: true,
-                        }
+                        },
+                        {
+                            name: "sort",
+                            desc: "How to sort the list of games",
+                            choices: sortChoices.map(({ name, value }) => ({ name, value })),
+                        },
                     ],
-                }
-            ]
+                },
+            ],
         });
 
         this.api = new SteamAPI(process.env.STEAM_TOKEN ?? "ERR_NO_ENV");
@@ -52,12 +65,12 @@ export class Steam extends Command
 
         try
         {
-            const username = int.options.getString("username");
+            const username = int.options.getString("username", true);
 
             const { data, status } = await axios.get(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${process.env.STEAM_TOKEN}&vanityurl=${username}`);
 
             if(status < 200 || status >= 300 || data.response.success !== 1)
-                return await this.editReply(int, "Couldn't find a user with that name");
+                return await this.editReply(int, embedify("Couldn't find a user with that name", settings.embedColors.error));
 
             const usrId = data.response.steamid as string;
 
@@ -113,93 +126,93 @@ export class Steam extends Command
                 await int.editReply({ ...bm.getReplyOpts() });
                 break;
             }
-            case "gamelist":
+            case "games":
             {
-                const gamesPerMsg = 40;
+                const gamesPerPage = 20;
+
+                const sort = int.options.getString("sort") as SortType ?? "alphabetical";
 
                 const embeds: MessageEmbed[] = [];
-                const games = await this.api.getUserOwnedGames(usrId);
+                const games = sort === "recent"
+                    ? await this.api.getUserRecentGames(usrId)
+                    : await this.api.getUserOwnedGames(usrId);
 
                 if(Array.isArray(games) && games.length > 0)
                 {
-                    const totalPages = Math.ceil((games.length - 1) / gamesPerMsg);
+                    const totalPages = Math.ceil((games.length - 1) / gamesPerPage);
 
-                    const ebdGames = [...games.sort((a, b) => a.name > b.name ? 1 : -1)];
+                    const ebdGames = this.sortGames(games, sort);
+
                     let pageNbr = 0;
 
                     while(ebdGames.length > 0)
                     {
                         pageNbr++;
-                        const eRoles = ebdGames.splice(0, gamesPerMsg);
+                        const eRoles = ebdGames.splice(0, gamesPerPage);
 
                         const half = Math.ceil(eRoles.length / 2);
                         const first = eRoles.slice(0, half);
                         const second = eRoles.slice((eRoles.length - half) * -1);
 
-                        const toField = (games: Game[]): EmbedFieldData => ({ name: "\u200B", value: games.map(g => `${g.name} (${(g.playTime / 60).toFixed(1)}h)`).join("\n"), inline: true });
+                        const toField = (games: Game[]): EmbedFieldData => {
+                            const maxNameLen = 30;
+
+                            const getVal = (withLinks = false) =>
+                                games.map(g => `${withLinks ? `[${truncStr(g.name, maxNameLen, "…")}](https://store.steampowered.com/app/${g.appID})` : truncStr(g.name, maxNameLen, "…")} (${(g.playTime / 60).toFixed(1)}h)`).join("\n");
+
+                            const val = getVal(true);
+
+                            return {
+                                name: "\u200B",
+                                value: val.length < 1024 ? val : getVal(false),
+                                inline: true,
+                            };
+                        };
+
+                        let ebdTitle = "Steam games";
+
+                        if(sort === "recent")
+                            ebdTitle = "Recent Steam games";
 
                         const pageDisp = totalPages > 1 ? ` (${pageNbr}/${totalPages})` : "";
+                        const sortedDisp = ` - sorted ${sortChoices.find(s => s.value === sort)!.display.toLowerCase()}`;
+                        const showingDisp = games.length > gamesPerPage ? `- showing: ${gamesPerPage}` : "";
+
+                        const fields = games.length <= (gamesPerPage / 2)
+                            ? [ toField(first.concat(second)) ]
+                            : [ toField(first), toField(second) ];
 
                         embeds.push(new MessageEmbed()
-                            .setTitle(`Showing Steam games of **${nickname}**${pageDisp}:`)
+                            .setTitle(`${ebdTitle} of **${nickname}**${pageDisp}:`)
                             .setColor(settings.embedColors.default)
-                            .setFields([ toField(first), toField(second) ])
-                            .setFooter({ text: `${pageDisp} - Total games: ${games.length}` })
+                            .setFields(fields)
+                            .setFooter({ text: `${pageDisp}${pageDisp.length > 0 ? " - " : ""}total games: ${games.length} ${showingDisp}${sortedDisp}` })
                         );
                     }
 
-                    const btns: ButtonOpts = [
-                        { emoji: "⏮️", style: "SECONDARY", label: "First" },
-                        { emoji: "⬅️", style: "PRIMARY",   label: "Previous" },
-                        { emoji: "➡️", style: "PRIMARY",   label: "Next" },
-                        { emoji: "⏭️", style: "SECONDARY", label: "Last" },
-                    ];
+                    const m = await int.fetchReply();
+                    const msg = m instanceof Message ? m : undefined;
 
-                    const bm = new BtnMsg(embeds[0], btns);
-
-                    let ebdIdx = 0;
-
-                    bm.on("press", async (btn, btInt) => {
-                        if(btInt.user.id !== int.user.id && btInt.createdTimestamp - int.createdTimestamp < 1000 * 60)
-                            return await btInt.reply({ content: "You can't interact with this yet.\nPlease wait a minute or send the command yourself.", ephemeral: true });
-
-                        switch(btn.label)
-                        {
-                        case "First":
-                            ebdIdx = 0;
-                            break;
-                        case "Previous":
-                            ebdIdx--;
-                            if(ebdIdx < 0)
-                                ebdIdx = embeds.length - 1;
-                            break;
-                        case "Next":
-                            ebdIdx++;
-                            if(ebdIdx >= embeds.length)
-                                ebdIdx = 0;
-                            break;
-                        case "Last":
-                            ebdIdx = embeds.length - 1;
-                            break;
-                        }
-
-                        await btInt.deferUpdate();
-
-                        await int.editReply({ ...bm.getReplyOpts(), embeds: [ embeds[ebdIdx] ] });
+                    const pe = new PageEmbed(embeds, int.user.id, {
+                        allowAllUsersTimeout: 1000 * 60,
+                        goToPageBtn: msg && embeds.length > 5,
+                        timeout: 1000 * 60 * 10,
                     });
 
-                    bm.on("timeout", async () => {
-                        await int.editReply({ components: [], embeds: [ embeds[ebdIdx] ] });
-                    });
+                    const updatePageEbd = () => int.editReply(pe.getMsgProps());
 
-                    await int.editReply({ ...bm.getReplyOpts(), embeds: [ embeds[0] ] });
+                    msg && pe.setMsg(msg);
+                    pe.setPageIdx(0);
+
+                    pe.on("press", updatePageEbd);
+                    await updatePageEbd();
                 }
             }
             }
         }
         catch(err)
         {
-            await this.editReply(int, "Can't connect to the Steam API. Please try again later.");
+            await this.editReply(int, embedify("Can't connect to the Steam API. Please try again later.", settings.embedColors.error));
         }
     }
 
@@ -208,5 +221,25 @@ export class Steam extends Command
         const { data, status } = await axios.get(`https://restcountries.com/v2/alpha/${code}`);
 
         return status >= 200 && status < 300 ? data?.name : undefined;
+    }
+
+    sortGames(games: SteamAPI.Game[], type: SortType)
+    {
+        let sortFn: (a: SteamAPI.Game, b: SteamAPI.Game) => boolean;
+
+        switch(type)
+        {
+        case "alphabetical":
+            sortFn = (a, b) => a.name.localeCompare(b.name) > -1 ? true : false;
+            break;
+        case "time":
+            sortFn = (a, b) => a.playTime < b.playTime;
+            break;
+        case "recent":
+            sortFn = (a, b) => a.playTime2 < b.playTime2;
+            break;
+        }
+
+        return [...games].sort((a, b) => sortFn(a, b) ? 1 : -1);
     }
 }
