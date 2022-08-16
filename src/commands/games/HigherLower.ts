@@ -108,7 +108,7 @@ export class HigherLower extends Command
 
                 await msg.edit({ embeds: [
                     this.baseEmbed(author)
-                        .setColor(settings.embedColors.gameWon)
+                        .setColor(settings.embedColors.success)
                         .setDescription(`Congratulations! You guessed the number **${randNum}** after ${guessesAmt} guess${guessesAmt === 1 ? "" : "es"}.`)
                         .setFooter(null)
                 ] });

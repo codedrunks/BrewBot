@@ -19,13 +19,13 @@ model User {
 }
 
 model Reminder {
-  reminderId   Int
-  guild        String?
-  channel      String?
-  name         String
-  dueTimestamp Int
-  User         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
+  reminderId Int
+  userId     String
+  name       String
+  dueTime    DateTime
+  guild      String?
+  channel    String?
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([reminderId, userId])
 }

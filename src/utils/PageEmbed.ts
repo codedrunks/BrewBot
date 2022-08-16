@@ -132,7 +132,7 @@ export class PageEmbed extends EmitterBase
         {
             const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
 
-            setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.gameWon)),
+            setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.success)),
                 clamp(useIn - Date.now(), 0, Number.MAX_SAFE_INTEGER));
 
             return int.reply({

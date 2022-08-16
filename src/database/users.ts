@@ -1,6 +1,8 @@
 import { Reminder, User } from "@prisma/client";
 import { prisma } from "@database/client";
 
+//#MARKER users
+
 /** Gets user via ID */
 export async function getUser(userId: string): Promise<User | null> {
     const user = await prisma.user.findUnique({
@@ -45,26 +47,44 @@ export async function createNewUser(userId: string, guildId: string, coins?: num
     });
 }
 
+//#MARKER reminders
+
 /** Gets all reminders via user ID */
 export async function getReminders(userId: string): Promise<Reminder[] | null> {
-    const reminders = await prisma.reminder.findMany({
+    return await prisma.reminder.findMany({
         where: {
             userId,
         },
+        orderBy: {
+            dueTime: "asc",
+        },
     });
-
-    return reminders;
 }
 
 /** Gets a specific reminder via its ID */
-export async function getReminder(reminderId: number): Promise<Reminder | null> {
-    const reminder = await prisma.reminder.findFirst({
+export async function getReminder(reminderId: number, userId: string): Promise<Reminder | null> {
+    return await prisma.reminder.findUnique({
         where: {
-            reminderId,
+            reminderId_userId: {
+                reminderId,
+                userId,
+            },
         },
     });
+}
 
-    return reminder;
+/** Gets all expired reminders */
+export async function getExpiredReminders(): Promise<Reminder[] | null> {
+    return await prisma.reminder.findMany({
+        where: {
+            dueTime: {
+                lt: new Date(),
+            },
+        },
+        orderBy: {
+            dueTime: "asc",
+        },
+    });
 }
 
 /** Adds or updates a reminder */
@@ -72,7 +92,10 @@ export async function setReminder(rem: Reminder): Promise<void>
 {
     await prisma.reminder.upsert({
         where: {
-            reminderId: rem.reminderId,
+            reminderId_userId: {
+                reminderId: rem.reminderId,
+                userId: rem.userId,
+            }
         },
         update: {
             ...rem,
@@ -83,21 +106,23 @@ export async function setReminder(rem: Reminder): Promise<void>
     });
 }
 
-/** Deletes one or multiple reminders by their ID */
-export async function deleteReminder(reminderId: number | number[]): Promise<void>
+/** Deletes one reminder by its ID */
+export async function deleteReminder(reminderId: number, userId: string): Promise<void>
 {
-    if(Array.isArray(reminderId))
-        await prisma.reminder.deleteMany({
-            where: {
-                reminderId: {
-                    in: reminderId,
-                },
+    await deleteReminders([reminderId], userId);
+}
+
+/** Deletes multiple reminders by their ID */
+export async function deleteReminders(reminderIds: number[], userId: string): Promise<void>
+{
+    await prisma.reminder.deleteMany({
+        where: {
+            reminderId: {
+                in: reminderIds,
             },
-        });
-    else
-        await prisma.reminder.delete({
-            where: {
-                reminderId: reminderId,
-            },
-        });
+            userId: {
+                in: userId,
+            }
+        },
+    });
 }

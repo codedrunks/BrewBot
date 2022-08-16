@@ -93,6 +93,11 @@ export class BtnMsg extends EmitterBase
             if(this.btns.find(b => b.customId === btn.customId))
                 this.emit("press", btn, int);
         });
+
+        this.opts.timeout > 0 && setTimeout(() => {
+            this.emit("timeout");
+            this.destroy();
+        }, this.opts.timeout);
     }
 
     /** Removes all listeners and triggers the registry to delete its reference to the buttons of this instance */
@@ -135,7 +140,9 @@ export class BtnMsg extends EmitterBase
      */
     public getMsgOpts(): MessageOptions
     {
-        const btns: Partial<MessageOptions> = { components: [ this.toMessageActionRow() ]};
+        const actRow = this.toMessageActionRow();
+
+        const btns: Partial<MessageOptions> = { components: actRow ? [ actRow ] : [] };
 
         return Array.isArray(this.msg) ? {
             embeds: this.msg,
@@ -152,9 +159,10 @@ export class BtnMsg extends EmitterBase
         return channel.send(this.getMsgOpts());
     }
 
-    protected toMessageActionRow(): MessageActionRow
+    protected toMessageActionRow(): MessageActionRow | undefined
     {
-        return new MessageActionRow()
-            .addComponents(this.btns);
+        if(this.btns.length > 0 && !this.destroyed)
+            return new MessageActionRow()
+                .addComponents(this.btns);
     }
 }

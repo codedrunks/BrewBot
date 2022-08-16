@@ -64,7 +64,7 @@ export class ExecModal extends Modal
 
         const ebd = new MessageEmbed()
             .setTitle(`Execution ${error ? "Error" : "Result"}`)
-            .setColor(error ? settings.embedColors.error : settings.embedColors.gameWon);
+            .setColor(error ? settings.embedColors.error : settings.embedColors.success);
 
         if(!error)
         {

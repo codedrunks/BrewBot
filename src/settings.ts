@@ -39,9 +39,9 @@ export const settings: Settings = {
     },
     embedColors: {
         default: "#faba05",
-        gameWon: "GREEN",
+        success: "GREEN",
         gameLost: "GREY",
-        warning: "YELLOW",
+        warning: "DARK_ORANGE",
         error: "DARK_RED",
         contestWinner: "GOLD",
     },
@@ -83,7 +83,7 @@ interface Settings {
     }
     embedColors: {
         default: ColorResolvable;
-        gameWon: ColorResolvable;
+        success: ColorResolvable;
         gameLost: ColorResolvable;
         warning: ColorResolvable;
         error: ColorResolvable;
