@@ -24,7 +24,7 @@ export class Translate extends Command
                 },
                 {
                     name: "language",
-                    desc: "Name of the language to translate to",
+                    desc: "English name of the language to translate to",
                     required: true,
                 }
             ]
@@ -36,13 +36,13 @@ export class Translate extends Command
         const text = int.options.getString("text", true).trim();
         const lang = int.options.getString("language", true).trim();
 
-        const fuse = new Fuse(
-            Object.entries(languages).map(([k, v]) => ({ code: k, name: v })),
-            {
-                keys: [ "name" ],
-                threshold: 0.5,
-            }
-        );
+        const langs = Object.entries(languages)
+            .map(([name, code]) => ({ name, code }));
+
+        const fuse = new Fuse(langs, {
+            keys: [ "name" ],
+            threshold: 0.5,
+        });
 
         const res = fuse.search(lang);
 
@@ -60,12 +60,13 @@ export class Translate extends Command
 
         const { fromLang, translation } = tr;
 
-        const fromLangName = (languages as Record<string, string>)[fromLang];
+        const fromLangName = Object.entries(languages).find(([_n, code]) => code === fromLang)?.[0];
+        const toLangName = Object.entries(languages).find(([_n, code]) => code === resLang.code)?.[0];
 
         const ebd = new MessageEmbed()
-            .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${resLang.name}**:`)
+            .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${toLangName}**:`)
             .setColor(settings.embedColors.default)
-            .setDescription(`> **Text:**\n> ${text}\n\n> **Translation:**\n> ${translation}`);
+            .setDescription(`> **Translation:**\n> ${translation}\n\n> **Original text:**\n> ${text}`);
 
         return await this.editReply(int, ebd);
     }
@@ -74,16 +75,16 @@ export class Translate extends Command
     {
         try
         {
-            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&ie=UTF-8&oe=UTF-8&sl=auto&tl=${targetLang}&q=${encodeURI(text)}`);
+            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?sl=auto&tl=${targetLang}&q=${encodeURI(text)}&client=gtx&dt=t&ie=UTF-8&oe=UTF-8`);
 
             if(status < 200 || status >= 300)
                 return null;
 
-            let fromLang = data?.[2];
+            const fromLang = data?.[2];
             const translation = data?.[0]?.[0]?.[0];
 
-            if(fromLang.match(/^\w+-\w+$/))
-                fromLang = fromLang.split("-")[0];
+            // if(fromLang.match(/^\w+-\w+$/))
+            //     fromLang = fromLang.split("-")[0];
 
             return allOfType([fromLang, translation], "string") ? { fromLang, translation } : null;
         }
