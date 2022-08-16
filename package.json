@@ -14,13 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jabrils-Discord-Server/bot.git"
+    "url": "git+https://github.com/codedrunks/BrewBot.git"
   },
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/Jabrils-Discord-Server/bot/issues"
+    "url": "https://github.com/codedrunks/BrewBot/issues"
   },
-  "homepage": "https://github.com/Jabrils-Discord-Server/bot#readme",
+  "homepage": "https://github.com/codedrunks/BrewBot#readme",
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^17.0.23",
