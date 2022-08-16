@@ -1,11 +1,8 @@
 import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { setCoins } from "@database/economy";
-import { settings } from "@src/settings";
 import { embedify } from "@utils/embedify";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-
-const { devs } = settings;
 
 export class SetBalance extends Command {
     constructor() {
@@ -26,7 +23,8 @@ export class SetBalance extends Command {
                     desc: "The user who's balance you wish to set"
                 }
             ],
-            memberPerms: [ PermissionFlagsBits.Administrator ]
+            memberPerms: [ PermissionFlagsBits.Administrator ],
+            devOnly: true,
         });
     }
 
@@ -36,8 +34,6 @@ export class SetBalance extends Command {
         if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
-
-        if(!devs.includes(int.user.id)) return this.reply(int, embedify("Only devs can use this command."), true);
         
         if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."), true);
 

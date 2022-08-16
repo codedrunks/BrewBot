@@ -21,7 +21,8 @@ export class Exec extends Command
                 }
             ],
             perms: [ "ADMINISTRATOR" ],
-            memberPerms: [ PermissionFlagsBits.Administrator ]
+            memberPerms: [ PermissionFlagsBits.Administrator ],
+            devOnly: true,
         });
 
         this.enabled = settings.commands.execEnabled;

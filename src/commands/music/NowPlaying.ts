@@ -1,9 +1,8 @@
 import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
-import { embedify, musicReadableTimeString } from "@utils/index";
+import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
-import { BtnMsg } from "@utils/BtnMsg";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
 import { fetchLyricsUrl } from "./global.music";
 

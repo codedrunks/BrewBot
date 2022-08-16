@@ -34,9 +34,6 @@ export class ExecModal extends Modal
             MessageEmbed, MessageButton, BtnMsg
         );
 
-        if(!settings.devs.includes(int.user.id))
-            return await this.reply(int, "You can't use this command.");
-
         const code = int.fields.getTextInputValue("code").trim();
 
         await this.deferReply(int, this.ephemeral);

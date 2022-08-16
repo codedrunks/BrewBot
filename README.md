@@ -101,11 +101,9 @@ redis-cli config set save ""
 redis-cli config rewrite
 ```
   
-After it was installed on the default WSL shell, if you want Redis to automatically launch and run in the background on Windows, follow these steps:
-1. Create a new task in Task Scheduler that runs `src/tools/redis.bat` whenever your user logs on, [see guide](https://winaero.com/run-app-or-script-at-logon-with-task-scheduler-in-windows-10/#How_to_Run_App_or_Script_at_Logon_with_Task_Scheduler_in_Windows_10)
-2. Under "General > Security options", click "Change User or Group", type in `SYSTEM` in the bottom text field and click Ok
-    - Note that this grants the .bat file full admin perms
-3. Right-click the finished task and click "Run", now you can start the bot as usual
+After it was installed on the default WSL shell, if you want Redis to automatically launch on Windows startup, you can use Task Scheduler.  
+Create a new task (not basic task) in Task Scheduler that runs `src/tools/redis.bat` whenever your user logs on, [see guide.](https://winaero.com/run-app-or-script-at-logon-with-task-scheduler-in-windows-10/#How_to_Run_App_or_Script_at_Logon_with_Task_Scheduler_in_Windows_10)  
+Then, right-click the finished task and click "Run" to test it.
 
 <br>
 
@@ -228,18 +226,6 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 > #### Methods:
 > - `submit()` is executed when the user submitted the modal - this method needs to be overridden in a sub-class
 > - `getInternalModal()` returns the modal object that needs to be passed to an interaction's `showModal()` method
-> 
-> #### Events:
-> - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance
-
-<br>
-
-> ### PageEmbed
-> This is a helper class that manages a MessageEmbed with multiple pages, which are navigable by buttons.  
-> The pages are dynamic and can be modified at any time.
-> 
-> #### Methods:
-> - ``
 > 
 > #### Events:
 > - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance

@@ -136,17 +136,16 @@ export class Slots extends Command
             result.push(rand);
         }
 
-        await subCoins(int.user.id, int.guild.id, bet);
-
         await this.editReply(int, resultStr);
 
         const win = this.checkWin(result, grid);
 
         if (win) {
-            const coinsWon = bet + (bet * this.SLOTS.get(win)!);
+            const coinsWon = Math.round(bet * this.SLOTS.get(win)!);
             await addCoins(int.user.id, int.guild.id, coinsWon);
-            return await this.followUpReply(int, embedify(`Congratulations!\nYou win ${coinsWon} coins`));
+            return await this.followUpReply(int, embedify(`Congratulations!\nYou win ${coinsWon + bet} coins`));
         } else {
+            await subCoins(int.user.id, int.guild.id, bet);
             return await this.followUpReply(int, embedify(`You lost ${bet} coins. Better luck next time`));
         }
     }
