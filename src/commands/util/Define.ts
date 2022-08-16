@@ -23,9 +23,9 @@ type DictEntry = {
 
 // TODO: change to raw.githubuserimages url after making the repo public
 const icons = {
-    dictionary: "https://i.postimg.cc/QF6f8Vry/dictionary.png",
-    wikipedia: "https://i.postimg.cc/KKRJRFGv/wikipedia.png",
-    urbandictionary: "https://i.postimg.cc/R3yGt8h1/urbandictionary.png",
+    dictionary: "https://raw.githubusercontent.com/codedrunks/BrewBot/main/src/assets/external/dictionary.png",
+    wikipedia: "https://raw.githubusercontent.com/codedrunks/BrewBot/main/src/assets/external/wikipedia.png",
+    urbandictionary: "https://raw.githubusercontent.com/codedrunks/BrewBot/main/src/assets/external/urbandictionary.png",
 };
 
 export class Define extends Command
