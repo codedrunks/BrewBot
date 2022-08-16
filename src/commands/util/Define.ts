@@ -21,7 +21,6 @@ type DictEntry = {
     source: string;
 };
 
-// TODO: change to raw.githubuserimages url after making the repo public
 const icons = {
     dictionary: "https://raw.githubusercontent.com/codedrunks/BrewBot/main/src/assets/external/dictionary.png",
     wikipedia: "https://raw.githubusercontent.com/codedrunks/BrewBot/main/src/assets/external/wikipedia.png",
