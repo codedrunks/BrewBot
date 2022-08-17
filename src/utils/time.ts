@@ -18,3 +18,9 @@ export function musicReadableTimeString(position: ParseDurationResult, duration:
 
     return `${positionString}/${durationString}`;
 }
+
+/** Turns a Date instance or unix13 timestamp into a unix10 timestamp */
+export function toUnix10(time: Date | number)
+{
+    return Math.floor((typeof time === "number" ? time : time.getTime()) / 1000);
+}
