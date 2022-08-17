@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@utils/index";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
-import { createNewUser, getUser } from "@database/users";
+import { createNewMember, getMember } from "@database/users";
 import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
 import { randomItem } from "svcorelib";
 
@@ -29,9 +29,9 @@ export class Work extends Command {
 
         const now = nowInSeconds();
 
-        const userInDB = await getUser(userid);
+        const memberInDB = await getMember(guildid, userid);
 
-        if(!userInDB) await createNewUser(userid, guildid);
+        if(!memberInDB) await createNewMember(guildid, userid);
 
         const lastwork = await getLastWork(userid, guildid);
 

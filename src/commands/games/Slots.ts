@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { getCoins, subCoins, addCoins } from "@database/economy";
 import { embedify } from "@utils/embedify";
-import { createNewUser } from "@src/database/users";
+import { createNewMember } from "@src/database/users";
 
 export class Slots extends Command
 {
@@ -111,7 +111,7 @@ export class Slots extends Command
         const coins = await getCoins(int.user.id, int.guild.id);
 
         if (!coins && coins != 0) {
-            return await createNewUser(int.user.id, int.guild.id);
+            return await createNewMember(int.guild.id, int.user.id);
         }
 
         const bet = int.options.getNumber("bet", true);

@@ -11,11 +11,21 @@ datasource db {
 }
 
 //#MARKER users
+// global user
 model User {
-  id        String     @id
-  coins     Coins[]
+  id        String     @id @unique
   reminders Reminder[]
-  bonus     Bonus[]
+}
+
+// guild member
+model Member {
+  guildId  String    @unique
+  userId   String    @unique
+  coins    Coins[]
+  bonus    Bonus[]
+  warnings Warning[]
+
+  @@id([guildId, userId])
 }
 
 model Reminder {
@@ -30,6 +40,17 @@ model Reminder {
   @@id([reminderId, userId])
 }
 
+model Warning {
+  warningId Int
+  userId    String
+  reason    String
+  warnedBy  String
+  timestamp DateTime
+  Member    Member   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@id([warningId, userId])
+}
+
 //#MARKER economy
 // cooldowns for economy, this is how coins are 'minted'
 model Bonus {
@@ -37,17 +58,19 @@ model Bonus {
   userId     String
   lastdaily  Int?
   lastwork   Int?
-  totalworks Int    @default(0)
-  User       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalworks Int     @default(0)
+  Member     Member  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  memberId   String?
 
   @@id([guildId, userId])
 }
 
 model Coins {
-  guildId String
-  userId  String
-  amount  Int    @default(0)
-  User    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guildId  String
+  userId   String
+  amount   Int     @default(0)
+  Member   Member? @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  memberId String?
 
   @@id([guildId, userId])
 }
@@ -61,6 +84,7 @@ model Guild {
   djOnly           Boolean?  @default(false)
   premium          Boolean?  @default(false)
   contests         Contest[]
+  botLogChannel    String?
 }
 
 //#SECTION contest

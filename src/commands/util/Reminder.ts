@@ -163,12 +163,7 @@ export class Reminder extends Command
                     : 1;
 
                 if(!await getUser(user.id))
-                {
-                    if(!guild)
-                        return await this.editReply(int, embedify("Please use this command once inside a guild.", settings.embedColors.error));
-
-                    await createNewUser(user.id, guild.id);
-                }
+                    await createNewUser(user.id);
 
                 const dueTimestamp = new Date(Date.now() + dueInMs);
 

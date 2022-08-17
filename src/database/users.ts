@@ -1,4 +1,4 @@
-import { Reminder, User } from "@prisma/client";
+import { Member, Reminder, User } from "@prisma/client";
 import { prisma } from "@database/client";
 
 //#MARKER users
@@ -24,7 +24,7 @@ export async function deleteUser(userId: string) {
 }
 
 /** Add new user to the database if they do not exist already */
-export async function createNewUser(userId: string, guildId: string, coins?: number) {
+export async function createNewUser(userId: string) {
     await prisma.user.upsert({
         where: {
             id: userId
@@ -32,6 +32,49 @@ export async function createNewUser(userId: string, guildId: string, coins?: num
         update: {},
         create: {
             id: userId,
+        },
+    });
+}
+
+//#MARKER members
+
+/** Gets member via ID */
+export async function getMember(guildId: string, userId: string): Promise<Member | null> {
+    return await prisma.member.findUnique({
+        where: {
+            guildId_userId: {
+                guildId,
+                userId,
+            },
+        },
+    });
+}
+
+/** Remove member from the database */
+export async function deleteMember(guildId: string, userId: string) {
+    await prisma.member.delete({
+        where: {
+            guildId_userId: {
+                guildId,
+                userId,
+            },
+        },
+    }).catch(); // this will be updated once prisma implements a doesNotExist thing
+}
+
+/** Add new member to the database if they do not exist already */
+export async function createNewMember(guildId: string, memberId: string, coins?: number) {
+    await prisma.member.upsert({
+        where: {
+            guildId_userId: {
+                userId: memberId,
+                guildId,
+            },
+        },
+        update: {},
+        create: {
+            userId: memberId,
+            guildId,
             coins: {
                 create: {
                     guildId,
