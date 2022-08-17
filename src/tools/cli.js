@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-// i like this file's name
-
 const yargs = require("yargs");
 const { readFile } = require("fs-extra");
 const { resolve } = require("path");
@@ -52,6 +50,9 @@ async function run()
         command = "npm run deploy";
         break;
     default:
+        if(typeof cmd !== "string")
+            return console.log(`${k.yellow("Please enter a command to run.")}\nUse ${k.underline("brewbot -h")} for a list of commands.`);
+
         throw new Error(`Unrecognized command "${cmd}"`);
     }
 
@@ -74,7 +75,7 @@ async function prepareCLI()
         .alias("h", "help");
 
     //#SECTION commands
-    yargs.command([ "start", "run" ], `Starts BrewBot (like ${k.gray("npm start")} - use ${k.gray("-w")} to watch for changes)`, cmd => 
+    yargs.command([ "start", "run" ], `Starts BrewBot (like ${k.gray("npm start")}, use ${k.gray("-w")} to watch for changes)`, cmd => 
         cmd.option("watch", {
             describe: "Watches for file changes to automatically restart the bot",
             alias: "w",
