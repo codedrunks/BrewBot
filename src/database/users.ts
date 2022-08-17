@@ -56,7 +56,7 @@ export async function getReminders(userId: string): Promise<Reminder[] | null> {
             userId,
         },
         orderBy: {
-            dueTime: "asc",
+            dueTimestamp: "asc",
         },
     });
 }
@@ -77,12 +77,12 @@ export async function getReminder(reminderId: number, userId: string): Promise<R
 export async function getExpiredReminders(): Promise<Reminder[] | null> {
     return await prisma.reminder.findMany({
         where: {
-            dueTime: {
+            dueTimestamp: {
                 lt: new Date(),
             },
         },
         orderBy: {
-            dueTime: "asc",
+            dueTimestamp: "asc",
         },
     });
 }
