@@ -90,8 +90,10 @@ export class BtnMsg extends EmitterBase
 
         btnListener.addBtns(this.btns);
 
-        btnListener.on("press", this.onPress);
-        this.once("destroy", () => btnListener.removeListener("press", this.onPress));
+        const onPress = (int: ButtonInteraction, btn: MessageButton) => this.onPress(int, btn);
+        
+        btnListener.on("press", onPress);
+        this.once("destroy", () => btnListener.removeListener("press", onPress));
 
         this.opts.timeout > 0 && setTimeout(() => {
             this.emit("timeout");

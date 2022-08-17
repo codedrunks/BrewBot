@@ -95,8 +95,10 @@ export class PageEmbed extends EmitterBase
 
         btnListener.addBtns(this.btns);
 
-        btnListener.on("press", this.onPress);
-        this.once("destroy", () => btnListener.removeListener("press", this.onPress));
+        const onPress = (int: ButtonInteraction, btn: MessageButton) => this.onPress(int, btn);
+
+        btnListener.on("press", onPress);
+        this.once("destroy", () => btnListener.removeListener("press", onPress));
 
         this.authorId = authorId;
 
