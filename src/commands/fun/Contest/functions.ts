@@ -1,27 +1,36 @@
 import { hyperlink, roleMention, time, userMention } from "@discordjs/builders";
-import { Contest, ContestSubmission, Guild } from "@prisma/client";
+import { Contest, ContestSubmission, Guild, GuildSettings } from "@prisma/client";
 import { checkContestTimes, getContestWinners } from "@database/contest";
 import { settings } from "@src/settings";
 import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
+import { getGuildSettings, getMultipleGuildSettings } from "@src/database/guild";
 
 export async function doContestStuff(cl: Client) {
     console.log("checking contest stuff");
     const { starting, ending } = await checkContestTimes();
 
-    runStartingContestsJobs(cl, starting);
+    const allGuildSettings = await getMultipleGuildSettings(starting.map(c => c.guildId));
+
+    const getStarting = (st: (Contest & { guild: Guild })[]) =>
+        st.map(c => ({
+            ...c,
+            guildSettings: allGuildSettings.find(gs => gs.guildId === c.guildId),
+        }));
+
+    runStartingContestsJobs(cl, getStarting(starting));
     runEndingContestsJobs(cl, ending);
 
     setInterval(async () => {
         console.log("checking contest stuff");
         const { starting, ending } = await checkContestTimes();
 
-        runStartingContestsJobs(cl, starting);
+        runStartingContestsJobs(cl, getStarting(starting));
         runEndingContestsJobs(cl, ending);
     }, 3600000);
 }
 
-function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild })[]) {
-    starting.forEach(contest => {
+async function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild, guildSettings?: GuildSettings })[]) {
+    for await(const contest of starting) {
         console.log("getting ready to start contest: " + contest.id);
         const timeTillStart = contest.startDate.getTime() - new Date().getTime();
 
@@ -36,17 +45,22 @@ function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild
             .addField("End", time(contest.endDate), true)
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
+        const guildSettings = await getGuildSettings(contest.guild.id);
+
+        if(!guildSettings)
+            return; // TODO: error msg?
+
         setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "New Contest"),
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "New Contest"),
                 embeds: [embed]
             });
         }, timeTillStart);
-    });
+    }
 }
 
-function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[]) {
-    ending.forEach(contest => {
+async function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[]) {
+    for await(const contest of ending) {
         console.log("getting ready to end contest: " + contest.id);
         const timeTillEnd = contest.endDate.getTime() - new Date().getTime();
 
@@ -76,10 +90,14 @@ function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, su
             .addField("Submissions", submissions)
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
+        const guildSettings = await getGuildSettings(contest.guild.id);
+
+        if(!guildSettings)
+            return; // TODO: error msg?
 
         setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Voting Started"),
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "Voting Started"),
                 embeds: [votingEmbed]
             });
         }, timeTillEnd);
@@ -170,10 +188,10 @@ function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, su
                 .addField("Result", winnersResult)
                 .setFooter({ text: `Contest ID: ${contest.id}` });
 
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Winner Announcement"),
-                embeds: [winnerEmbed]
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "Winner Announcement"),
+                embeds: [winnerEmbed],
             });
         }, 24 * 3600 * 1000);
-    });
+    }
 }

@@ -52,3 +52,14 @@ export function getGuildSettings(guildId: string)
         },
     });
 }
+
+export function getMultipleGuildSettings(guildIds: string[])
+{
+    return prisma.guildSettings.findMany({
+        where: {
+            guildId: {
+                in: guildIds,
+            },
+        },
+    });
+}

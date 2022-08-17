@@ -59,22 +59,22 @@ run()
 
 async function prepareDb()
 {
-    const hasContChan = (await prisma.guild.findUnique({
+    const hasContChan = (await prisma.guildSettings.findUnique({
         where: {
-            id: guildId,
+            guildId,
         },
     }))?.contestChannelId;
 
-    !hasContChan && await prisma.guild.upsert({
+    !hasContChan && await prisma.guildSettings.upsert({
         where: {
-            id: guildId
+            guildId,
         },
         update: {
             contestChannelId: "715561909482422363"
         },
         create: {
-            id: guildId,
+            guildId,
             contestChannelId: "715561909482422363"
-        }
+        },
     });
 }
