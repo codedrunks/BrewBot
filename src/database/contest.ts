@@ -198,7 +198,10 @@ export async function deleteContestSubmission(guildId: string, contestId: number
     return submission;
 }
 
-export async function checkContestTimes(): Promise<{ starting: (Contest & { guild: Guild })[], ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[] }> {
+export type StartingContest = Contest & { guild: Guild };
+export type EndingContest = Contest & { guild: Guild, submissions: ContestSubmission[] };
+
+export async function checkContestTimes(): Promise<{ starting: StartingContest[], ending: EndingContest[] }> {
     const now = new Date();
     const nowPlusHour = new Date(now.getTime());
     nowPlusHour.setMinutes(now.getMinutes() + 1);
