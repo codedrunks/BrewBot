@@ -39,7 +39,7 @@ async function init()
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
 
-    client.on("ready", async (cl) => {
+    client.once("ready", async (cl) => {
         const { user, guilds } = cl;
 
         user.setPresence({

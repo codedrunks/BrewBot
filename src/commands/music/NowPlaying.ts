@@ -95,7 +95,7 @@ export class NowPlaying extends Command {
             }
         });
 
-        button.on("timeout", async () => {
+        button.once("timeout", async () => {
             await this.deleteReply(int);
             button.destroy();
         });

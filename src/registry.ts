@@ -233,7 +233,7 @@ export function registerModal(modal: Modal)
 {
     modals.set(modal.id, modal);
 
-    modal.on("destroy", () => {
+    modal.once("destroy", () => {
         modals.delete(modal.id);
     });
 }

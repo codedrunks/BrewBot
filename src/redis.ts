@@ -9,7 +9,7 @@ client.on("error", (err) => {
     }
 });
 
-client.on("connect", () => {
+client.once("connect", () => {
     console.log("\nRedis Client ready to send commands");
 });
 

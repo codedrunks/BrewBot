@@ -111,7 +111,7 @@ export class Queue extends Command {
                     }
                 });
 
-                button.on("timeout", async () => {
+                button.once("timeout", async () => {
                     delete pages[int.user.id];
 
                     await this.deleteReply(int);

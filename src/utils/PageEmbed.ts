@@ -2,10 +2,10 @@ import { Message, MessageEmbed, ButtonInteraction, TextBasedChannel, MessageButt
 import { time } from "@discordjs/builders";
 import { clamp } from "svcorelib";
 import { APIEmbed } from "discord-api-types/v10";
+import { randomUUID } from "crypto";
 import { EmitterBase } from "@utils/EmitterBase";
 import { Command } from "@src/Command";
-import * as registry from "@src/registry";
-import { randomUUID } from "crypto";
+import { btnListener } from "@src/registry";
 import { useEmbedify } from "./embedify";
 import { settings } from "@src/settings";
 
@@ -93,20 +93,10 @@ export class PageEmbed extends EmitterBase
 
         this.btns = this.createBtns();
 
-        registry.btnListener.addBtns(this.btns);
-        registry.btnListener.on("press", async (int, btn) => {
-            let btIdx;
-            this.btns.forEach(({ customId }, i) => {
-                if(customId === btn.customId)
-                    btIdx = i;
-            });
+        btnListener.addBtns(this.btns);
 
-            if(btIdx !== undefined)
-            {
-                await this.onPress(int, btIdx);
-                !int.deferred && await int.deferUpdate();
-            }
-        });
+        btnListener.on("press", this.onPress);
+        this.once("destroy", () => btnListener.removeListener("press", this.onPress));
 
         this.authorId = authorId;
 
@@ -123,54 +113,64 @@ export class PageEmbed extends EmitterBase
             setTimeout(() => this.setAllowAllUsers(true), this.settings.allowAllUsersTimeout);
     }
 
-    private onPress(int: ButtonInteraction, btIdx: number)
+    private async onPress(int: ButtonInteraction, btn: MessageButton)
     {
-        if(!int.channel)
-            return;
+        let btIdx;
+        this.btns.forEach(({ customId }, i) => {
+            if(customId === btn.customId)
+                btIdx = i;
+        });
 
-        if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp)
+        if(btIdx !== undefined)
         {
-            const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
+            if(!int.channel)
+                return;
 
-            setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.success)),
-                clamp(useIn - Date.now(), 0, Number.MAX_SAFE_INTEGER));
+            if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp)
+            {
+                const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
 
-            return int.reply({
-                ...useEmbedify(useIn
-                    ? `You can use these buttons ${time(new Date(useIn), "R")}`
-                    : "You can't use these buttons yet", settings.embedColors.error),
-                ...(!int.replied ? { ephemeral: true } : {}),
-            });
+                setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.success)),
+                    clamp(useIn - Date.now(), 0, Number.MAX_SAFE_INTEGER));
+
+                return int.reply({
+                    ...useEmbedify(useIn
+                        ? `You can use these buttons ${time(new Date(useIn), "R")}`
+                        : "You can't use these buttons yet", settings.embedColors.error),
+                    ...(!int.replied ? { ephemeral: true } : {}),
+                });
+            }
+
+            const btns2 = ["prev"];
+            this.settings.goToPageBtn && btns2.push("goto");
+            btns2.push("next");
+            const btns4 = ["first", ...btns2, "last"];
+
+            const type = (this.settings.firstLastBtns ? btns4 : btns2)[btIdx];
+
+            switch(type)
+            {
+            case "first":
+                this.first();
+                break;
+            case "prev":
+                this.prev();
+                break;
+            case "goto":
+                return this.askGoToPage(int);
+            case "next":
+                this.next();
+                break;
+            case "last":
+                this.last();
+                break;
+            default:
+                return;
+            }
+
+            this.emit("press", int, type);
+            !int.deferred && await int.deferUpdate();
         }
-
-        const btns2 = ["prev"];
-        this.settings.goToPageBtn && btns2.push("goto");
-        btns2.push("next");
-        const btns4 = ["first", ...btns2, "last"];
-
-        const type = (this.settings.firstLastBtns ? btns4 : btns2)[btIdx];
-
-        switch(type)
-        {
-        case "first":
-            this.first();
-            break;
-        case "prev":
-            this.prev();
-            break;
-        case "goto":
-            return this.askGoToPage(int);
-        case "next":
-            this.next();
-            break;
-        case "last":
-            this.last();
-            break;
-        default:
-            return;
-        }
-
-        this.emit("press", int, type);
     }
 
     private pressAllowed(userId: string)
@@ -185,7 +185,7 @@ export class PageEmbed extends EmitterBase
 
         await this.updateMsg(true);
 
-        registry.btnListener.delBtns(ids);
+        btnListener.delBtns(ids);
 
         this.emit("destroy", ids);
 
@@ -320,9 +320,7 @@ export class PageEmbed extends EmitterBase
                 }
             });
 
-            this.on("destroy", () => {
-                coll.stop();
-            });
+            this.once("destroy", coll.stop);
 
             coll.on("end", () => {
                 this.collectorRunning = false;

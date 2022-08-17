@@ -89,15 +89,20 @@ export class BtnMsg extends EmitterBase
         this.opts = { ...defaultOpts, ...options };
 
         btnListener.addBtns(this.btns);
-        btnListener.on("press", (int, btn) => {
-            if(this.btns.find(b => b.customId === btn.customId))
-                this.emit("press", btn, int);
-        });
+
+        btnListener.on("press", this.onPress);
+        this.once("destroy", () => btnListener.removeListener("press", this.onPress));
 
         this.opts.timeout > 0 && setTimeout(() => {
             this.emit("timeout");
             this.destroy();
         }, this.opts.timeout);
+    }
+
+    private onPress(int: ButtonInteraction, btn: MessageButton)
+    {
+        if(this.btns.find(b => b.customId === btn.customId))
+            this.emit("press", btn, int);
     }
 
     /** Removes all listeners and triggers the registry to delete its reference to the buttons of this instance */

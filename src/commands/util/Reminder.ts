@@ -1,11 +1,14 @@
 import { Client, CommandInteraction, CommandInteractionOption, Message, MessageEmbed, TextBasedChannel } from "discord.js";
+import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
-import { BtnMsg, ButtonOpts, embedify, PageEmbed, useEmbedify } from "@src/utils";
-import k from "kleur";
+import { BtnMsg, ButtonOpts, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+
+/** Max reminders per user (global) */
+const reminderLimit = 10;
 
 type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
 
@@ -99,7 +102,7 @@ export class Reminder extends Command
             {
                 // since the constructor is called exactly once at startup, this should work just fine
                 this.checkReminders(client);
-                // setInterval(() => this.checkReminders(client), 1000);
+                setInterval(() => this.checkReminders(client), 1000);
             }
             catch(err)
             {
@@ -144,16 +147,15 @@ export class Reminder extends Command
                 const { name, ...timeObj } = args;
 
                 const dueInMs = getTime(timeObj);
-                const dueTimestamp = Date.now() + dueInMs;
 
                 if(dueInMs < 1000 * 5)
                     return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);
 
-                await this.deferReply(int, true);
+                await this.deferReply(int, false);
 
                 const reminders = await getReminders(user.id);
 
-                if(reminders && reminders.length >= 10)
+                if(reminders && reminders.length >= reminderLimit)
                     return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease free up some space with `/reminder delete`", settings.embedColors.error));
 
                 const reminderId = reminders && reminders.length > 0 && reminders.at(-1)
@@ -168,7 +170,7 @@ export class Reminder extends Command
                     await createNewUser(user.id, guild.id);
                 }
 
-                const dueTime = new Date(dueTimestamp);
+                const dueTimestamp = new Date(Date.now() + dueInMs);
 
                 await setReminder({
                     name: args.name,
@@ -176,10 +178,10 @@ export class Reminder extends Command
                     userId: user.id,
                     channel: channel?.id ?? null,
                     reminderId,
-                    dueTime,
+                    dueTimestamp,
                 });
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\`\nDue: ${time(Math.floor(dueTimestamp / 1000), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\`\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
             }
             case "list":
             {
@@ -193,7 +195,7 @@ export class Reminder extends Command
                 if(!reminders || reminders.length === 0)
                     return await this.editReply(int, embedify("You don't have any active reminders.\nCreate a new one with `/reminder set`", settings.embedColors.error));
 
-                const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) => acc + `> \`${cur.reminderId}\` : ${cur.name}\n> ${time(Math.floor(cur.dueTime.getTime() / 1000), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`, "");
+                const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) => acc + `> \`${cur.reminderId}\` : ${cur.name}\n> ${time(toUnix10(cur.dueTimestamp), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`, "");
                 const getReminderEbd = (remStr: string) =>
                     new MessageEmbed()
                         .setTitle("Your reminders:")
@@ -325,8 +327,8 @@ export class Reminder extends Command
 
                 const updateReply = () => int.editReply(bm.getReplyOpts());
 
-                bm.on("timeout", updateReply);
-                bm.on("destroy", updateReply);
+                bm.once("timeout", updateReply);
+                bm.once("destroy", updateReply);
 
                 return await updateReply();
             }
@@ -349,8 +351,6 @@ export class Reminder extends Command
 
         if(!expRems || expRems.length === 0)
             return;
-
-        console.log(`#DEBUG: Found ${expRems.length} expired reminders...`);
 
         for await(const rem of expRems)
         {
