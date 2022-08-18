@@ -50,8 +50,9 @@ export function getCtxMenus()
     return ctxMenus;
 }
 
-/** Registers all slash commands for the specified guild or guilds */
+/** Registers all slash commands and context menus for multiple guilds */
 export async function registerGuildCommands(guildID: string[]): Promise<void>
+/** Registers all slash commands and context menus for one guild */
 export async function registerGuildCommands(guildID: string): Promise<void>
 export async function registerGuildCommands(...guildIDs: (string|string[])[]): Promise<void>
 {
@@ -75,7 +76,7 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
 
     try
     {
-        if(contextMenus.length === 0)
+        if(ctxMenus.length === 0)
             for(const CtxClass of contextMenus)
                 ctxMenus.push(new CtxClass());
     }
