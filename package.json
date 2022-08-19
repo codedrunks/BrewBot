@@ -59,6 +59,9 @@
   "bin": {
     "brewbot": "./src/tools/cli.js"
   },
+  "engines": {
+    "npm": ">=8"
+  },
   "nodemonConfig": {
     "watch": [
       "src/*",
