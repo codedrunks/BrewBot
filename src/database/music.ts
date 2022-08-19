@@ -34,12 +34,13 @@ export async function getPremium(guildId: string): Promise<boolean> {
                 id: guildId
             },
             select: {
-                premium: true
-            }
+                premium: true,
+            },
         });
 
         return premium?.premium ?? false;
-    } else return redisCheck === "true";
+    }
+    else return redisCheck === "true";
 }
 
 export async function togglePremium(guildId: string): Promise<boolean> {
