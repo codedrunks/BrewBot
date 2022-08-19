@@ -4,7 +4,7 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
-import { fetchLyricsUrl } from "./global.music";
+import { fetchSongInfo, resolveTitle } from "./global.music";
 
 const ten_secs = 10_000;
 
@@ -37,17 +37,18 @@ export class NowPlaying extends Command {
 
         const readableTime = musicReadableTimeString(currentTime, duration);
 
+        const info = await fetchSongInfo(resolveTitle(current.title));
+
         let lyricsLink = "";
         if(await getPremium(int.guild.id))
         {
-            const lyrics = await fetchLyricsUrl(current.title);
-            if(lyrics)
-                lyricsLink = `Lyrics: [click to open <:open_in_browser:994648843331309589>](${lyrics})\n`;
+            if(info?.url)
+                lyricsLink = `Lyrics: [click to open <:open_in_browser:994648843331309589>](${info.url})\n`;
         }
 
-        const embed = embedify(
-            `Artist: \`${current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`
-        ).setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`).setTitle(`${current.title}`);
+        const embed = embedify(`Artist: \`${info?.meta.artists ?? current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`)
+            .setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`)
+            .setTitle(`${current.title}`);
 
         if(current?.uri) embed.setURL(current.uri);
 
@@ -55,8 +56,8 @@ export class NowPlaying extends Command {
             new MessageButton().setEmoji("⏪").setLabel("- 10s").setStyle("PRIMARY"),
             new MessageButton().setEmoji("⏯️").setLabel("Pause/Resume").setStyle("PRIMARY"),
             new MessageButton().setEmoji("⏩").setLabel("+ 10s").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏭").setLabel("Skip").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏹️").setLabel("Stop").setStyle("PRIMARY")
+            new MessageButton().setEmoji("⏭").setLabel("Skip").setStyle("SECONDARY"),
+            new MessageButton().setEmoji("⏹️").setLabel("Stop").setStyle("SECONDARY")
         ];
 
         const button = new BtnMsg(embed, btns, { timeout: current.isStream ? -1 : (current.duration as number) - player.position });
