@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, CommandInteractionOption, Message, MessageEmbed, TextBasedChannel } from "discord.js";
+import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed, TextBasedChannel } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -191,8 +191,9 @@ export class Reminder extends Command
                     return await this.editReply(int, embedify("You don't have any active reminders.\nCreate a new one with `/reminder set`", settings.embedColors.error));
 
                 const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) => acc + `> \`${cur.reminderId}\` : ${cur.name}\n> ${time(toUnix10(cur.dueTimestamp), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`, "");
-                const getReminderEbd = (remStr: string) =>
-                    new MessageEmbed()
+                const getReminderEbd = (remStr: string, curPage?: number, maxPage?: number) =>
+                {
+                    const ebd = new MessageEmbed()
                         .setTitle("Your reminders:")
                         .setDescription(remStr + "\n\nTo delete a reminder, use `/reminder delete`")
                         .setAuthor({
@@ -200,6 +201,11 @@ export class Reminder extends Command
                             iconURL: avatar ?? undefined,
                         })
                         .setColor(settings.embedColors.default);
+
+                    curPage && maxPage && ebd.setFooter({ text: `Page ${curPage}/${maxPage}` });
+
+                    return ebd;
+                };
 
                 const avatar = user.avatarURL({ format: "png", size: 512 });
 
@@ -214,28 +220,20 @@ export class Reminder extends Command
                     const pages: MessageEmbed[] = [];
                     const rems = [...reminders];
 
+                    let pageNbr = 0;
                     while(rems.length > 0)
                     {
+                        pageNbr++;
                         const remSlice = rems.splice(0, remindersPerPage);
                         const rStr = getReminderStr(remSlice);
-                        pages.push(getReminderEbd(rStr));
+                        pages.push(getReminderEbd(rStr, pageNbr, Math.ceil(reminders.length / remindersPerPage)));
                     }
 
                     const pe = new PageEmbed(pages, user.id, {
                         goToPageBtn: pages.length > 5,
-                        timeout: 1000 * 5,
                     });
 
-                    const m = await int.fetchReply();
-                    const msg = m instanceof Message ? m : undefined;
-
-                    const updatePageEbd = () => int.editReply(pe.getMsgProps());
-
-                    msg && pe.setMsg(msg);
-                    pe.setPageIdx(0);
-
-                    pe.on("press", updatePageEbd);
-                    return await updatePageEbd();
+                    return pe.useInt(int);
                 }
             }
             case "delete":

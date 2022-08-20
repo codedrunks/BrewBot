@@ -1,4 +1,4 @@
-import { ClientEvents, ColorResolvable, PermissionFlags } from "discord.js";
+import { ButtonInteraction, ClientEvents, ColorResolvable, CommandInteraction, ContextMenuInteraction, ModalSubmitInteraction, PermissionFlags } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ContextMenuCommandType } from "@discordjs/builders";
 
@@ -42,6 +42,8 @@ export interface PersistentData
 export type DataKey = keyof PersistentData;
 
 //#MARKER commands
+
+export type AnyCmdInteraction = CommandInteraction | ButtonInteraction | ModalSubmitInteraction | ContextMenuInteraction;
 
 /** A single argument of a slash command */
 type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);

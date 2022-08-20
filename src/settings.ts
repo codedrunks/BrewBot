@@ -12,6 +12,7 @@ export const settings: Settings = {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
     },
+    // TODO: remove
     moderation: {
         /** How many reaction votes are needed to ban someone */
         votesToBan: 2,
@@ -45,21 +46,23 @@ export const settings: Settings = {
         error: "DARK_RED",
         contestWinner: "GOLD",
     },
-    /** When a user is warned this many times, a message is sent to the botLogs channel */
+    /** TODO: remove - When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
     guildID: "693878197107949572",
+    // TODO: also remove -
     messageLogChannel: "976942278637666376",
+    devServer: "693878197107949572",
+    // - end remove
     devs: [
         "427491040468140043",
         "407351772575694879",
         "194507254249160704",
         "415597358752071693"
     ],
-    devServer: "693878197107949572",
     commands: {
-        execEnabled: envVarEquals("EXEC_CMD_ENABLED", false) ? false : true,
+        execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
     },
 };
 

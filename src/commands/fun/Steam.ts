@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption, EmbedFieldData, Message, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
 import { axios, BtnMsg, embedify, PageEmbed, truncStr } from "@src/utils";
 import { Command } from "@src/Command";
@@ -190,22 +190,13 @@ export class Steam extends Command
                         );
                     }
 
-                    const m = await int.fetchReply();
-                    const msg = m instanceof Message ? m : undefined;
-
                     const pe = new PageEmbed(embeds, int.user.id, {
                         allowAllUsersTimeout: 1000 * 60,
-                        goToPageBtn: msg && embeds.length > 5,
+                        goToPageBtn: embeds.length > 5,
                         timeout: 1000 * 60 * 10,
                     });
 
-                    const updatePageEbd = () => int.editReply(pe.getMsgProps());
-
-                    msg && pe.setMsg(msg);
-                    pe.setPageIdx(0);
-
-                    pe.on("press", updatePageEbd);
-                    await updatePageEbd();
+                    await pe.useInt(int);
                 }
             }
             }

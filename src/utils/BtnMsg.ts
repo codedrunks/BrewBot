@@ -35,12 +35,12 @@ export interface BtnMsg {
  */
 export class BtnMsg extends EmitterBase
 {
-    readonly id: string = randomUUID();
-
     readonly btns: MessageButton[];
     readonly msg: string | MessageEmbed[];
 
     readonly opts: BtnMsgOpts;
+
+    readonly btnId: string;
 
     /**
      * Wrapper for discord.js' `MessageButton`  
@@ -54,6 +54,8 @@ export class BtnMsg extends EmitterBase
     constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
     {
         super();
+
+        this.btnId = randomUUID();
 
         this.msg = message instanceof MessageEmbed ? [message] : message;
 
@@ -78,7 +80,7 @@ export class BtnMsg extends EmitterBase
 
         this.btns = this.btns.map((b, i) => {
             if(!b.url)
-                b.setCustomId(`${this.id}@${i}`);
+                b.setCustomId(`${this.btnId}@${i}`);
             return b;
         });
 
