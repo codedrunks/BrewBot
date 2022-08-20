@@ -2,8 +2,9 @@ import { CommandInteraction, TextChannel, MessageEmbed, ColorResolvable } from "
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-import persistentData from "@src/persistentData";
 import { PermissionFlagsBits } from "discord-api-types/v10";
+import { createGuild, getGuild, setGuild } from "@src/database/guild";
+import { embedify } from "@src/utils";
 
 export class Log extends Command {
     constructor() {
@@ -36,12 +37,20 @@ export class Log extends Command {
 
     async run(int: CommandInteraction): Promise<void> {
 
-        const { channel } = int;
+        const { guild, channel } = int;
+
+        if(!guild || !channel)
+            return this.reply(int, embedify("This command can only be used in a server.", settings.embedColors.error), true);
 
         const args = this.resolveArgs(int);
 
         const amtRaw = parseInt(args?.amount);
         const amount = Math.min(Math.max(amtRaw, 1), 50);
+
+        await this.deferReply(int, true);
+
+        const g = await getGuild(guild.id);
+        const gld = !g ? await createGuild(guild.id) : g;
 
         const logChannel = int.client.guilds.cache.find(g => g.id == settings.guildID)?.channels.cache.find(ch => ch.id === settings.messageLogChannel) as TextChannel;
         let startMessageID = args.start;
@@ -79,8 +88,7 @@ export class Log extends Command {
                             messages.delete(lastMessage.id);
                         }
 
-
-                        if(persistentData.get("lastLogColor") == embedColors[0]) {
+                        if(gld.lastLogColor == embedColors[0] || !gld.lastLogColor) {
                             newEmbedColor = embedColors[1];
                         }
 
@@ -154,27 +162,31 @@ export class Log extends Command {
                                 if (embedLength < 6000) {
                                     messageSet.push(loggedMessagesEmbed);
                                 } else {
-                                    return this.reply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
+                                    return this.editReply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
                                 }
                             }
                         });
-                    }).then(() => {
-                        messageSet.forEach((messageEmbed) => {
-                            persistentData.set("lastLogColor", newEmbedColor).then(() => {
-                                logChannel.send({ embeds: [messageEmbed] });
-                            });
-                        });
+                    }).then(async () => {
+                        for await(const embed of messageSet) {
+                            gld.lastLogColor = String(newEmbedColor);
+
+                            await setGuild(guild.id, gld);
+                            logChannel.send({ embeds: [embed] });
+                        }
                     });
-                    
-                return await this.reply(int, `Successfully logged **${amount}** messages to **#${logChannel.name}**`);
+
+                return await this.editReply(int, embedify(`Successfully logged **${amount}** messages to **#${logChannel.name}**`, settings.embedColors.default));
             }
             else
-                return await this.reply(int, "Error logging messages");
+                return await this.editReply(int, embedify("Error logging messages", settings.embedColors.error));
         }
         catch (err) {
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
 
-            return await this.reply(int, "Error logging messages");
+            if(int.replied || int.deferred)
+                return await this.reply(int, embedify("Error logging messages", settings.embedColors.error));
+            else
+                return await this.reply(int, embedify("Error logging messages", settings.embedColors.error));
         }
     }
 }

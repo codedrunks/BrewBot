@@ -77,14 +77,15 @@ model Coins {
 
 //#MARKER guild
 model Guild {
-  id            String        @id
-  premium       Boolean?      @default(false)
+  id            String         @id
+  premium       Boolean?       @default(false)
+  lastLogColor  String?
   contests      Contest[]
-  GuildSettings GuildSettings @relation(fields: [id], references: [guildId], onDelete: Cascade)
+  GuildSettings GuildSettings? @relation(fields: [id], references: [guildId], onDelete: Cascade)
 }
 
 model GuildSettings {
-  guildId          String   @id @unique
+  guildId          String   @id
   contestRoleId    String?
   contestChannelId String?
   djRoleIds        String[]
