@@ -224,6 +224,7 @@ Markdown that isn't allowed anywhere:
 >   
 > #### Methods:
 > - `sendIn()` sends this PageEmbed in the provided channel. If you want a custom message implementation, use `setMsg()` and `getMsg()`
+> - `useInt()` instead replies to or edits a Command-/ButtonInteraction
 > - `getMsgOpts()` returns properties that can be passed to a `channel.send()` or `(msg | int).reply()` method
 > - `setPages()` is for dynamically changing the pages of the instance. If the current page index is out of range after the pages have changed, it gets lowered automatically.
 > - `first()`, `prev()`, `next()` and `last()` can be used just like the users use the MessageButtons to navigate the PageEmbed.
@@ -237,7 +238,7 @@ Markdown that isn't allowed anywhere:
 > - `press` is emitted whenever a button is pressed by a user and gets passed the ButtonInteraction instance and a string telling you which button was pressed.  
 > - `timeout` is emitted when the timeout of the PageEmbed, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called.
 > - `destroy` is emitted whenever the `.destroy()` method is called.
-> - `update` is emitted after the associated message on the Discord API has been edited.
+> - `update` is emitted after the associated message or interaction on the Discord API has been edited.
 
 <br>
 
