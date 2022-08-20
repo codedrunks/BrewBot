@@ -51,7 +51,8 @@
     "redis": "^4.2.0",
     "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
-    "svcorelib": "^1.16.0"
+    "svcorelib": "^1.16.0",
+    "winston": "^3.8.1"
   },
   "nodemonConfig": {
     "watch": [
