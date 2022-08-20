@@ -10,7 +10,7 @@ interface ModalConstructor {
 }
 
 export interface Modal {
-    /** Emitted on error and unhandled Promise rejection */
+    /** Emitted on unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
     /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;

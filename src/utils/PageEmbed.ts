@@ -43,7 +43,7 @@ export interface PageEmbed extends EmitterBase
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
     /** Emitted whenever this PageEmbed times out and is going to deregister and destroy itself */
     on(event: "timeout", listener: () => void): this;
-    /** Emitted on error and unhandled Promise rejection */
+    /** Emitted on unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
     /** Gets emitted when this PageEmbed has finished */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
