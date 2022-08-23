@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
@@ -15,13 +15,13 @@ export class Skip extends Command {
                 {
                     name: "amount",
                     desc: "amount of songs to skip, including current song",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     min: 1
                 },
                 {
                     name: "to",
                     desc: "song to skip to in queue",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     min: 1
                 }
             ]

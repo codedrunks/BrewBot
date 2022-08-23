@@ -14,7 +14,7 @@ export class Premium extends Command {
                 {
                     name: "toggle",
                     desc: "Give premium to current guild [DEV ONLY]",
-                    perms: ["ADMINISTRATOR"]
+                    devOnly: true,
                 },
                 {
                     name: "status",

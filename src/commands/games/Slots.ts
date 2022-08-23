@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { getCoins, subCoins, addCoins } from "@database/economy";
 import { embedify } from "@utils/embedify";
@@ -28,7 +28,7 @@ export class Slots extends Command
                 {
                     name: "bet",
                     desc: "How many coins you wanna bet",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     min: 100,
                     max: 100000,
                     required: true,
@@ -36,7 +36,7 @@ export class Slots extends Command
                 {
                     name: "slots_grid",
                     desc: "How big is the slot grid",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     choices: [
                         {
                             name: "3x3",
@@ -114,8 +114,8 @@ export class Slots extends Command
             return await createNewUser(int.user.id, int.guild.id);
         }
 
-        const bet = int.options.getNumber("bet", true);
-        const grid = parseInt(int.options.getString("slots_grid") ?? "3");
+        const bet = Number(int.options.get("bet", true).value);
+        const grid = parseInt(int.options.get("slots_grid")?.value?.toString() ?? "3");
 
         if (coins < bet) {
             return await this.reply(int, embedify(`Insufficient coins\nYour balance is: ${coins}`));

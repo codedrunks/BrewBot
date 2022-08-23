@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
@@ -14,7 +14,7 @@ export class Volume extends Command {
                 {
                     name: "volume",
                     desc: "how loud the bot should play music (1-100)",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     required: true,
                     max: 100,
                     min: 1

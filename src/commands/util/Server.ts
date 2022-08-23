@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedField, EmbedBuilder, ChannelType, PermissionFlagsBits } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 
@@ -45,14 +45,14 @@ export class Server extends Command
         case "info":
         {
             const verifLevelMap = {
-                NONE: "None (1/5)",
-                LOW: "Low (2/5)",
-                MEDIUM: "Medium (3/5)",
-                HIGH: "High (4/5)",
-                VERY_HIGH: "Very high (5/5)",
+                0: "None (1/5)",
+                1: "Low (2/5)",
+                2: "Medium (3/5)",
+                3: "High (4/5)",
+                4: "Very high (5/5)",
             };
 
-            const fields: EmbedFieldData[] = [];
+            const fields: EmbedField[] = [];
 
             guild.description && guild.description.length > 0 && fields.push({ name: "Description", value: guild.description, inline: true });
 
@@ -66,8 +66,8 @@ export class Server extends Command
             const botMembers = guild.members.cache.filter(m => m.user.bot).size ?? undefined;
             const onlineMembers = botMembers ? guild.members.cache.filter(m => (!m.user.bot && ["online", "idle", "dnd"].includes(m.presence?.status ?? "_"))).size : undefined;
 
-            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => ["GUILD_NEWS", "GUILD_TEXT"].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has("VIEW_CHANNEL")).size;
-            const publicVoiceChannelsAmt = guild.channels.cache.filter(ch => ch.type === "GUILD_VOICE" && ch.permissionsFor(guild.roles.everyone).has("SPEAK")).size;
+            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => [ChannelType.GuildNews, ChannelType.GuildText].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.ViewChannel)).size;
+            const publicVoiceChannelsAmt = guild.channels.cache.filter(ch => ch.type === ChannelType.GuildVoice && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.Speak)).size;
 
             let memberCount = `Total: ${allMembers}`;
             if(onlineMembers) memberCount += `\nOnline: ${onlineMembers}`;
@@ -83,24 +83,24 @@ export class Server extends Command
             fields.push({ name: "Emojis", value: `Total: ${staticEmojiAmt + animatedEmojiAmt}\nStatic: ${staticEmojiAmt}\nAnimated: ${animatedEmojiAmt}`, inline: true });
             // TODO: add amount of assignable roles?
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`**${guild.name}**`)
                 .setColor(settings.embedColors.default)
                 .setFields(fields);
 
-            const iconUrl = guild.iconURL({ format: "png", size: 1024 });
+            const iconUrl = guild.iconURL({ extension: "png", size: 1024 });
             iconUrl && embed.setThumbnail(iconUrl);
 
             return await this.reply(int, embed);
         }
         case "banner":
         {
-            const bannerUrl = guild.bannerURL({ format: "png", size: 4096 });
+            const bannerUrl = guild.bannerURL({ extension: "png", size: 4096 });
 
             if(!bannerUrl)
                 return await this.reply(int, "This server doesn't have a banner.", true);
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`**${guild.name}** - banner:`)
                 .setColor(settings.embedColors.default)
                 .setImage(bannerUrl);
@@ -109,12 +109,12 @@ export class Server extends Command
         }
         case "icon":
         {
-            const iconUrl = guild.iconURL({ format: "png", size: 4096 });
+            const iconUrl = guild.iconURL({ extension: "png", size: 4096 });
 
             if(!iconUrl)
                 return await this.reply(int, "This server doesn't have an icon.", true);
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`**${guild.name}** - icon:`)
                 .setColor(settings.embedColors.default)
                 .setImage(iconUrl);
@@ -123,12 +123,12 @@ export class Server extends Command
         }
         case "splash":
         {
-            const splashUrl = guild.splashURL({ format: "png", size: 4096 });
+            const splashUrl = guild.splashURL({ extension: "png", size: 4096 });
 
             if(!splashUrl)
                 return await this.reply(int, "This server doesn't have a splash image (invite background).", true);
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`**${guild.name}** - splash image:`)
                 .setColor(settings.embedColors.default)
                 .setImage(splashUrl);
@@ -150,10 +150,10 @@ export class Server extends Command
                 return await this.reply(int, "Couldn't find an invite. Please create a new one or ask the moderators to create one.", true);
 
             const link = vanityUrl ? vanityUrl : iv?.url;
-            const chan = iv?.channel.id ? `\nChannel: <#${iv.channel.id}>` : undefined;
+            const chan = iv?.channel?.id ? `\nChannel: <#${iv.channel.id}>` : undefined;
             const uses = iv?.uses ? `\nUses: ${iv.uses}${typeof iv.maxUses === "number" && iv.maxUses > 0 ? ` / ${iv.maxUses}` : ""}` : undefined;
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`**${guild.name}** - invite:`)
                 .setColor(settings.embedColors.default)
                 .setDescription(`**[${link}](${link})**${chan || uses ? "\n" : ""}${chan}${uses}`);

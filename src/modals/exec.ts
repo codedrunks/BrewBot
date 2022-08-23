@@ -1,4 +1,4 @@
-import { MessageEmbed, MessageButton, ModalSubmitInteraction, TextInputComponent } from "discord.js";
+import { EmbedBuilder, ButtonBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
 import { unused } from "svcorelib";
 
 import { BtnMsg } from "@utils/BtnMsg";
@@ -14,11 +14,11 @@ export class ExecModal extends Modal
         super({
             title: "Execute code",
             inputs: [
-                new TextInputComponent()
+                new TextInputBuilder()
                     .setCustomId("code")
                     .setLabel("Code")
-                    .setPlaceholder("Any CommonJS code\n(Vars: channel, user, guild, client, MessageEmbed, MessageButton, BtnMsg)")
-                    .setStyle("PARAGRAPH")
+                    .setPlaceholder("Any CommonJS code\n(Vars: channel, user, guild, client, EmbedBuilder, ButtonBuilder, BtnMsg)")
+                    .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true)
             ]
         });
@@ -31,7 +31,7 @@ export class ExecModal extends Modal
 
         unused(
             channel, user, guild, client,
-            MessageEmbed, MessageButton, BtnMsg
+            EmbedBuilder, ButtonBuilder, BtnMsg
         );
 
         const code = int.fields.getTextInputValue("code").trim();
@@ -42,7 +42,7 @@ export class ExecModal extends Modal
         try
         {
             const lines = [
-                "const { MessageEmbed, MessageButton } = require(\"discord.js\");",
+                "const { EmbedBuilder, ButtonBuilder } = require(\"discord.js\");",
                 "const { BtnMsg } = require(\"../utils/BtnMsg\");",
                 "const { embedify, useEmbedify } = require(\"../utils/embedify\");",
                 "const { PageEmbed } = require(\"../utils/PageEmbed\");",
@@ -61,7 +61,7 @@ export class ExecModal extends Modal
                 error = String(err);
         }
 
-        const ebd = new MessageEmbed()
+        const ebd = new EmbedBuilder()
             .setTitle(`Execution ${error ? "Error" : "Result"}`)
             .setColor(error ? settings.embedColors.error : settings.embedColors.gameWon);
 
@@ -99,12 +99,32 @@ export class ExecModal extends Modal
 
             const resStr = String(result).trim();
 
-            ebd.addField(`Result <\`${findType(result)}\`>:`, `\`\`\`\n${resStr.length > 0 ? transformRes(result) : "(empty)"}\n\`\`\``, false)
-                .addField("Code:", `\`\`\`ts\n${code}\n\`\`\``, false);
+            ebd.addFields([
+                {
+                    name: `Result <\`${findType(result)}\`>:`,
+                    value: `\`\`\`\n${resStr.length > 0 ? transformRes(result) : "(empty)"}\n\`\`\``,
+                    inline: false
+                },
+                {
+                    name: "Code:",
+                    value: `\`\`\`ts\n${code}\n\`\`\``,
+                    inline: false
+                }
+            ]);
         }
         else
-            ebd.addField("Error:", `\`\`\`\n${truncField(error)}\n\`\`\``, false)
-                .addField("Code:", `\`\`\`ts\n${code}\n\`\`\``, false);
+            ebd.addFields([
+                {
+                    name: "Error:",
+                    value: `\`\`\`\n${truncField(error)}\n\`\`\``,
+                    inline: false
+                },
+                {
+                    name: "Code:",
+                    value: `\`\`\`ts\n${code}\n\`\`\``,
+                    inline: false
+                }
+            ]);
 
         await this.editReply(int, ebd);
     }

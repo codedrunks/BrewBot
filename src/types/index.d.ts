@@ -1,4 +1,4 @@
-import { ClientEvents, ColorResolvable, PermissionFlags } from "discord.js";
+import { ClientEvents, ColorResolvable, ApplicationCommandOptionType } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ContextMenuCommandType } from "@discordjs/builders";
 
@@ -63,33 +63,33 @@ interface BaseCommandArg {
 }
 
 interface StringCommandArg extends ChoiceCmdArg<string> {
-    type?: "string";
+    type: ApplicationCommandOptionType.String;
 }
 
 interface NumberCommandArg extends ChoiceCmdArg<number> {
-    type: "number";
+    type: ApplicationCommandOptionType.Number;
     min?: number;
     max?: number;
 }
 
 interface BooleanCommandArg {
-    type: "boolean";
+    type: ApplicationCommandOptionType.Boolean;
 }
 
 interface UserCommandArg {
-    type: "user";
+    type: ApplicationCommandOptionType.User;
 }
 
 interface ChannelCommandArg {
-    type: "channel";
+    type: ApplicationCommandOptionType.Channel;
 }
 
 interface RoleCommandArg {
-    type: "role";
+    type: ApplicationCommandOptionType.Role;
 }
 
 interface AttachmentCommandArg {
-    type: "attachment";
+    type: ApplicationCommandOptionType.Attachment;
 }
 
 /** The different categories that a command can be, these are denoted by the directory name a command is located in */
@@ -100,8 +100,7 @@ interface CmdMetaBase {
     name: string;
     /** Description that's displayed when typing the command in chat */
     desc: string;
-    /** Additional permissions needed to run this command */
-    perms?: (keyof PermissionFlags)[];
+    perms?: PermissionFlagsBits[];
     /** Default member permissions needed to view and use this command */
     memberPerms?: PermissionFlagsBits[];
     /** Category of the command */

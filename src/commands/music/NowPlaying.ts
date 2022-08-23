@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMemberRoleManager, MessageButton, User } from "discord.js";
+import { CommandInteraction, GuildMemberRoleManager, ButtonBuilder, User, ButtonStyle } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
@@ -42,12 +42,12 @@ export class NowPlaying extends Command {
 
         if(current?.uri) embed.setURL(current.uri);
 
-        const btns: MessageButton[] = [
-            new MessageButton().setEmoji("⏪").setLabel("- 10s").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏯️").setLabel("Pause/Resume").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏩").setLabel("+ 10s").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏭").setLabel("Skip").setStyle("PRIMARY"),
-            new MessageButton().setEmoji("⏹️").setLabel("Stop").setStyle("PRIMARY")
+        const btns: ButtonBuilder[] = [
+            new ButtonBuilder().setEmoji("⏪").setLabel("- 10s").setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setEmoji("⏯️").setLabel("Pause/Resume").setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setEmoji("⏩").setLabel("+ 10s").setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setEmoji("⏭").setLabel("Skip").setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setEmoji("⏹️").setLabel("Stop").setStyle(ButtonStyle.Primary)
         ];
 
         const button = new BtnMsg(embed, btns, { timeout: current.isStream ? -1 : (current.duration as number) - player.position });
@@ -62,7 +62,7 @@ export class NowPlaying extends Command {
 
             if(!player || !player.queue.current) return;
 
-            switch(b.label) {
+            switch(b.data.label) {
             case "- 10s":
                 player.seek(player.position - ten_secs);
                 break;

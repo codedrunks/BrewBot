@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { SearchQuery, SearchResult } from "erela.js";
 import { Command } from "@src/Command";
 import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/client";
@@ -15,13 +15,13 @@ export class Play extends Command {
             args: [
                 {
                     name: "song",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Song to play or URL",
                     required: true
                 },
                 {
                     name: "source",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Source for the music to be searched from",
                     choices: [
                         {
@@ -40,7 +40,7 @@ export class Play extends Command {
                 },
                 {
                     name: "position",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Whether to play the song now or next, if so desired",
                     choices: [
                         {
@@ -55,7 +55,7 @@ export class Play extends Command {
                 },
                 {
                     name: "shuffled",
-                    type: "boolean",
+                    type: ApplicationCommandOptionType.Boolean,
                     desc: "Shuffles a playlist before adding, places into the queue randomly if a single track"
                 }
             ],

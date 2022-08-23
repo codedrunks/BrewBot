@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed, GuildMemberRoleManager } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
@@ -17,13 +17,13 @@ export class Search extends Command {
             args: [
                 {
                     name: "song",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Song to play or URL",
                     required: true
                 },
                 {
                     name: "source",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Source for the music to be searched from",
                     choices: [
                         {
@@ -42,7 +42,7 @@ export class Search extends Command {
                 },
                 {
                     name: "position",
-                    type: "string",
+                    type: ApplicationCommandOptionType.String,
                     desc: "Whether to play the song now or next, if so desired",
                     choices: [
                         {
@@ -57,7 +57,7 @@ export class Search extends Command {
                 },
                 {
                     name: "shuffled",
-                    type: "boolean",
+                    type: ApplicationCommandOptionType.Boolean,
                     desc: "Places song into the queue randomly"
                 }
             ]
@@ -151,7 +151,7 @@ export class Search extends Command {
                     if(player.state !== "CONNECTED") player.connect();
                     const channelMention = `<#${voice}>`;
 
-                    let sEmbed: MessageEmbed | undefined;
+                    let sEmbed: EmbedBuilder | undefined;
 
                     if(position == "next") {
                         player.queue.add(track, 0);

@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
 import { getTotalWorks } from "@database/economy";
 import { settings } from "@src/settings";
@@ -32,7 +32,7 @@ export class Job extends Command {
 
         const username = int.user.username;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setColor(settings.embedColors.default)
             .setTitle(`*${username}*'s Current Vocation: ${name}`)
             .setDescription(`You currently can make $${Math.round(baseAward * multiplier)} per 4 hours and have worked ${totalworks} time${totalworks > 1 ? "s": ""}.`);

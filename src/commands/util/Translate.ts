@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { allOfType } from "svcorelib";
 import axios from "axios";
 import Fuse from "fuse.js";
@@ -20,11 +20,13 @@ export class Translate extends Command
                 {
                     name: "text",
                     desc: "The text to translate",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 },
                 {
                     name: "language",
                     desc: "Name of the language to translate to",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 }
             ]
@@ -33,8 +35,8 @@ export class Translate extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const text = int.options.getString("text", true).trim();
-        const lang = int.options.getString("language", true).trim();
+        const text = (int.options.get("text", true).value as string).trim();
+        const lang = (int.options.get("language", true).value as string).trim();
 
         const fuse = new Fuse(
             Object.entries(languages).map(([k, v]) => ({ code: k, name: v })),
@@ -62,7 +64,7 @@ export class Translate extends Command
 
         const fromLangName = (languages as Record<string, string>)[fromLang];
 
-        const ebd = new MessageEmbed()
+        const ebd = new EmbedBuilder()
             .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${resLang.name}**:`)
             .setColor(settings.embedColors.default)
             .setDescription(`> **Text:**\n> ${text}\n\n> **Translation:**\n> ${translation}`);

@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption, MessageReaction, User } from "discord.js";
 import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
 import { Command } from "@src/Command";
@@ -648,7 +648,7 @@ export class Chess extends Command
                     args: [
                         {
                             name: "user",
-                            type: "user",
+                            type: ApplicationCommandOptionType.User,
                             desc: "Choose an opponent",
                             required: true,
                         },
@@ -660,13 +660,13 @@ export class Chess extends Command
                     args: [
                         {
                             name: "p1",
-                            type: "string",
+                            type: ApplicationCommandOptionType.String,
                             desc: "Starting pos",
                             required: true
                         },
                         {
                             name: "p2",
-                            type: "string",
+                            type: ApplicationCommandOptionType.String,
                             desc: "Ending pos",
                             required: true
                         }

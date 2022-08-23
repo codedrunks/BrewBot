@@ -1,6 +1,6 @@
 import { CtxMenu } from "@src/CtxMenu";
 import { ApplicationCommandType } from "discord-api-types/v10";
-import { ContextMenuInteraction } from "discord.js";
+import { ContextMenuCommandInteraction } from "discord.js";
 
 export class TEMPLATE extends CtxMenu
 {
@@ -12,7 +12,7 @@ export class TEMPLATE extends CtxMenu
         });
     }
 
-    async run(int: ContextMenuInteraction)
+    async run(int: ContextMenuCommandInteraction)
     {
         void int;
     }

@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
+import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
 import axios from "axios";
 import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
@@ -41,11 +41,13 @@ export class Define extends Command
                 {
                     name: "term",
                     desc: "The term to search for",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 },
                 {
                     name: "engine",
                     desc: "Which search engine to use for the term's definition",
+                    type: ApplicationCommandOptionType.String,
                     choices: [
                         { name: "Wikipedia", value: "wikipedia" },
                         { name: "Dictionary", value: "dictionary" },
@@ -59,15 +61,15 @@ export class Define extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const term = int.options.getString("term", true);
-        const engine = int.options.getString("engine", true);
+        const term = (int.options.get("term", true).value as string).trim();
+        const engine = (int.options.get("engine", true).value as string).trim();
 
         await this.deferReply(int);
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setColor(settings.embedColors.default);
 
-        const btns: MessageButton[] = [];
+        const btns: ButtonBuilder[] = [];
 
         switch(engine)
         {
@@ -131,8 +133,8 @@ export class Define extends Command
 
             const redirLink = await grabRedirectUrl(permalink);
 
-            btns.push(new MessageButton()
-                .setStyle("LINK")
+            btns.push(new ButtonBuilder()
+                .setStyle(ButtonStyle.Link)
                 .setLabel("Open")
                 .setURL(redirLink ?? permalink)
             );
@@ -258,9 +260,9 @@ export class Define extends Command
                 .setFooter({ text: "dictionaryapi.dev", iconURL: icons.dictionary });
 
             if(entry.pronounciation)
-                btns.push(new MessageButton().setStyle("LINK").setLabel("Pronounciation").setURL(entry.pronounciation));
+                btns.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Pronounciation").setURL(entry.pronounciation));
 
-            btns.push(new MessageButton().setStyle("LINK").setLabel("Source").setURL(entry.source));
+            btns.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Source").setURL(entry.source));
 
             break;
         }
@@ -285,7 +287,7 @@ export class Define extends Command
             return await int.reply(useEmbedify("Please run this command in a server's text channel.", settings.embedColors.error));
 
         const m = await int.channel.send({ embeds: [
-            new MessageEmbed()
+            new EmbedBuilder()
                 .setTitle("Select the best matching article")
                 .setDescription(this.emojiChoiceDesc(
                     articles.map(
@@ -320,7 +322,7 @@ export class Define extends Command
 
                 const { title, extract, url, thumbnail } = articles[artIdx];
 
-                const ebd = new MessageEmbed()
+                const ebd = new EmbedBuilder()
                     .setTitle(`Wikipedia definition for **${title}**:`)
                     .setColor(settings.embedColors.default)
                     .setDescription(extract)
@@ -330,8 +332,8 @@ export class Define extends Command
 
                 return await int.editReply({
                     embeds: [ ebd ],
-                    ...Command.useButtons(new MessageButton()
-                        .setStyle("LINK")
+                    ...Command.useButtons(new ButtonBuilder()
+                        .setStyle(ButtonStyle.Link)
                         .setLabel("Open")
                         .setURL(url)
                     )

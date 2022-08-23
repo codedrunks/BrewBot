@@ -2,7 +2,7 @@ import { CtxMenu } from "@src/CtxMenu";
 import { settings } from "@src/settings";
 import { useEmbedify } from "@src/utils";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord-api-types/v10";
-import { ContextMenuInteraction, DiscordAPIError, GuildMember } from "discord.js";
+import { ContextMenuCommandInteraction, DiscordAPIError, GuildMember } from "discord.js";
 
 export class ResetNickname extends CtxMenu
 {
@@ -15,9 +15,9 @@ export class ResetNickname extends CtxMenu
         });
     }
 
-    async run(int: ContextMenuInteraction)
+    async run(int: ContextMenuCommandInteraction)
     {
-        if(!int.isUserContextMenu())
+        if(!int.isUserContextMenuCommand())
             return int.reply({ ...useEmbedify("This command can only be used in a server.", settings.embedColors.error), ephemeral: true });
 
         try
@@ -32,7 +32,7 @@ export class ResetNickname extends CtxMenu
         }
         catch(err)
         {
-            if(err instanceof DiscordAPIError && err.httpStatus === 403)
+            if(err instanceof DiscordAPIError && err.status === 403)
                 return int.reply({ ...useEmbedify(`I can't reset the nickname of someone as noble as <@${int.targetMember?.user?.id}>`, settings.embedColors.error), ephemeral: true });
         }
 

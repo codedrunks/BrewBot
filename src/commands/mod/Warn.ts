@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
+import { Client, CommandInteraction, GuildMember, EmbedBuilder, ApplicationCommandOptionType } from "discord.js";
 import { Command } from "@src/Command";
 import { sendLogMsg } from "@src/botLogs";
 import persistentData from "@src/persistentData";
@@ -21,16 +21,16 @@ export class Warn extends Command
                 {
                     name: "member",
                     desc: "Which member to warn",
-                    type: "user",
+                    type: ApplicationCommandOptionType.User,
                     required: true,
                 },
                 {
                     name: "reason",
                     desc: "The reason of the warning",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 },
             ],
-            perms: [ "MODERATE_MEMBERS" ],
             memberPerms: [ PermissionFlagsBits.ModerateMembers ],
         });
 
@@ -83,7 +83,7 @@ export class Warn extends Command
         {
             const baseDesc = `Member <@!${user.id}> has been warned ${warningsAmt} time${warningsAmt != 1 ? "s" : ""}.\nPrevious warnings:\n\n${reasonList}\n\n`;
 
-            const logMsg = await sendLogMsg(new MessageEmbed()
+            const logMsg = await sendLogMsg(new EmbedBuilder()
                 .setTitle("Sussy baka alert")
                 .setColor(settings.embedColors.warning)
                 .setDescription(baseDesc + `To ban the member, react ${votesToBan} time${votesToBan !== 1 ? "s" : ""} with the ban hammer within 24 hours.`)
@@ -94,7 +94,7 @@ export class Warn extends Command
                 await logMsg.react("<:banhammer:500792756281671690>");
 
                 const coll = logMsg.createReactionCollector({
-                    filter: (react, usr) => (react.emoji.id === "500792756281671690" && !usr.bot && logMsg.guild?.members.cache.find(m => m.id === usr.id)?.permissions.has("BAN_MEMBERS")) ?? false,
+                    filter: (react, usr) => (react.emoji.id === "500792756281671690" && !usr.bot && logMsg.guild?.members.cache.find(m => m.id === usr.id)?.permissions.has(PermissionFlagsBits.BanMembers)) ?? false,
                     max: votesToBan,
                     time: /*24 * 60 * 60*/ 10 * 1000,
                 });
@@ -108,7 +108,7 @@ export class Warn extends Command
                         {
                             const dmChan = await user.createDM(true);
 
-                            dmChan && dmChan.send({ embeds: [ new MessageEmbed()
+                            dmChan && dmChan.send({ embeds: [ new EmbedBuilder()
                                 .setTitle("You have been banned")
                                 .setColor(settings.embedColors.error)
                                 .setDescription(`You have been banned from the server **${logMsg.guild?.name}** after being warned ${warningsAmt} times:\n\n${reasonList}`)
@@ -131,7 +131,7 @@ export class Warn extends Command
         {
             const dmChannel = await user.createDM(true);
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle(`Warning from ${user.guild.name}`)
                 .setColor(settings.embedColors.warning)
                 .setDescription(`You have been warned for \`${reason}\` in the server **${user.guild.name}**.\n\nThese are your current warnings:\n\n${reasonList}`)

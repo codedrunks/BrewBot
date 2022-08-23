@@ -1,5 +1,5 @@
 import { embedify } from "@utils/embedify";
-import { ModalSubmitInteraction, CacheType, TextInputComponent } from "discord.js";
+import { ModalSubmitInteraction, CacheType, TextInputBuilder, TextInputStyle } from "discord.js";
 import { Modal } from "@utils/Modal";
 import { addContest } from "@database/contest";
 import { DatabaseError } from "@database/util";
@@ -13,29 +13,29 @@ export class ContestModal extends Modal {
         super({
             title: "Add New Contest",
             inputs: [
-                new TextInputComponent()
+                new TextInputBuilder()
                     .setCustomId("name")
                     .setLabel("Contest Name")
-                    .setStyle("SHORT")
+                    .setStyle(TextInputStyle.Short)
                     .setMaxLength(100)
                     .setRequired(true),
-                new TextInputComponent()
+                new TextInputBuilder()
                     .setCustomId("desc")
                     .setLabel("Contest Description")
-                    .setStyle("PARAGRAPH")
+                    .setStyle(TextInputStyle.Paragraph)
                     .setMaxLength(2048)
                     .setRequired(true),
-                new TextInputComponent()
+                new TextInputBuilder()
                     .setCustomId("start_date")
                     .setLabel("Start Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
-                    .setStyle("SHORT")
+                    .setStyle(TextInputStyle.Short)
                     .setPlaceholder("2022-10-29 13:45")
                     .setMaxLength(16)
                     .setRequired(true),
-                new TextInputComponent()
+                new TextInputBuilder()
                     .setCustomId("end_date")
                     .setLabel("End Datetime (YYYY-MM-DD HH:MM) (Local TZ)")
-                    .setStyle("SHORT")
+                    .setStyle(TextInputStyle.Short)
                     .setPlaceholder("2022-10-29 13:45")
                     .setMaxLength(16)
                     .setRequired(true)
