@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, PermissionFlagsBits } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { settings } from "@src/settings";
@@ -15,6 +15,7 @@ export class Premium extends Command {
                     name: "toggle",
                     desc: "Give premium to current guild [DEV ONLY]",
                     devOnly: true,
+                    perms: [PermissionFlagsBits.Administrator],
                 },
                 {
                     name: "status",
