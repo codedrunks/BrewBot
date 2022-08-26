@@ -29,7 +29,7 @@ export class Exec extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const ephemeral = int.options.get("ephemeral")?.value as boolean | undefined ?? null;
+        const ephemeral = int.options.get("ephemeral")?.value as boolean | undefined;
 
         const modal = new ExecModal(ephemeral ?? false);
 

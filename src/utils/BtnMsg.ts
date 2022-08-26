@@ -67,7 +67,7 @@ export class BtnMsg extends EmitterBase
         }
 
         this.btns = this.btns.map((b, i) => {
-            if((!b.data as Partial<APIButtonComponentWithURL>).url)
+            if(!(b.data as Partial<APIButtonComponentWithURL>).url)
                 b.setCustomId(`${this.id}@${i}`);
             return b;
         });

@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
-import { ButtonInteraction, Client, Collection, ButtonBuilder, ModalSubmitInteraction, APIButtonComponentWithCustomId } from "discord.js";
+import { ButtonInteraction, Client, Collection, ButtonBuilder, ModalSubmitInteraction, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
 
 import { Command } from "@src/Command";
 import { Event } from "@src/Event";
@@ -172,7 +172,7 @@ class BtnListener extends EventEmitter
 
         btns.forEach(bt => {
             if(!(bt.data as Partial<APIButtonComponentWithCustomId>).custom_id)
-                throw new TypeError(`ButtonBuilder "${bt.data.label}/${bt.data.style}" doesn't have a customId`);
+                throw new TypeError(`ButtonBuilder "${bt.data.label}/${ButtonStyle[bt.data.style as unknown as ButtonStyle]}" doesn't have a customId`);
             this.btns.set((bt.data as APIButtonComponentWithCustomId).custom_id, bt);
         });
     }

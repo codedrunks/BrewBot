@@ -1,6 +1,9 @@
 {
   "name": "bot",
   "version": "0.2.0",
+  "engines": {
+    "node": ">=16.9"
+  },
   "scripts": {
     "start": "tsc && tsc-alias && node out/bot.js",
     "test": "ts-node src/test.ts",
