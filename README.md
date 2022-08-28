@@ -26,7 +26,7 @@ https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&
 <br>
 
 ## Installation:
-1. Install Node.js (v14+), npm (v8+) and Postgres
+1. Install Node.js (v16.9+), npm (v8+) and Postgres
 2. Install GTK2 and libjpeg-turbo by following [this guide](https://github.com/Automattic/node-canvas/wiki/Installation:-Windows#2-installing-gtk-2)
 3. [Install Redis](#redis)
 4. Set up a psql user and DB schema for the bot

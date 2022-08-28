@@ -1,4 +1,4 @@
-import { CommandInteraction, Message, MessageEmbed, User } from "discord.js";
+import { CommandInteraction, Message, EmbedBuilder, User, ApplicationCommandOptionType } from "discord.js";
 import { randRange } from "svcorelib";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -17,7 +17,7 @@ export class HigherLower extends Command
                 {
                     name: "max",
                     desc: "The maximum number that can be chosen. Defaults to 1000. Must be between 10 and 1 000 000 000",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     min: 10,
                     max: 1000000000,
                 }
@@ -27,7 +27,7 @@ export class HigherLower extends Command
 
     baseEmbed(usr: User)
     {
-        const ebd = new MessageEmbed()
+        const ebd = new EmbedBuilder()
             .setTitle("Higher Lower")
             .setColor(settings.embedColors.default)
             .setFooter({ text: "Try to type the randomly selected number only by getting a higher/lower hint. React with X to end the game." });

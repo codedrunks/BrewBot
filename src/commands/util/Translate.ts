@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { allOfType } from "svcorelib";
 import Fuse from "fuse.js";
 
@@ -19,11 +19,13 @@ export class Translate extends Command
                 {
                     name: "text",
                     desc: "The text to translate",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 },
                 {
                     name: "language",
                     desc: "English name of the language to translate to",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 }
             ]
@@ -32,8 +34,8 @@ export class Translate extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const text = int.options.getString("text", true).trim();
-        const lang = int.options.getString("language", true).trim();
+        const text = (int.options.get("text", true).value as string).trim();
+        const lang = (int.options.get("language", true).value as string).trim();
 
         const langs = Object.entries(languages)
             .map(([name, code]) => ({ name, code }));
@@ -62,7 +64,7 @@ export class Translate extends Command
         const fromLangName = Object.entries(languages).find(([_n, code]) => code === fromLang)?.[0];
         const toLangName = Object.entries(languages).find(([_n, code]) => code === resLang.code)?.[0];
 
-        const ebd = new MessageEmbed()
+        const ebd = new EmbedBuilder()
             .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${toLangName}**:`)
             .setColor(settings.embedColors.default)
             .setDescription(`> **Translation:**\n> ${translation}\n\n> **Original text:**\n> ${text}`);

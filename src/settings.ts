@@ -1,5 +1,5 @@
 import { GatewayIntentBits } from "discord-api-types/v10";
-import { ColorResolvable } from "discord.js";
+import { ColorResolvable, Colors } from "discord.js";
 import dotenv from "dotenv";
 import { Stringifiable } from "svcorelib";
 
@@ -40,11 +40,11 @@ export const settings: Settings = {
     },
     embedColors: {
         default: "#faba05",
-        success: "GREEN",
-        gameLost: "GREY",
-        warning: "DARK_ORANGE",
-        error: "DARK_RED",
-        contestWinner: "GOLD",
+        success: Colors.Green,
+        gameLost: Colors.Grey,
+        warning: Colors.Orange,
+        error: Colors.DarkRed,
+        contestWinner: Colors.Gold,
     },
     /** TODO: remove - When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,

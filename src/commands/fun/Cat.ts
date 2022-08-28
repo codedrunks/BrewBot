@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { randomItem } from "svcorelib";
 import { AxiosError } from "axios";
 import { axios } from "@src/utils";
@@ -60,7 +60,7 @@ export class Cat extends Command
 
                     if(data.webpurl || data.compressed_url)
                     {
-                        const embed = new MessageEmbed()
+                        const embed = new EmbedBuilder()
                             .setTitle(randomItem(embedTitles))
                             .setColor(settings.embedColors.default)
                             .setFooter({ text: apiInfo[tApi].embedFooter })

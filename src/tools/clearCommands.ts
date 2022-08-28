@@ -1,10 +1,11 @@
-import { Client } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v9";
+import { Routes } from "discord-api-types/v10";
 import dotenv from "dotenv";
 import k from "kleur";
 
 dotenv.config();
+const Intents = GatewayIntentBits;
 
 console.log("Logging in...");
 
@@ -15,7 +16,7 @@ const rest = new REST({
 }).setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
 const cl = new Client({
-    intents: [ "GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_PRESENCES" ],
+    intents: [ Intents.Guilds, Intents.GuildMessages, Intents.GuildMembers, Intents.GuildPresences ],
 });
 
 cl.login(process.env.BOT_TOKEN ?? "ERR_NO_ENV");

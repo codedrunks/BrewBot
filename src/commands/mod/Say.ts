@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { CommandInteraction, TextBasedChannel } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, TextBasedChannel } from "discord.js";
 import { Command } from "@src/Command";
 
 export class Say extends Command
@@ -14,15 +14,15 @@ export class Say extends Command
                 {
                     name: "message",
                     desc: "The message to send",
+                    type: ApplicationCommandOptionType.String,
                     required: true
                 },
                 {
                     name: "channel",
-                    type: "channel",
+                    type: ApplicationCommandOptionType.Channel,
                     desc: "Which channel to send the message in, leave empty for the current channel"
                 },
             ],
-            perms: [ "MANAGE_MESSAGES" ],
             memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }

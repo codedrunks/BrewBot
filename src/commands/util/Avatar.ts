@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { settings } from "@src/settings";
 import { Command } from "@src/Command";
 import { AxiosError } from "axios";
@@ -15,12 +15,13 @@ export class Avatar extends Command
             args: [
                 {
                     name: "user",
-                    type: "user",
+                    type: ApplicationCommandOptionType.User,
                     desc: "Which user to display the avatar of. Leave empty for your own.",
                 },
                 {
                     name: "format",
                     desc: "Format of the image",
+                    type: ApplicationCommandOptionType.String,
                     choices: [
                         { name: "png", value: "png" },
                         { name: "gif", value: "gif" },
@@ -41,7 +42,7 @@ export class Avatar extends Command
 
         if(usr)
         {
-            const requestedAvUrl = usr.avatarURL({ format, size: 4096 });
+            const requestedAvUrl = usr.avatarURL({ extension: format, size: 4096 });
 
             let status = 400;
 
@@ -55,11 +56,11 @@ export class Avatar extends Command
                 status = err instanceof AxiosError ? parseInt(err.status ?? "415") : 415;
             }
 
-            const avatarUrl = (status >= 400 ? usr.avatarURL({ format: "png", size: 4096 }) : requestedAvUrl);
+            const avatarUrl = (status >= 400 ? usr.avatarURL({ extension: "png", size: 4096 }) : requestedAvUrl);
 
             if(avatarUrl)
             {
-                const ebd = new MessageEmbed()
+                const ebd = new EmbedBuilder()
                     .setTitle(`Avatar of <@${usr.id}>:`)
                     .setColor(settings.embedColors.default)
                     .setImage(avatarUrl);

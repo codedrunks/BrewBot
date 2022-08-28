@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed, TextBasedChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, TextBasedChannel } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -28,47 +28,48 @@ export class Reminder extends Command
                         {
                             name: "name",
                             desc: "The name of the reminder",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                         {
                             name: "seconds",
                             desc: "In how many seconds",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 59,
                         },
                         {
                             name: "minutes",
                             desc: "In how many minutes",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 59,
                         },
                         {
                             name: "hours",
                             desc: "In how many hours",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 23,
                         },
                         {
                             name: "days",
                             desc: "In how many days",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 364,
                         },
                         {
                             name: "months",
                             desc: "In how many months (1 month = 30 days)",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 11,
                         },
                         {
                             name: "years",
                             desc: "In how many years",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 100,
                         },
@@ -85,6 +86,7 @@ export class Reminder extends Command
                         {
                             name: "reminder",
                             desc: "The name of the reminder or the ID (shown in /reminder list)",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                     ],
@@ -135,13 +137,13 @@ export class Reminder extends Command
                 action = "set a reminder";
 
                 const args = {
-                    name: int.options.getString("name", true),
-                    seconds: int.options.getNumber("seconds", false) ?? 0,
-                    minutes: int.options.getNumber("minutes", false) ?? 0,
-                    hours: int.options.getNumber("hours", false) ?? 0,
-                    days: int.options.getNumber("days", false) ?? 0,
-                    months: int.options.getNumber("months", false) ?? 0,
-                    years: int.options.getNumber("years", false) ?? 0,
+                    name: int.options.get("name", true).value as string,
+                    seconds: int.options.get("seconds")?.value as number ?? 0,
+                    minutes: int.options.get("minutes")?.value as number ?? 0,
+                    hours: int.options.get("hours")?.value as number ?? 0,
+                    days: int.options.get("days")?.value as number ?? 0,
+                    months: int.options.get("months")?.value as number ?? 0,
+                    years: int.options.get("years")?.value as number ?? 0,
                 };
 
                 const { name, ...timeObj } = args;
@@ -193,7 +195,7 @@ export class Reminder extends Command
                 const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) => acc + `> \`${cur.reminderId}\` : ${cur.name}\n> ${time(toUnix10(cur.dueTimestamp), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`, "");
                 const getReminderEbd = (remStr: string, curPage?: number, maxPage?: number) =>
                 {
-                    const ebd = new MessageEmbed()
+                    const ebd = new EmbedBuilder()
                         .setTitle("Your reminders:")
                         .setDescription(remStr + "\n\nTo delete a reminder, use `/reminder delete`")
                         .setAuthor({
@@ -207,7 +209,7 @@ export class Reminder extends Command
                     return ebd;
                 };
 
-                const avatar = user.avatarURL({ format: "png", size: 512 });
+                const avatar = user.avatarURL({ extension: "png", size: 512 });
 
                 const remStr = getReminderStr(reminders);
 
@@ -217,7 +219,7 @@ export class Reminder extends Command
                     return await this.editReply(int, getReminderEbd(remStr));
                 else
                 {
-                    const pages: MessageEmbed[] = [];
+                    const pages: EmbedBuilder[] = [];
                     const rems = [...reminders];
 
                     let pageNbr = 0;
@@ -241,7 +243,7 @@ export class Reminder extends Command
                 //#SECTION delete one
                 action = "delete a reminder";
 
-                const remIdent = int.options.getString("reminder", true).trim();
+                const remIdent = (int.options.get("reminder", true).value as string).trim();
 
                 await this.deferReply(int, true);
 
@@ -297,9 +299,9 @@ export class Reminder extends Command
 
                 const cont = embedify(`Are you sure you want to delete ${rems.length > 1 ? `all ${rems.length} reminders` : "your 1 reminder"}?\nThis action cannot be undone.`, settings.embedColors.warning);
 
-                const btns: ButtonOpts = [
-                    { label: "Delete all", style: "DANGER", emoji: "🗑️" },
-                    { label: "Cancel", style: "SECONDARY", emoji: "❌" },
+                const btns: ButtonBuilder[] = [
+                    new ButtonBuilder().setLabel("Delete all").setStyle(ButtonStyle.Danger).setEmoji("🗑️"),
+                    new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary).setEmoji("❌"),
                 ];
 
                 const bm = new BtnMsg(cont, btns, {
@@ -307,7 +309,7 @@ export class Reminder extends Command
                 });
 
                 bm.on("press", async (bt, btInt) => {
-                    if(bt.label === btns.find(b => b.label)?.label)
+                    if(bt.data.label === btns.find(b => b.data.label)?.data.label)
                     {
                         await deleteReminders(rems.map(r => r.reminderId), user.id);
                         await btInt.reply({ ...useEmbedify("Deleted all reminders.", settings.embedColors.default), ephemeral: true });

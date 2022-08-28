@@ -1,5 +1,5 @@
 import { settings } from "@src/settings";
-import { CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
 import { deleteContestSubmission, getAllContestsInGuild, getContestById, getCurrentContest, getSubmissionsOfContest, setContestChannel, setContestRole, submitContestEntry, unvoteContest, voteContest } from "@database/contest";
 import { embedify } from "@utils/embedify";
@@ -39,7 +39,7 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want the info of",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true,
                         }
                     ]
@@ -51,7 +51,7 @@ export class Contest extends Command
                         {
                             name: "channel",
                             desc: "Channel where winners will be announced",
-                            type: "channel",
+                            type: ApplicationCommandOptionType.Channel,
                             required: true
                         }
                     ],
@@ -64,7 +64,7 @@ export class Contest extends Command
                         {
                             name: "role",
                             desc: "Role that will be pinged",
-                            type: "role",
+                            type: ApplicationCommandOptionType.Role,
                             required: true,
                         }
                     ],
@@ -77,13 +77,13 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want to submit to",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true
                         },
                         {
                             name: "attachment",
                             desc: "The attachment you want to submit",
-                            type: "attachment",
+                            type: ApplicationCommandOptionType.Attachment,
                             required: true
                         }
                     ]
@@ -95,13 +95,13 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want to vote on",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "contestant",
                             desc: "Contestant you want to vote for",
-                            type: "user",
+                            type: ApplicationCommandOptionType.User,
                             required: true,
                         }
                     ]
@@ -113,13 +113,13 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want to remove the vote from",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "contestant",
                             desc: "Contestant you want to remove the vote from",
-                            type: "user",
+                            type: ApplicationCommandOptionType.User,
                             required: true,
                         }
                     ]
@@ -131,7 +131,7 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want your submissions removed from",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                     ]
@@ -143,13 +143,13 @@ export class Contest extends Command
                         {
                             name: "contest_id",
                             desc: "ID of contest you want your submissions removed from",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "user",
                             desc: "User you want to delete the submission of",
-                            type: "user",
+                            type: ApplicationCommandOptionType.User,
                             required: true,
                         },
                     ],
@@ -209,7 +209,7 @@ export class Contest extends Command
 
         const embedDesc = `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(contest.name)
             .setDescription(embedDesc)
             .setColor(settings.embedColors.default)
@@ -240,7 +240,7 @@ export class Contest extends Command
                 followUpDesc += `- ${linkifiedUsername} (${submission._count.votes})\n`;
             });
 
-            const submissionsEmbed = new MessageEmbed()
+            const submissionsEmbed = new EmbedBuilder()
                 .setTitle("Submissions")
                 .setDescription(followUpDesc)
                 .setColor(settings.embedColors.default);
@@ -256,7 +256,7 @@ export class Contest extends Command
 
         const embeds = [];
 
-        const contestId = int.options.getNumber("contest_id", true);
+        const contestId = int.options.get("contest_id", true).value as number;
 
         const contest = await getContestById(int.guild.id, contestId);
 
@@ -271,7 +271,7 @@ export class Contest extends Command
 
         const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(contest.name)
             .setDescription(embedDesc)
             .setColor(settings.embedColors.default)
@@ -324,14 +324,14 @@ export class Contest extends Command
                 const numOfEmbeds = Math.floor(fields.length / this.embedFieldsLimit) + 1;
 
                 for (let i = 0; i < numOfEmbeds; i++) {
-                    const newEmbed = new MessageEmbed()
+                    const newEmbed = new EmbedBuilder()
                         .setTitle("Submissions")
                         .setColor(settings.embedColors.default)
                         .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}` });
 
                     for (let i = 0; i < fields.length; i++) {
                         console.log(fields[i]);
-                        newEmbed.addField("\u200b", fields[i], true);
+                        newEmbed.addFields([{ name: "\u200b", value: fields[i], inline: true }]);
                     }
 
                     submissionsEmbeds.push(newEmbed);
@@ -339,7 +339,7 @@ export class Contest extends Command
 
                 embeds.push(...submissionsEmbeds);
             } else {
-                const submissionsEmbed = new MessageEmbed()
+                const submissionsEmbed = new EmbedBuilder()
                     .setTitle("Submissions")
                     .setDescription(submissionsDesc)
                     .setColor(settings.embedColors.default);
@@ -355,7 +355,7 @@ export class Contest extends Command
 
         const contests = await getAllContestsInGuild(int.guild.id);
 
-        const embeds: MessageEmbed[] = [];
+        const embeds: EmbedBuilder[] = [];
 
         let embedDesc = "use `/contest info` to get more information\n\n\n\n";
 
@@ -394,7 +394,7 @@ export class Contest extends Command
             const numOfEmbeds = Math.floor(fields.length / this.embedFieldsLimit) + 1;
 
             for (let i = 0; i < numOfEmbeds; i++) {
-                const newEmbed = new MessageEmbed()
+                const newEmbed = new EmbedBuilder()
                     .setTitle("Contests")
                     .setDescription(desc)
                     .setColor(settings.embedColors.default)
@@ -402,7 +402,7 @@ export class Contest extends Command
 
                 for (let i = 0; i < fields.length; i++) {
                     console.log(fields[i]);
-                    newEmbed.addField("\u200b", fields[i], true);
+                    newEmbed.addFields([{ name: "\u200b", value: fields[i], inline: true }]);
                 }
 
                 contestsEmbeds.push(newEmbed);
@@ -410,7 +410,7 @@ export class Contest extends Command
 
             embeds.push(...contestsEmbeds);
         } else {
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle("Contests")
                 .setColor(settings.embedColors.default)
                 .setDescription(embedDesc);
@@ -423,7 +423,7 @@ export class Contest extends Command
     async setChannel(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const chan = int.options.getChannel("channel", true);
+        const chan = int.options.get("channel", true).channel!;
         const err = await setContestChannel(int.guild.id, chan.id);
 
         if (err === DatabaseError.UNKNOWN)
@@ -435,7 +435,7 @@ export class Contest extends Command
     async setRole(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const role = int.options.getRole("role", true);
+        const role = int.options.get("role", true).role!;
         const err = await setContestRole(int.guild.id, role.id);
 
         if (err === DatabaseError.UNKNOWN)
@@ -447,8 +447,8 @@ export class Contest extends Command
     async submit(int: CommandInteraction) {
         if (!int.guild?.id || !int.channel?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const contestId = int.options.getNumber("contest_id", true);
-        const attachment = int.options.getAttachment("attachment", true);
+        const contestId = int.options.get("contest_id", true).value as number;
+        const attachment = int.options.get("attachment", true).attachment!;
 
         const contest = await getContestById(int.guild.id, contestId);
 
@@ -481,7 +481,7 @@ export class Contest extends Command
     async vote(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const contestId = int.options.getNumber("contest_id", true);
+        const contestId = int.options.get("contest_id", true).value as number;
         const user = int.options.getUser("contestant", true);
 
         const now = new Date().getTime();
@@ -521,7 +521,7 @@ export class Contest extends Command
     async unvote(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const contestId = int.options.getNumber("contest_id", true);
+        const contestId = int.options.get("contest_id", true).value as number;
         const user = int.options.getUser("contestant", true);
 
         const now = new Date().getTime();
@@ -559,7 +559,7 @@ export class Contest extends Command
     async deleteSubmission(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const contestId = int.options.getNumber("contest_id", true);
+        const contestId = int.options.get("contest_id", true).value as number;
 
         const contest = await getContestById(int.guild.id, contestId);
 
@@ -586,7 +586,7 @@ export class Contest extends Command
     async modDeleteSubmission(int: CommandInteraction) {
         if (!int.guild?.id) return await this.editReply(int, embedify("This command cannot be used in DMs"));
 
-        const contestId = int.options.getNumber("contest_id", true);
+        const contestId = int.options.get("contest_id", true).value as number;
         const user = int.options.getUser("user", true);
 
         const contest = await getContestById(int.guild.id, contestId);

@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
-import { ButtonInteraction, Client, Collection, MessageButton, ModalSubmitInteraction } from "discord.js";
+import { ButtonInteraction, Client, Collection, ButtonBuilder, ModalSubmitInteraction, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
 
 import { Command } from "@src/Command";
 import { Event } from "@src/Event";
@@ -163,37 +163,37 @@ interface BtnListener {
      * Emitted when a button is pressed. Gets passed the instance of the clicked button.  
      * Make sure to check that you're responding to the correct `btn`'s interaction by validating the customId!
      */
-    on(event: "press", listener: (int: ButtonInteraction, btn: MessageButton) => void): this;
+    on(event: "press", listener: (int: ButtonInteraction, btn: ButtonBuilder) => void): this;
 }
 
 // TODO:FIXME: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
 class BtnListener extends EventEmitter
 {
-    private btns = new Collection<string, MessageButton>();
+    private btns = new Collection<string, ButtonBuilder>();
 
     constructor()
     {
         super({ captureRejections: true });
     }
 
-    /** Adds multiple MessageButtons. Throws an error if there's no customId props! */
-    public addBtns(btns: MessageButton[]): void
-    /** Adds one MessageButton. Throws an error if there's no customId prop! */
-    public addBtns(btn: MessageButton): void
-    public addBtns(btns: MessageButton | MessageButton[]): void
+    /** Adds multiple ButtonBuilders. Throws an error if there's no customId props! */
+    public addBtns(btns: ButtonBuilder[]): void
+    /** Adds one ButtonBuilder. Throws an error if there's no customId prop! */
+    public addBtns(btn: ButtonBuilder): void
+    public addBtns(btns: ButtonBuilder | ButtonBuilder[]): void
     {
         btns = Array.isArray(btns) ? btns : [btns];
 
         btns.forEach(bt => {
-            if(!bt.customId)
-                throw new TypeError(`MessageButton "${bt.label}/${bt.style}" doesn't have a customId`);
-            this.btns.set(bt.customId, bt);
+            if(!(bt.data as Partial<APIButtonComponentWithCustomId>).custom_id)
+                throw new TypeError(`ButtonBuilder "${bt.data.label}/${ButtonStyle[bt.data.style as unknown as ButtonStyle]}" doesn't have a customId`);
+            this.btns.set((bt.data as APIButtonComponentWithCustomId).custom_id, bt);
         });
     }
 
-    /** Deletes multiple MessageButtons by their customId's. Invalid IDs are ignored. */
+    /** Deletes multiple ButtonBuilders by their customId's. Invalid IDs are ignored. */
     public delBtns(customIDs?: (string | null)[]): void
-    /** Deletes one  MessageButton by its customId. Invalid ID is ignored. */
+    /** Deletes one  ButtonBuilder by its customId. Invalid ID is ignored. */
     public delBtns(customId?: string): void
     public delBtns(customIDs?: string | (string | null)[]): void
     {
@@ -202,7 +202,7 @@ class BtnListener extends EventEmitter
         ids.forEach(id => id && this.btns.delete(id));
     }
 
-    /** Returns all buttons that are currently registered, as a Collection of customId and MessageButton instances */
+    /** Returns all buttons that are currently registered, as a Collection of customId and ButtonBuilder instances */
     public getBtns()
     {
         return this.btns;
@@ -219,7 +219,7 @@ class BtnListener extends EventEmitter
     }
 }
 
-/** This instance manages all MessageButtons and emits events when they are clicked. */
+/** This instance manages all ButtonBuilders and emits events when they are clicked. */
 export const btnListener = new BtnListener();
 
 

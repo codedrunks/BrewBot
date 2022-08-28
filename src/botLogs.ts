@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
+import { Client, EmbedBuilder, TextBasedChannel } from "discord.js";
 import persistentData from "@src/persistentData";
 
 
@@ -11,7 +11,7 @@ export function init(client: Client)
 }
 
 /** @deprecated This needs to be overhauled */
-export async function sendLogMsg(msg: string | MessageEmbed | MessageEmbed[])
+export async function sendLogMsg(msg: string | EmbedBuilder | EmbedBuilder[])
 {
     if(botLogsChannel)
     {

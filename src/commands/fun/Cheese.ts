@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption, MessageButton, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, ButtonBuilder, EmbedBuilder, EmbedField, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { Nullable } from "discord-api-types/utils/internals";
@@ -54,6 +54,7 @@ export class Cheese extends Command
                         {
                             name: "name",
                             desc: "The name of the cheese",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                     ],
@@ -80,7 +81,7 @@ export class Cheese extends Command
             break;
         case "search":
             urlPath = "/search";
-            urlParams = `?q=${encodeURIComponent(int.options.getString("name", true))}`;
+            urlParams = `?q=${encodeURIComponent(int.options.get("name", true).value as string)}`;
             ebdTitle = "**{NAME}**:";
         }
 
@@ -102,9 +103,9 @@ export class Cheese extends Command
             const embed = this.embedifyCheese(cheese, ebdTitle.replace("{NAME}", cheese.name));
 
             const btn = cheese.link ?
-                new MessageButton()
+                new ButtonBuilder()
                     .setLabel("Open")
-                    .setStyle("LINK")
+                    .setStyle(ButtonStyle.Link)
                     .setURL(cheese.link)
                 : undefined;
 
@@ -119,10 +120,12 @@ export class Cheese extends Command
 
     embedifyCheese(cheese: CheeseObj, title: string)
     {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(title)
             .setColor(settings.embedColors.default)
             .setFooter({ text: "https://github.com/IllusionMan1212/say-cheese" });
+
+        const embedFields: EmbedField[] = [];
 
         cheese.image && embed.setThumbnail(cheese.image);
         cheese.description && embed.setDescription(cheese.description.length > 1900 ? cheese.description.substring(0, 1900) + "..." : cheese.description);
@@ -130,13 +133,15 @@ export class Cheese extends Command
         const { countries, types, flavors, textures, aromas, vegetarian } = cheese.attributes;
         const milks = cheese.milks;
 
-        Array.isArray(countries) && countries.length > 0 && embed.addField(`Countr${countries.length != 1 ? "ies" : "y"}`, countries.join(", "), true);
-        Array.isArray(types) && types.length > 0 && embed.addField(`Type${types.length != 1 ? "s" : ""}`, types.join(", "), true);
-        Array.isArray(milks) && milks.length > 0 && embed.addField(`Milk${milks.length != 1 ? "s" : ""}`, milks.join(", "), true);
-        Array.isArray(flavors) && flavors.length > 0 && embed.addField(`Flavor${flavors.length != 1 ? "s" : ""}`, flavors.join(", "), true);
-        Array.isArray(textures) && textures.length > 0 && embed.addField(`Texture${textures.length != 1 ? "s" : ""}`, textures.join(", "), true);
-        Array.isArray(aromas) && aromas.length > 0 && embed.addField(`Aroma${aromas.length != 1 ? "s" : ""}`, aromas.join(", "), true);
-        typeof vegetarian === "boolean" && embed.addField("Vegetarian", vegetarian ? "yes" : "no", true);
+        Array.isArray(countries) && countries.length > 0 && embedFields.push({ name: `Countr${countries.length != 1 ? "ies" : "y"}`, value: countries.join(", "), inline: true });
+        Array.isArray(types) && types.length > 0 && embedFields.push({ name: `Type${types.length != 1 ? "s" : ""}`, value: types.join(", "), inline: true });
+        Array.isArray(milks) && milks.length > 0 && embedFields.push({ name: `Milk${milks.length != 1 ? "s" : ""}`, value: milks.join(", "), inline: true });
+        Array.isArray(flavors) && flavors.length > 0 && embedFields.push({ name: `Flavor${flavors.length != 1 ? "s" : ""}`, value: flavors.join(", "), inline: true });
+        Array.isArray(textures) && textures.length > 0 && embedFields.push({ name: `Texture${textures.length != 1 ? "s" : ""}`, value: textures.join(", "), inline: true });
+        Array.isArray(aromas) && aromas.length > 0 && embedFields.push({ name: `Aroma${aromas.length != 1 ? "s" : ""}`, value: aromas.join(", "), inline: true });
+        typeof vegetarian === "boolean" && embedFields.push({ name: "Vegetarian", value: vegetarian ? "yes" : "no", inline: true });
+
+        embed.addFields(embedFields);
 
         return embed;
     }

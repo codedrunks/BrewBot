@@ -1,6 +1,6 @@
 import { ContextMenuCommandBuilder } from "@discordjs/builders";
 import { RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
-import { ContextMenuInteraction } from "discord.js";
+import { ContextMenuCommandInteraction } from "discord.js";
 import { settings } from "./settings";
 
 import { CtxMeta } from "./types";
@@ -27,7 +27,7 @@ export abstract class CtxMenu
     }
 
     /** Tries to run this context menu command */
-    public async tryRun(int: ContextMenuInteraction)
+    public async tryRun(int: ContextMenuCommandInteraction)
     {
         try
         {
@@ -45,5 +45,5 @@ export abstract class CtxMenu
         }
     }
 
-    protected abstract run(int: ContextMenuInteraction): Promise<unknown>;
+    protected abstract run(int: ContextMenuCommandInteraction): Promise<unknown>;
 }

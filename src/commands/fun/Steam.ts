@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption, EmbedFieldData, MessageEmbed } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, EmbedField, EmbedBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
 import SteamAPI, { Game } from "steamapi";
 import { axios, BtnMsg, embedify, PageEmbed, truncStr } from "@src/utils";
 import { Command } from "@src/Command";
@@ -30,6 +30,7 @@ export class Steam extends Command
                         {
                             name: "username",
                             desc: "Whose info to look up - case sensitive",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                     ],
@@ -41,11 +42,13 @@ export class Steam extends Command
                         {
                             name: "username",
                             desc: "Whose info to look up - case sensitive",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                         {
                             name: "sort",
                             desc: "How to sort the list of games",
+                            type: ApplicationCommandOptionType.String,
                             choices: sortChoices.map(({ name, value }) => ({ name, value })),
                         },
                     ],
@@ -65,7 +68,7 @@ export class Steam extends Command
 
         try
         {
-            const username = int.options.getString("username", true);
+            const username = (int.options.get("username", true).value as string).trim();
 
             const { data, status } = await axios.get(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${process.env.STEAM_TOKEN}&vanityurl=${username}`);
 
@@ -80,48 +83,49 @@ export class Steam extends Command
             {
             case "info":
             {
-                const embed = new MessageEmbed()
+                const embed = new EmbedBuilder()
                     .setTitle(`Steam user **${nickname ?? "Anonymous"}**:`)
                     .setColor(settings.embedColors.default);
 
+                const embedFields: EmbedField[] = [];
+
                 avatar && embed.setThumbnail(avatar.large ?? avatar.medium ?? avatar.small);
-                realName && embed.addField("Real name", realName, true);
-                embed.addField("Created at", createdAt.toLocaleDateString("en-GB", { dateStyle: "medium" }), true);
+                realName && embedFields.push({ name: "Real name", value: realName, inline: true });
+                embedFields.push({ name: "Created at", value: createdAt.toLocaleDateString("en-GB", { dateStyle: "medium" }), inline: true });
 
                 const promises: (() => Promise<void>)[] = [];
 
                 promises.push(async () => {
-                    countryCode && embed.addField("Country", await this.getCountryName(countryCode), true);
+                    countryCode && embedFields.push({ name: "Country", value: await this.getCountryName(countryCode), inline: true });
                 });
 
                 promises.push(async () => {
                     const games = await this.api.getUserOwnedGames(usrId);
-                    Array.isArray(games) && games.length > 0 && embed.addField("Games", String(games.length), true);
+                    Array.isArray(games) && games.length > 0 && embedFields.push({ name: "Games", value: String(games.length), inline: true });
                 });
 
                 promises.push(async () => {
                     const recentGames = await this.api.getUserRecentGames(usrId);
-                    Array.isArray(recentGames) && recentGames.length > 0 && embed.addField("Recent Games", recentGames.slice(0, 4).map(r => r.name).join(", "), true);
+                    Array.isArray(recentGames) && recentGames.length > 0 && embedFields.push({ name: "Recent Games", value: recentGames.slice(0, 4).map(r => r.name).join(", "), inline: true });
                 });
 
                 promises.push(async () => {
                     const level = await this.api.getUserLevel(usrId);
                     const badges = await this.api.getUserBadges(usrId);
 
-                    typeof level === "number" && embed.addField("Level", `**${level}**${badges.playerXP ? ` (${badges.playerXP} / ${badges.playerXP + badges.playerNextLevelXP} XP)` : ""}`, true);
-                    Array.isArray(badges.badges) && badges.badges.length > 0 && embed.addField("Badges", String(badges.badges.length), true);
+                    typeof level === "number" && embedFields.push({ name: "Level", value: `**${level}**${badges.playerXP ? ` (${badges.playerXP} / ${badges.playerXP + badges.playerNextLevelXP} XP)` : ""}`, inline: true });
+                    Array.isArray(badges.badges) && badges.badges.length > 0 && embedFields.push({ name: "Badges", value: String(badges.badges.length), inline: true });
                 });
 
                 promises.push(async () => {
                     const bans = await this.api.getUserBans(usrId);
-                    bans && embed.addField("Bans", `VAC: ${bans.vacBans}\nGame: ${bans.gameBans}${bans.communityBanned ? "\nCommunity: banned" : ""}`, true);
+                    bans && embedFields.push({ name: "Bans", value: `VAC: ${bans.vacBans}\nGame: ${bans.gameBans}${bans.communityBanned ? "\nCommunity: banned" : ""}`, inline: true });
                 });
 
                 await Promise.allSettled(promises.map(p => p()));
+                embed.addFields(embedFields);
 
-                const bm = new BtnMsg(embed, [
-                    { style: "LINK", label: "Open profile", url },
-                ]);
+                const bm = new BtnMsg(embed, new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Open profile").setURL(url));
 
                 await int.editReply({ ...bm.getReplyOpts() });
                 break;
@@ -130,9 +134,9 @@ export class Steam extends Command
             {
                 const gamesPerPage = 20;
 
-                const sort = int.options.getString("sort") as SortType ?? "alphabetical";
+                const sort = int.options.get("sort", true).value as SortType ?? "alphabetical";
 
-                const embeds: MessageEmbed[] = [];
+                const embeds: EmbedBuilder[] = [];
                 const games = sort === "recent"
                     ? await this.api.getUserRecentGames(usrId)
                     : await this.api.getUserOwnedGames(usrId);
@@ -154,7 +158,7 @@ export class Steam extends Command
                         const first = eRoles.slice(0, half);
                         const second = eRoles.slice((eRoles.length - half) * -1);
 
-                        const toField = (games: Game[]): EmbedFieldData => {
+                        const toField = (games: Game[]): EmbedField => {
                             const maxNameLen = 30;
 
                             const getVal = (withLinks = false) =>
@@ -182,7 +186,7 @@ export class Steam extends Command
                             ? [ toField(first.concat(second)) ]
                             : [ toField(first), toField(second) ];
 
-                        embeds.push(new MessageEmbed()
+                        embeds.push(new EmbedBuilder()
                             .setTitle(`${ebdTitle} of **${nickname}**${pageDisp}:`)
                             .setColor(settings.embedColors.default)
                             .setFields(fields)

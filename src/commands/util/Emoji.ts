@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageButton, MessageEmbed } from "discord.js";
+import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 
@@ -16,6 +16,7 @@ export class Emoji extends Command
                 {
                     name: "emoji",
                     desc: `Enter one or up to ${maxEmojiAmt} custom emojis`,
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 }
             ]
@@ -29,8 +30,8 @@ export class Emoji extends Command
         const getEmUrl = (id: string, fmt: string) => `https://cdn.discordapp.com/emojis/${id}.${fmt}?size=4096&quality=lossless`;
         const trimmed = (str: string) => str.length > 16 ? str.substring(0, 16) + "+" : str;
 
-        const embeds: MessageEmbed[] = [];
-        const btns: MessageButton[] = [];
+        const embeds: EmbedBuilder[] = [];
+        const btns: ButtonBuilder[] = [];
 
         const matches = emoji.match(/<a?:[\p{Letter}\d_]{2,}:(\d{18})>/giu);
 
@@ -51,7 +52,7 @@ export class Emoji extends Command
             {
                 if(!em) continue;
 
-                const embd = new MessageEmbed()
+                const embd = new EmbedBuilder()
                     .setColor(settings.embedColors.default)
                     .setImage(em.url);
 
@@ -59,9 +60,9 @@ export class Emoji extends Command
 
                 embeds.push(embd);
 
-                btns.push(new MessageButton()
+                btns.push(new ButtonBuilder()
                     .setLabel(emojis.length === 1 ? "Open" : `:${trimmed(em.name)}:`)
-                    .setStyle("LINK")
+                    .setStyle(ButtonStyle.Link)
                     .setURL(em.url)
                 );
             }

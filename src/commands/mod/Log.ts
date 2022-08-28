@@ -1,4 +1,4 @@
-import { CommandInteraction, TextChannel, MessageEmbed, ColorResolvable } from "discord.js";
+import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -15,22 +15,25 @@ export class Log extends Command {
             args: [
                 {
                     name: "amount",
-                    desc: "How many messages to log. Must be between 1 and 100.",
+                    desc: "How many messages to log.",
+                    type: ApplicationCommandOptionType.Number,
+                    min: 1,
+                    max: 100,
                     required: true,
                 },
                 {
                     name: "channel",
-                    type: "channel",
+                    type: ApplicationCommandOptionType.Channel,
                     desc: "Name of log channel.",
                     required: false,
                 },
                 {
                     name: "start",
                     desc: "ID or URL of starting message, logs messages before selected message.",
+                    type: ApplicationCommandOptionType.String,
                     required: false,
                 },
             ],
-            perms: ["MANAGE_MESSAGES"],
             memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }
@@ -44,8 +47,7 @@ export class Log extends Command {
 
         const args = this.resolveArgs(int);
 
-        const amtRaw = parseInt(args?.amount);
-        const amount = Math.min(Math.max(amtRaw, 1), 50);
+        const amount = parseInt(args?.amount);
 
         await this.deferReply(int, true);
 
@@ -60,7 +62,7 @@ export class Log extends Command {
         }
 
         try {
-            if (!isNaN(amtRaw) && channel?.type === "GUILD_TEXT" && typeof(logChannel?.send) === "function") {
+            if (channel?.type === ChannelType.GuildText && typeof(logChannel?.send) === "function") {
 
                 if(!args.start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {
@@ -72,7 +74,7 @@ export class Log extends Command {
                     });
                 }
 
-                const messageSet:MessageEmbed[] = [];
+                const messageSet:EmbedBuilder[] = [];
 
                 const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
                 let newEmbedColor: ColorResolvable = embedColors[0];
@@ -143,7 +145,7 @@ export class Log extends Command {
                             }
 
                             if(i === 10 || (10 * setNum) + i === messages.size) {
-                                const loggedMessagesEmbed = new MessageEmbed()
+                                const loggedMessagesEmbed = new EmbedBuilder()
                                     .setDescription(messageEmbedString)
                                     .setFooter({ text: `${setNum + 1}/${messagesSize}` })
                                     .setColor(newEmbedColor);

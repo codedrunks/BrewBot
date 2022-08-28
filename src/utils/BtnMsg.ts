@@ -1,26 +1,17 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, EmojiIdentifierResolvable, InteractionReplyOptions, MessageActionRow, MessageButton, MessageButtonStyleResolvable, MessageEmbed, MessageOptions, TextBasedChannel } from "discord.js";
-
+import { ButtonInteraction, InteractionReplyOptions, ActionRowBuilder, ButtonBuilder, EmbedBuilder, MessageOptions, TextBasedChannel, APIButtonComponentWithURL, APIButtonComponentWithCustomId, ComponentEmojiResolvable } from "discord.js";
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
-
 
 interface BtnMsgOpts {
     /** In milliseconds - defaults to 30 minutes, set to -1 to disable */
     timeout: number;
 }
 
-export type ButtonOpts = {
-    label: string,
-    style: MessageButtonStyleResolvable,
-    emoji?: EmojiIdentifierResolvable,
-    url?: string,
-}[];
-
 export interface BtnMsg {
     /** Gets emitted whenever a button was pressed */
-    on(event: "press", listener: (btn: MessageButton, int: ButtonInteraction) => void): this;
+    on(event: "press", listener: (btn: ButtonBuilder, int: ButtonInteraction) => void): this;
     /** Gets emitted when this BtnMsg times out */
     on(event: "timeout", listener: () => void): this;
     /** Gets emitted when this BtnMsg was destroyed and needs to be deleted from the registry */
@@ -30,47 +21,46 @@ export interface BtnMsg {
 }
 
 /**
- * Wrapper for discord.js' `MessageButton`  
+ * Wrapper for discord.js' `ButtonBuilder`  
  * Contains convenience methods for easier creation of messages with attached buttons
  */
 export class BtnMsg extends EmitterBase
 {
-    readonly btns: MessageButton[];
-    readonly msg: string | MessageEmbed[];
+    readonly btns: ButtonBuilder[];
+    readonly msg: string | EmbedBuilder[];
 
     readonly opts: BtnMsgOpts;
 
     readonly btnId: string;
 
     /**
-     * Wrapper for discord.js' `MessageButton`  
+     * Wrapper for discord.js' `ButtonBuilder`  
      * Contains convenience methods for easier creation of messages with attached buttons  
      * Use `.on("press")` to listen for button presses
      * @param message The message or reply content
-     * @param buttons Up to 5 MessageButton instances - customIDs will be managed by this BtnMsg
+     * @param buttons Up to 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
      */
-    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
-    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts, options?: Partial<BtnMsgOpts>)
-    constructor(message: string | MessageEmbed | MessageEmbed[], buttons: ButtonOpts | MessageButton | MessageButton[], options?: Partial<BtnMsgOpts>)
+    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonBuilder[], options?: Partial<BtnMsgOpts>)
+    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonBuilder[], options?: Partial<BtnMsgOpts>)
     {
         super();
 
         this.btnId = randomUUID();
 
-        this.msg = message instanceof MessageEmbed ? [message] : message;
+        this.msg = message instanceof EmbedBuilder ? [message] : message;
 
-        if(buttons instanceof MessageButton || (Array.isArray(buttons) && buttons[0] instanceof MessageButton))
-            this.btns = Array.isArray(buttons) ? buttons as MessageButton[] : [buttons];
+        if(buttons instanceof ButtonBuilder || (Array.isArray(buttons) && buttons[0] instanceof ButtonBuilder))
+            this.btns = Array.isArray(buttons) ? buttons as ButtonBuilder[] : [buttons];
         else
         {
-            const btns: MessageButton[] = [];
+            const btns: ButtonBuilder[] = [];
 
             buttons.forEach(b => {
-                const mb = new MessageButton();
-                b.label && mb.setLabel(b.label);
-                b.style && mb.setStyle(b.style);
-                b.emoji && mb.setEmoji(b.emoji as EmojiIdentifierResolvable);
-                b.url && mb.setURL(b.url);
+                const mb = new ButtonBuilder();
+                b.data.label && mb.setLabel(b.data.label);
+                b.data.style && mb.setStyle(b.data.style);
+                b.data.emoji && mb.setEmoji(b.data.emoji as ComponentEmojiResolvable);
+                (b.data as Partial<APIButtonComponentWithURL>).url && mb.setURL((b.data as APIButtonComponentWithURL).url);
 
                 btns.push(mb);
             });
@@ -79,7 +69,7 @@ export class BtnMsg extends EmitterBase
         }
 
         this.btns = this.btns.map((b, i) => {
-            if(!b.url)
+            if(!(b.data as Partial<APIButtonComponentWithURL>).url)
                 b.setCustomId(`${this.btnId}@${i}`);
             return b;
         });
@@ -92,8 +82,8 @@ export class BtnMsg extends EmitterBase
 
         btnListener.addBtns(this.btns);
 
-        const onPress = (int: ButtonInteraction, btn: MessageButton) => this.onPress(int, btn);
-        
+        const onPress = (int: ButtonInteraction, btn: ButtonBuilder) => this.onPress(int, btn);
+
         btnListener.on("press", onPress);
         this.once("destroy", () => btnListener.removeListener("press", onPress));
 
@@ -103,9 +93,9 @@ export class BtnMsg extends EmitterBase
         }, this.opts.timeout);
     }
 
-    private onPress(int: ButtonInteraction, btn: MessageButton)
+    private onPress(int: ButtonInteraction, btn: ButtonBuilder)
     {
-        if(this.btns.find(b => b.customId === btn.customId))
+        if(this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id))
             this.emit("press", btn, int);
     }
 
@@ -117,17 +107,17 @@ export class BtnMsg extends EmitterBase
 
         this.destroyed = true;
 
-        this.emit("destroy", this.btns.map(b => b.customId));
+        this.emit("destroy", this.btns.map(b => (b.data as APIButtonComponentWithCustomId).custom_id));
 
         this.eventNames()
             .forEach(e => this.removeAllListeners(e));
 
-        btnListener.delBtns(this.btns.map(b => b.customId ?? "_"));
+        btnListener.delBtns(this.btns.map(b => (b.data as Partial<APIButtonComponentWithCustomId>).custom_id ?? "_"));
     }
 
     public getBtn(customId: string)
     {
-        return this.btns.find(b => b.customId === customId);
+        return this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === customId);
     }
 
     /**
@@ -149,7 +139,7 @@ export class BtnMsg extends EmitterBase
      */
     public getMsgOpts(): MessageOptions
     {
-        const actRow = this.toMessageActionRow();
+        const actRow = this.toActionRowBuilder();
 
         const btns: Partial<MessageOptions> = { components: actRow ? [ actRow ] : [] };
 
@@ -168,10 +158,10 @@ export class BtnMsg extends EmitterBase
         return channel.send(this.getMsgOpts());
     }
 
-    protected toMessageActionRow(): MessageActionRow | undefined
+    protected toActionRowBuilder(): ActionRowBuilder<ButtonBuilder> | undefined
     {
         if(this.btns.length > 0 && !this.destroyed)
-            return new MessageActionRow()
+            return new ActionRowBuilder<ButtonBuilder>()
                 .addComponents(this.btns);
     }
 }

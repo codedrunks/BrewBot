@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { ActivityType, ApplicationCommandType, Client, ComponentType, InteractionType } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
 import { allOfType, system, Stringifiable } from "svcorelib";
@@ -44,7 +44,7 @@ async function init()
 
         user.setPresence({
             status: "dnd",
-            activities: [{ type: "PLAYING", name: "starting up..." }]
+            activities: [{ type: ActivityType.Playing, name: "starting up..." }]
         });
 
         await getRedis().connect();
@@ -62,7 +62,7 @@ async function init()
 
         user.setPresence({
             status: "online",
-            activities: [{ type: "WATCHING", name: "ur mom" }],
+            activities: [{ type: ActivityType.Watching, name: "ur mom" }],
         });
 
         console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
@@ -93,8 +93,8 @@ async function init()
 
         await prisma.$disconnect();
 
-        client.user?.setPresence({ status: "dnd", activities: [{ type: "PLAYING", name: "shutting down..." }] });
-        client.user?.setPresence({ status: "invisible", activities: [{ type: "PLAYING", name: "shutting down..." }] });
+        client.user?.setPresence({ status: "dnd", activities: [{ type: ActivityType.Playing, name: "shutting down..." }] });
+        client.user?.setPresence({ status: "invisible", activities: [{ type: ActivityType.Playing, name: "shutting down..." }] });
 
         setTimeout(() => exit(0), 100);
     }));
@@ -150,7 +150,7 @@ async function registerCommands(client: Client)
         printDbgItmList(ctxMenus.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
-            if(int.isCommand())
+            if(int.type === InteractionType.ApplicationCommand && int.commandType === ApplicationCommandType.ChatInput)
             {
                 const { commandName, options } = int;
 
@@ -163,11 +163,11 @@ async function registerCommands(client: Client)
 
                 await cmd.tryRun(int, Array.isArray(opts) ? opts[0] : opts);
             }
-            else if(int.isButton())
+            else if(int.type === InteractionType.MessageComponent && int.componentType === ComponentType.Button)
                 btnListener.emitBtnPressed(int);
-            else if(int.isModalSubmit())
+            else if(int.type === InteractionType.ModalSubmit)
                 await modalSubmitted(int);
-            else if(int.isContextMenu())
+            else if(int.type === InteractionType.ApplicationCommand) // It's implied that the type of command is either ApplicationCommandType.User or ApplicationCommandType.Message
             {
                 const run = ctxMenus
                     .find(c => c.meta.name === int.commandName)

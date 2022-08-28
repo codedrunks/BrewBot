@@ -2,7 +2,7 @@ import { hyperlink, roleMention, time, userMention } from "@discordjs/builders";
 import { GuildSettings } from "@prisma/client";
 import { checkContestTimes, EndingContest, getContestWinners, StartingContest } from "@database/contest";
 import { settings } from "@src/settings";
-import { Client, MessageEmbed, TextBasedChannel } from "discord.js";
+import { Client, EmbedBuilder, TextBasedChannel } from "discord.js";
 import { getMultipleGuildSettings } from "@src/database/guild";
 import k from "kleur";
 
@@ -43,13 +43,15 @@ function runStartingContestsJobs(cl: Client, starting: (StartingContest & { guil
 
         const description = `${contest.description}\n\n\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setAuthor({ name: "Contest Started!" })
             .setTitle(contest.name)
             .setDescription(description)
             .setColor(settings.embedColors.default)
-            .addField("Start", time(contest.startDate), true)
-            .addField("End", time(contest.endDate), true)
+            .addFields([
+                { name: "Start", value: time(contest.startDate), inline: true },
+                { name: "End", value: time(contest.endDate), inline: true }
+            ])
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
         const { guildSettings } = contest;
@@ -88,12 +90,12 @@ function runEndingContestsJobs(cl: Client, ending: (EndingContest & { guildSetti
         });
 
 
-        const votingEmbed = new MessageEmbed()
+        const votingEmbed = new EmbedBuilder()
             .setAuthor({ name: "Voting Time!" })
             .setTitle(contest.name)
             .setDescription(description)
             .setColor(settings.embedColors.default)
-            .addField("Submissions", submissions)
+            .addFields([{ name: "Submissions", value: submissions }])
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
         const { guildSettings } = contest;
@@ -186,12 +188,12 @@ function runEndingContestsJobs(cl: Client, ending: (EndingContest & { guildSetti
                 winnersResult += ` (${third[0]._count.votes})`;
             }
 
-            const winnerEmbed = new MessageEmbed()
+            const winnerEmbed = new EmbedBuilder()
                 .setAuthor({ name: authorText })
                 .setTitle(contest.name)
                 .setDescription(contest.description)
                 .setColor(settings.embedColors.contestWinner)
-                .addField("Result", winnersResult)
+                .addFields([{name :"Result", value: winnersResult }])
                 .setFooter({ text: `Contest ID: ${contest.id}` });
 
             await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
