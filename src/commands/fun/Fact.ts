@@ -1,5 +1,5 @@
 import axios from "axios";
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { randomItem } from "svcorelib";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -31,7 +31,7 @@ export class Fact extends Command
         if(status < 200 || status >= 300 || !data.text)
             return await this.editReply(int, "Random Useless Facts is currently unreachable. Please try again later.");
 
-        return this.editReply(int, new MessageEmbed()
+        return this.editReply(int, new EmbedBuilder()
             .setColor(settings.embedColors.default)
             .setTitle(randomItem(titles))
             .setDescription(data.text)

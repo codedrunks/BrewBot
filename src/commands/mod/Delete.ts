@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { Collection, CommandInteraction, Message } from "discord.js";
+import { ApplicationCommandOptionType, ChannelType, Collection, CommandInteraction, Message } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 
@@ -15,7 +15,7 @@ export class Delete extends Command {
             args: [
                 {
                     name: "amount",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     desc: `How many messages to delete. Must be between 1 and ${delMaxAmt}.`,
                     min: 1,
                     max: delMaxAmt,
@@ -23,9 +23,9 @@ export class Delete extends Command {
                 {
                     name: "up_until",
                     desc: "Deletes from the bottom until and including the message with this ID or link.",
+                    type: ApplicationCommandOptionType.String,
                 },
             ],
-            perms: [ "MANAGE_MESSAGES" ],
             memberPerms: [ PermissionFlagsBits.ManageMessages ],
         });
     }
@@ -43,7 +43,7 @@ export class Delete extends Command {
 
         const amount = Math.min(Math.max(amtRaw, 1), delMaxAmt);
 
-        if(!channel || channel?.type === "DM")
+        if(!channel || channel?.type === ChannelType.DM)
             return;
 
         try

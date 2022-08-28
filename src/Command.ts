@@ -1,4 +1,4 @@
-import { ButtonInteraction, CommandInteraction, CommandInteractionOption, MessageActionRow, MessageButton, MessageEmbed, PermissionString } from "discord.js";
+import { ButtonInteraction, CommandInteraction, CommandInteractionOption, ActionRowBuilder, ButtonBuilder, EmbedBuilder, PermissionsString, ApplicationCommandOptionType } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta } from "@src/types";
 import { ChannelType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
@@ -53,13 +53,13 @@ export abstract class Command
                 if(arg.desc.length > 100)
                     throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of arg ${k.yellow(arg.name)} can't be longer than 100 chars, got ${arg.desc.length}`);
 
-                if(arg.type === "user")
+                if(arg.type === ApplicationCommandOptionType.User)
                     data.addUserOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                     );
-                else if(arg.type === "number")
+                else if(arg.type === ApplicationCommandOptionType.Number)
                     data.addNumberOption(opt => {
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
@@ -72,32 +72,32 @@ export abstract class Command
 
                         return opt;
                     });
-                else if(arg.type === "boolean")
+                else if(arg.type === ApplicationCommandOptionType.Boolean)
                     data.addBooleanOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                     );
-                else if(arg.type === "channel")
+                else if(arg.type === ApplicationCommandOptionType.Channel)
                     data.addChannelOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                             .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                     );
-                else if(arg.type === "role")
+                else if(arg.type === ApplicationCommandOptionType.Role)
                     data.addRoleOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                     );
-                else if(arg.type === "attachment")
+                else if(arg.type === ApplicationCommandOptionType.Attachment)
                     data.addAttachmentOption(opt =>
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
                     );
-                else
+                else if(arg.type === ApplicationCommandOptionType.String)
                     data.addStringOption(opt => {
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
@@ -107,6 +107,8 @@ export abstract class Command
 
                         return opt;
                     });
+                else
+                    throw new Error("Unimplemented option type");
             });
         }
         else
@@ -129,13 +131,13 @@ export abstract class Command
                         if(arg.desc.length > 100)
                             throw new Error(`${k.yellow(`/${this.meta.name}`)}: Description of subcommand ${k.yellow(scmd.name)} argument ${k.yellow(arg.name)} can't be longer than 100 chars, got ${arg.desc.length}`);
 
-                        if(arg.type === "user")
+                        if(arg.type === ApplicationCommandOptionType.User)
                             sc.addUserOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
-                        else if(arg.type === "number")
+                        else if(arg.type === ApplicationCommandOptionType.Number)
                             sc.addNumberOption(opt => {
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
@@ -148,32 +150,32 @@ export abstract class Command
 
                                 return opt;
                             });
-                        else if(arg.type === "boolean")
+                        else if(arg.type === ApplicationCommandOptionType.Boolean)
                             sc.addBooleanOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
-                        else if(arg.type === "channel")
+                        else if(arg.type === ApplicationCommandOptionType.Channel)
                             sc.addChannelOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                                     .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
                             );
-                        else if(arg.type === "role")
+                        else if(arg.type === ApplicationCommandOptionType.Role)
                             sc.addRoleOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
-                        else if(arg.type === "attachment")
+                        else if(arg.type === ApplicationCommandOptionType.Attachment)
                             sc.addAttachmentOption(opt =>
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
                             );
-                        else
+                        else if(arg.type === ApplicationCommandOptionType.String)
                             sc.addStringOption(opt => {
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
@@ -183,6 +185,8 @@ export abstract class Command
 
                                 return opt;
                             });
+                        else
+                            throw new Error("Unimplemented option");
                     });
 
                     return sc;
@@ -241,7 +245,7 @@ export abstract class Command
     {
         const { memberPermissions } = int;
 
-        const has = (metaPerms?: PermissionString[]) =>
+        const has = (metaPerms?: PermissionsString[]) =>
             !(!Array.isArray(metaPerms) ? [] : metaPerms.map(p => memberPermissions?.has(p))).includes(false);
 
         if(Command.isCommandMeta(this.meta))
@@ -284,11 +288,11 @@ export abstract class Command
      * @param ephemeral Set to true to make the command reply only visible to the author. Defaults to false (publicly visible).
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async reply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
+    protected async reply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
+        else if(content instanceof EmbedBuilder || (Array.isArray(content) && content[0] instanceof EmbedBuilder))
             await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -308,11 +312,11 @@ export abstract class Command
      * @param content Can be a string or a single or multiple MessageEmbed instances
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async editReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], actions?: MessageButton | MessageButton[])
+    protected async editReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], actions?: ButtonBuilder | ButtonBuilder[])
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
+        else if(content instanceof EmbedBuilder || (Array.isArray(content) && content[0] instanceof EmbedBuilder))
             await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
@@ -323,11 +327,11 @@ export abstract class Command
      * @param ephemeral Set to true to make the follow up only visible to the author. Defaults to false (publicly visible)
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async followUpReply(int: CommandInteraction, content: string | MessageEmbed | MessageEmbed[], ephemeral = false, actions?: MessageButton | MessageButton[])
+    protected async followUpReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof MessageEmbed || (Array.isArray(content) && content[0] instanceof MessageEmbed))
+        else if(content instanceof EmbedBuilder || (Array.isArray(content) && content[0] instanceof EmbedBuilder))
             await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -346,14 +350,14 @@ export abstract class Command
      * await int.reply({ ...Command.useButtons(btns), content: "foo" });
      * ```
      */
-    public static useButtons(buttons?: MessageButton | MessageButton[]): { components: MessageActionRow[] } | Record<string, never>
+    public static useButtons(buttons?: ButtonBuilder | ButtonBuilder[]): { components: ActionRowBuilder<ButtonBuilder>[] } | Record<string, never>
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
 
         if(!actRows || actRows.length === 0)
             return {};
 
-        const act = new MessageActionRow()
+        const act = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(actRows);
 
         return actRows ? { components: [act] } : {};

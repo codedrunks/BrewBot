@@ -2,7 +2,7 @@ import { CtxMenu } from "@src/CtxMenu";
 import { settings } from "@src/settings";
 import { useEmbedify } from "@src/utils";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord-api-types/v10";
-import { ContextMenuInteraction, Message } from "discord.js";
+import { ContextMenuCommandInteraction, Message } from "discord.js";
 
 
 export class DeleteMessage extends CtxMenu
@@ -16,11 +16,11 @@ export class DeleteMessage extends CtxMenu
         });
     }
 
-    async run(int: ContextMenuInteraction)
+    async run(int: ContextMenuCommandInteraction)
     {
         const err = () => int.reply({ ...useEmbedify("Can't delete this message", settings.embedColors.error), ephemeral: true });
 
-        if(!int.isMessageContextMenu())
+        if(!int.isMessageContextMenuCommand())
             return err();
 
         if(int.targetMessage instanceof Message)

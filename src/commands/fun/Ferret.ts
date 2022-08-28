@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 import axios from "axios";
 import { randomItem } from "svcorelib";
 import { Command } from "@src/Command";
@@ -32,7 +32,7 @@ export class Ferret extends Command
         if(status < 200 || status >= 300 || !data.file)
             return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, true);
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setTitle(randomItem(titles))
             .setColor(settings.embedColors.default)
             .setFooter({ text: "https://ferret.canarado.xyz" })

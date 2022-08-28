@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, CommandInteractionOption, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import parseRelativeTime from "parse-relative-time";
 import { readableArray } from "svcorelib";
 import { Command } from "@src/Command";
@@ -22,33 +22,34 @@ export class Reminder extends Command
                         {
                             name: "name",
                             desc: "The name of the reminder",
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                         },
                         {
                             name: "days",
                             desc: "How many days",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 364,
                         },
                         {
                             name: "hours",
                             desc: "How many hours",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 23,
                         },
                         {
                             name: "minutes",
                             desc: "How many minutes",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 59,
                         },
                         {
                             name: "seconds",
                             desc: "How many seconds",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 59,
                         },
@@ -109,12 +110,12 @@ export class Reminder extends Command
 
             const remList = ownReminders.reduce((acc, cur) => acc += `\n**${cur.name}**\n${new Date(cur.dueTimestamp).toUTCString()}\n`, "");
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setTitle("Your reminders")
                 .setColor(settings.embedColors.default)
                 .setDescription(remList);
 
-            const avatar = int.guild?.members.cache.find(m => m.id === int.member?.user.id)?.avatarURL({ format: "png", size: 1024 });
+            const avatar = int.guild?.members.cache.find(m => m.id === int.member?.user.id)?.avatarURL({ extension: "png", size: 1024 });
 
             if(avatar)
                 embed.setThumbnail(avatar);

@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageButton, User } from "discord.js";
+import { CommandInteraction, ButtonBuilder, User, ButtonStyle } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
@@ -52,9 +52,9 @@ export class Queue extends Command {
             if(player.queue.current.thumbnail) embed.setThumbnail(player.queue.current.thumbnail);
 
             if(player.queue.length > 10) {
-                const btns: MessageButton[] = [
-                    new MessageButton().setEmoji("⬅️").setLabel("Previous").setStyle("PRIMARY"),
-                    new MessageButton().setEmoji("➡️").setLabel("Next").setStyle("PRIMARY")
+                const btns: ButtonBuilder[] = [
+                    new ButtonBuilder().setEmoji("⬅️").setLabel("Previous").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji("➡️").setLabel("Next").setStyle(ButtonStyle.Primary)
                 ];
 
                 const button = new BtnMsg(embed, btns, { timeout: 60_000 });
@@ -72,7 +72,7 @@ export class Queue extends Command {
                     // if there is no longer enough tracks to have buttons, delete embed, send new embed without buttons with a timeout of 15 seconds
                     // set page variables and shiz
 
-                    if(b.label == "Previous") {
+                    if(b.data.label == "Previous") {
                         if(page !== 1) page--;
                         else page = maxPage;
 
@@ -81,7 +81,7 @@ export class Queue extends Command {
                         embed.setDescription(`${page == 1 ? `Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n` : ""}${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`);
 
                         int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
-                    } else if(b.label == "Next") {
+                    } else if(b.data.label == "Next") {
                         if(page < maxPage) page++;
                         else page = 1;
 

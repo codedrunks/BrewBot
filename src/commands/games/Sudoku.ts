@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { createCanvas, CanvasRenderingContext2D, Canvas } from "canvas";
 import fs from "fs-extra";
@@ -49,7 +49,7 @@ export class Sudoku extends Command
                         {
                             name: "box",
                             desc: "Which box you want to fill",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 9,
                             required: true,
@@ -57,7 +57,7 @@ export class Sudoku extends Command
                         {
                             name: "cell",
                             desc: "Which cell you want to fill",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 9,
                             required: true,
@@ -65,7 +65,7 @@ export class Sudoku extends Command
                         {
                             name: "number",
                             desc: "Number you want to fill in",
-                            type: "number",
+                            type: ApplicationCommandOptionType.Number,
                             min: 1,
                             max: 9,
                             required: true,
@@ -157,9 +157,9 @@ export class Sudoku extends Command
 
         const game = this.games.get(user.id)!;
 
-        const box = int.options.getNumber("box", true);
-        const cell = int.options.getNumber("cell", true);
-        const choice = int.options.getNumber("number", true);
+        const box = int.options.get("box", true).value as number;
+        const cell = int.options.get("cell", true).value as number;
+        const choice = int.options.get("number", true).value as number;
 
         const boxRow = Math.floor((box - 1) / 3);
         const boxCol = (box - 1) % 3;
@@ -501,7 +501,7 @@ export class Sudoku extends Command
                     image: {
                         url: `attachment://${userId}-sudoku.png`
                     },
-                    color: settings.embedColors.default,
+                    color: Number(settings.embedColors.default.toString()),
                 }
             ],
             files: [{

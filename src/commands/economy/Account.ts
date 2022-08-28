@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { getCoins } from "@src/database/economy";
@@ -18,7 +18,7 @@ export class Account extends Command {
                         {
                             name: "user",
                             desc: "User who's balance you want to view, blank for yourself",
-                            type: "user",
+                            type: ApplicationCommandOptionType.User,
                             required: false
                         }
                     ]

@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, ButtonInteraction, TextBasedChannel, MessageButton } from "discord.js";
+import { Message, EmbedBuilder, ButtonInteraction, TextBasedChannel, ButtonBuilder, ButtonStyle, APIButtonComponentWithCustomId } from "discord.js";
 import { time } from "@discordjs/builders";
 import { clamp } from "svcorelib";
 import { APIEmbed } from "discord-api-types/v10";
@@ -12,8 +12,8 @@ import { settings } from "@src/settings";
 
 type BtnType = "first" | "prev" | "next" | "last";
 
-/** A page of a PageEmbed instance, defined as an array of MessageEmbed or APIEmbed (or MessageEmbedOptions). */
-type EbdPage = APIEmbed | MessageEmbed;
+/** A page of a PageEmbed instance, defined as an array of EmbedBuilder or APIEmbed (or EmbedBuilderOptions). */
+type EbdPage = APIEmbed | EmbedBuilder;
 
 interface PageEmbedSettings {
     /** Whether the "first" and "last" buttons are enabled - defaults to true */
@@ -56,7 +56,7 @@ export class PageEmbed extends EmitterBase
     private readonly settings: PageEmbedSettings;
 
     private msg?: Message;
-    private btns: MessageButton[];
+    private btns: ButtonBuilder[];
 
     private pages: APIEmbed[] = [];
     private pageIdx = -1;
@@ -70,7 +70,7 @@ export class PageEmbed extends EmitterBase
     private readonly btnId = randomUUID();
 
     /**
-     * A wrapper for MessageEmbed that handles scrolling through multiple of them via MessageButtons
+     * A wrapper for EmbedBuilder that handles scrolling through multiple of them via ButtonBuilders
      * @param pages The pages to scroll through with buttons
      * @param authorId The ID of the user that sent the command
      * @param settings Additional settings (all have their defaults)
@@ -96,8 +96,8 @@ export class PageEmbed extends EmitterBase
         registry.btnListener.addBtns(this.btns);
         registry.btnListener.on("press", async (int, btn) => {
             let btIdx;
-            this.btns.forEach(({ customId }, i) => {
-                if(customId === btn.customId)
+            this.btns.forEach(({ data }, i) => {
+                if((data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id)
                     btIdx = i;
             });
 
@@ -181,7 +181,7 @@ export class PageEmbed extends EmitterBase
     /** Destroys this instance, emits the "destroy" event and removes all event listeners */
     public async destroy()
     {
-        const ids = this.btns.map(b => b.customId);
+        const ids = this.btns.map(b => (b.data as APIButtonComponentWithCustomId).custom_id);
 
         await this.updateMsg(true);
 
@@ -214,7 +214,7 @@ export class PageEmbed extends EmitterBase
     /** Overrides the current set of pages. Automatically lowers the page index if necessary. */
     public setPages(pages: EbdPage[])
     {
-        this.pages = pages.map(p => p instanceof MessageEmbed ? p.toJSON() : p);
+        this.pages = pages.map(p => p instanceof EmbedBuilder ? p.toJSON() : p);
 
         if(this.pageIdx > this.pages.length - 1)
             this.setPageIdx(this.pages.length - 1);
@@ -335,36 +335,36 @@ export class PageEmbed extends EmitterBase
 
     private createBtns()
     {
-        const btns: MessageButton[] = [
-            new MessageButton()
+        const btns: ButtonBuilder[] = [
+            new ButtonBuilder()
                 .setLabel("Previous")
                 .setEmoji("◀️")
-                .setStyle("PRIMARY"),
+                .setStyle(ButtonStyle.Primary),
         ];
 
-        this.settings.goToPageBtn && btns.push(new MessageButton()
+        this.settings.goToPageBtn && btns.push(new ButtonBuilder()
             .setLabel("Go to")
             .setEmoji("🔢")
-            .setStyle("PRIMARY")
+            .setStyle(ButtonStyle.Primary)
         );
 
-        btns.push(new MessageButton()
+        btns.push(new ButtonBuilder()
             .setLabel("Next")
             .setEmoji("▶️")
-            .setStyle("PRIMARY")
+            .setStyle(ButtonStyle.Primary)
         );
 
         if(this.settings.firstLastBtns)
         {
-            btns.unshift(new MessageButton()
+            btns.unshift(new ButtonBuilder()
                 .setLabel("First")
                 .setEmoji("⏮️")
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
             );
-            btns.push(new MessageButton()
+            btns.push(new ButtonBuilder()
                 .setLabel("Last")
                 .setEmoji("⏭️")
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
             );
         }
 

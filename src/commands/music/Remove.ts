@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
@@ -14,7 +14,7 @@ export class Remove extends Command {
                 {
                     name: "song",
                     desc: "Song to remove from the queue, denoted by it's position in the queue",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     required: true,
                     min: 1
                 }
@@ -24,7 +24,7 @@ export class Remove extends Command {
 
     async run(int: CommandInteraction): Promise<void> {
 
-        const song = int.options.getNumber("song", true);
+        const song = (int.options.get("song", true).value as number);
 
         const guild = int.guild;
 

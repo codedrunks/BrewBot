@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import axios from "axios";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -43,6 +43,7 @@ export class Joke extends Command
                 {
                     name: "category",
                     desc: "The category of jokes you want to get",
+                    type: ApplicationCommandOptionType.String,
                     choices: [
                         { name: "Any", value: "Any" },
                         { name: "Misc", value: "Misc" },
@@ -56,18 +57,19 @@ export class Joke extends Command
                 {
                     name: "safe-mode",
                     desc: "Disable to get potentially unsafe and triggering jokes",
-                    type: "boolean",
+                    type: ApplicationCommandOptionType.Boolean,
                 },
                 {
                     name: "amount",
                     desc: "How many jokes you want to get",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     min: 1,
                     max: 10,
                 },
                 {
                     name: "contains",
                     desc: "If set, only gives jokes that contain this text",
+                    type: ApplicationCommandOptionType.String,
                 }
             ]
         });
@@ -114,10 +116,10 @@ export class Joke extends Command
         else
             jokes = data.jokes;
         
-        const embeds: MessageEmbed[] = [];
+        const embeds: EmbedBuilder[] = [];
 
         jokes.forEach((j, i) => {
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
                 .setDescription(`${j.type === "single" ? j.joke : `${j.setup}\n\n${j.delivery}`}`)
                 .setColor(settings.embedColors.default);
 

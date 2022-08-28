@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 
 import { Command } from "@src/Command";
@@ -17,10 +17,9 @@ export class Exec extends Command
                 {
                     name: "ephemeral",
                     desc: "ephemeral - default false",
-                    type: "boolean",
+                    type: ApplicationCommandOptionType.Boolean,
                 }
             ],
-            perms: [ "ADMINISTRATOR" ],
             memberPerms: [ PermissionFlagsBits.Administrator ],
             devOnly: true,
         });
@@ -30,7 +29,7 @@ export class Exec extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const ephemeral = int.options.getBoolean("ephemeral");
+        const ephemeral = int.options.get("ephemeral")?.value as boolean | undefined;
 
         const modal = new ExecModal(ephemeral ?? false);
 

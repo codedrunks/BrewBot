@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 
 export class Mock extends Command
@@ -14,12 +14,13 @@ export class Mock extends Command
                 {
                     name: "text",
                     desc: "The text to mockify",
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                 },
                 {
                     name: "copy",
                     desc: "Set to true to hide the bot's reply from other members, so you can copy and send it yourself",
-                    type: "boolean",
+                    type: ApplicationCommandOptionType.Boolean,
                 }
             ]
         });

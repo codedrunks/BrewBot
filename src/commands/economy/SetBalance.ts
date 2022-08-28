@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { setCoins } from "@database/economy";
 import { embedify } from "@utils/embedify";
@@ -13,13 +13,13 @@ export class SetBalance extends Command {
             args: [
                 {
                     name: "amount",
-                    type: "number",
+                    type: ApplicationCommandOptionType.Number,
                     desc: "Coin balance will be set to this value",
                     required: true
                 },
                 {
                     name: "user",
-                    type: "user",
+                    type: ApplicationCommandOptionType.User,
                     desc: "The user who's balance you wish to set"
                 }
             ],

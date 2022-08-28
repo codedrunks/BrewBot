@@ -1,8 +1,8 @@
-import { ColorResolvable, MessageEmbed } from "discord.js";
+import { ColorResolvable, EmbedBuilder } from "discord.js";
 import { settings } from "@src/settings";
 
-export function embedify(text: string, color?: ColorResolvable): MessageEmbed {
-    return new MessageEmbed()
+export function embedify(text: string, color?: ColorResolvable): EmbedBuilder {
+    return new EmbedBuilder()
         .setDescription(text).setColor(color ?? settings.embedColors.default);
 }
 

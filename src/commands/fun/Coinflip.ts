@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { randRange } from "svcorelib";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -17,7 +17,10 @@ export class Coinflip extends Command {
             args: [
                 {
                     name: "amount",
-                    desc: "How many coins to flip. Must be between 1 and 50"
+                    desc: "How many coins to flip.",
+                    type: ApplicationCommandOptionType.Number,
+                    min: 1,
+                    max: 50,
                 }
             ]
         });
@@ -32,12 +35,6 @@ export class Coinflip extends Command {
         {
             const amount = parseInt(args.amount);
 
-            if(isNaN(amount) || amount < 1 || amount > 50)
-            {
-                await this.reply(int, "Please enter a valid amount between 1 and 50", true);
-                return;
-            }
-
             const flips = [];
             for(let i = 0; i < amount; i++)
                 flips.push(coins[randRange(0, 1)]);
@@ -47,7 +44,7 @@ export class Coinflip extends Command {
         else
             replyText = `You flipped a coin: ${coins[randRange(0, 1)]}`;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setColor(settings.embedColors.default)
             .setDescription(replyText);
 

@@ -1,4 +1,4 @@
-import { CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "@database/music";
@@ -18,7 +18,7 @@ export class DJ extends Command {
                         {
                             name: "role",
                             desc: "The role to make a DJ-enabled role",
-                            type: "role",
+                            type: ApplicationCommandOptionType.Role,
                             required: true
                         }
                     ]
@@ -31,7 +31,7 @@ export class DJ extends Command {
                         {
                             name: "role",
                             desc: "Role to remove from DJ",
-                            type: "role",
+                            type: ApplicationCommandOptionType.Role,
                             required: true
                         }
                     ]
@@ -59,22 +59,22 @@ export class DJ extends Command {
         if((roles.length == 0 || !roles) && opt.name !== "set") return this.reply(int, embedify("Before using these commands, try setting a DJ role with `/dj set`"));
 
         if(opt.name == "set") {
-            const role = int.options.getRole("role", true).id;
+            const role = int.options.get("role", true).role?.id;
 
             const currentRoles = await getDJRoleIds(guild.id);
 
-            if(currentRoles.length > 0 && currentRoles.includes(role)) return this.reply(int, embedify("That role is already set as a DJ role"));
+            if(currentRoles.length > 0 && currentRoles.includes(role!)) return this.reply(int, embedify("That role is already set as a DJ role"));
 
             if(currentRoles.length >= 10) return this.reply(int, embedify("You may not have more than 10 DJ roles"));
 
-            await addDJRoleId(guild.id, role);
+            await addDJRoleId(guild.id, role!);
 
             this.reply(int, embedify(`Added <@&${role}> as a DJ role`));
 
         } else if(opt.name == "remove") {
-            const role = int.options.getRole("role", true).id;
+            const role = int.options.get("role", true).role?.id;
 
-            const e = await removeDJRoleId(guild.id, role);
+            const e = await removeDJRoleId(guild.id, role!);
 
             if(e) return this.reply(int, embedify(`<@&${role}> was not designated as a DJ role previously`));
 
