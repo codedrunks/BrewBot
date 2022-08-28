@@ -1,11 +1,11 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, TextBasedChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, TextBasedChannel } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
-import { BtnMsg, ButtonOpts, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
@@ -351,7 +351,7 @@ export class Reminder extends Command
         {
             const usr = client.users.cache.find(u => u.id === rem.userId);
 
-            const expEmbed = new MessageEmbed()
+            const expEmbed = new EmbedBuilder()
                 .setTitle("Reminder")
                 .setColor(settings.embedColors.default)
                 .setDescription(`Your reminder with the name \`${rem.name}\` has expired!`);
@@ -362,7 +362,7 @@ export class Reminder extends Command
                     const guild = client.guilds.cache.find(g => g.id === rem.guild);
                     const chan = guild?.channels.cache.find(c => c.id === rem.channel);
 
-                    if(chan && ["GUILD_TEXT", "GUILD_PUBLIC_THREAD", "GUILD_PRIVATE_THREAD"].includes(chan.type))
+                    if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread].includes(chan.type))
                     {
                         const c = chan as TextBasedChannel;
                         c.send({ embeds: [ expEmbed ] });
