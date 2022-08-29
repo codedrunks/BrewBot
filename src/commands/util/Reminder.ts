@@ -347,88 +347,61 @@ export class Reminder extends Command
         if(!expRems || expRems.length === 0)
             return;
 
-        for await(const rem of expRems)
-        {
-            const usr = client.users.cache.find(u => u.id === rem.userId);
+        const promises: Promise<void>[] = [];
 
-            const expEmbed = new EmbedBuilder()
-                .setTitle("Reminder")
-                .setColor(settings.embedColors.default)
-                .setDescription(`Your reminder with the name \`${rem.name}\` has expired!`);
+        const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
+            .setTitle("Reminder")
+            .setColor(settings.embedColors.default)
+            .setDescription(`Your reminder with the name \`${name}\` has expired!`);
 
-            const guildFallback = () => {
-                try
-                {
-                    const guild = client.guilds.cache.find(g => g.id === rem.guild);
-                    const chan = guild?.channels.cache.find(c => c.id === rem.channel);
-
-                    if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread].includes(chan.type))
-                    {
-                        const c = chan as TextBasedChannel;
-                        c.send({ embeds: [ expEmbed ] });
-                    }
-                }
-                catch(err)
-                {
-                    void err;
-                }
-                finally
-                {
-                    deleteReminder(rem.reminderId, rem.userId);
-                }
-            };
-
-            if(!usr)
-                return guildFallback();
-
+        const guildFallback = (rem: ReminderObj) => {
             try
             {
-                const dm = await usr?.createDM(true);
+                const guild = client.guilds.cache.find(g => g.id === rem.guild);
+                const chan = guild?.channels.cache.find(c => c.id === rem.channel);
 
-                const msg = await dm?.send({ embeds: [ expEmbed ]});
-
-                if(!dm || !msg)
-                    return guildFallback();
-
-                await deleteReminder(rem.reminderId, rem.userId);
+                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread].includes(chan.type))
+                {
+                    const c = chan as TextBasedChannel;
+                    c.send({ embeds: [ getExpiredEbd(rem) ] });
+                }
             }
             catch(err)
             {
-                return guildFallback();
+                void err;
             }
+            finally
+            {
+                deleteReminder(rem.reminderId, rem.userId);
+            }
+        };
+
+        for(const rem of expRems)
+        {
+            const usr = client.users.cache.find(u => u.id === rem.userId);
+
+            promises.push((async () => {
+                if(!usr)
+                    return guildFallback(rem);
+
+                try
+                {
+                    const dm = await usr?.createDM(true);
+
+                    const msg = await dm?.send({ embeds: [ getExpiredEbd(rem) ]});
+
+                    if(!dm || !msg)
+                        return guildFallback(rem);
+
+                    await deleteReminder(rem.reminderId, rem.userId);
+                }
+                catch(err)
+                {
+                    return guildFallback(rem);
+                }
+            })());
         }
 
-        // const now = Date.now();
-        // const reminders = persistentData.get("reminders");
-
-        // if(!reminders || reminders.length === 0) return;
-
-        // let atLeastOneDue = false;
-
-        // for(const rem of reminders)
-        // {
-        //     if(rem.dueTimestamp <= now)
-        //     {
-        //         atLeastOneDue = true;
-
-        //         const guild = client.guilds.cache.find(g => g.id === rem.guild);
-        //         const member = guild?.members.cache.find(m => m.id === rem.member);
-
-        //         if(member)
-        //         {
-        //             try
-        //             {
-        //                 const dmChannel = await member.createDM();
-        //                 dmChannel.send(`\\*Beep boop\\*, your reminder with the name \`${rem.name}\` has expired!`);
-        //             }
-        //             catch(err)
-        //             {
-        //                 void err;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // atLeastOneDue && await persistentData.set("reminders", reminders.filter(r => r.dueTimestamp <= now));
+        await Promise.allSettled(promises);
     }
 }
