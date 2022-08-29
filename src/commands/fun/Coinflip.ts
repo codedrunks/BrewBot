@@ -18,7 +18,7 @@ export class Coinflip extends Command {
                 {
                     name: "amount",
                     desc: "How many coins to flip.",
-                    type: ApplicationCommandOptionType.Number,
+                    type: ApplicationCommandOptionType.Integer,
                     min: 1,
                     max: 50,
                 }
@@ -27,14 +27,12 @@ export class Coinflip extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const args = this.resolveArgs(int);
+        const amount = int.options.get("amount")?.value as number ?? 1;
 
         let replyText = "";
 
-        if(args.amount)
+        if(amount > 1)
         {
-            const amount = parseInt(args.amount);
-
             const flips = [];
             for(let i = 0; i < amount; i++)
                 flips.push(coins[randRange(0, 1)]);

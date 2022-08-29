@@ -68,7 +68,10 @@ export class Search extends Command {
 
         await this.deferReply(int);
 
-        const args = this.resolveArgs(int);
+        const song = int.options.get("song", true).value as string;
+        const source = int.options.get("source")?.value as string | undefined;
+        const position = int.options.get("position")?.value as string | undefined;
+        const shuffled = int.options.get("shuffled")?.value as boolean | undefined;
 
         const guild = int.guild;
 
@@ -88,13 +91,13 @@ export class Search extends Command {
 
         let res: SearchResult;
 
-        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
-            || args.source == "spotify")) {
-            res = await manager.search(args.song, int.user);
+        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(song)
+            || source == "spotify")) {
+            res = await manager.search(song, int.user);
         } else {
             res = await manager.search({
-                query: args.song,
-                source: args.source as SearchQuery["source"] ?? "youtube"
+                query: song,
+                source: source as SearchQuery["source"] ?? "youtube"
             }, int.user);
         }
 
@@ -143,7 +146,6 @@ export class Search extends Command {
                 }
 
                 if(idxs.includes(parseInt(m.content))) {
-                    const position = args.position || null;
                     const index = Number(m.content) - 1;
 
                     const track = res.tracks[index];
@@ -168,7 +170,7 @@ export class Search extends Command {
                     }
 
                     else {
-                        player.queue.add(track, args.shuffled ? randRange(0, player.queue.size) : undefined);
+                        player.queue.add(track, shuffled ? randRange(0, player.queue.size) : undefined);
                         sEmbed = embedify(`Queued \`${track.title}\` in ${channelMention}`);
                     }
 

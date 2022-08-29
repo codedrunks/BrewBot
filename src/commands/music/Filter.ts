@@ -52,7 +52,8 @@ export class Filter extends Command {
     async run(int: CommandInteraction): Promise<void> {
         await this.deferReply(int);
 
-        const args = this.resolveArgs(int);
+        const filterType = int.options.get("filter_type", true).value as string;
+        const repeat = int.options.get("repeat", true).value as string;
 
         const guild = int.guild;
 
@@ -75,13 +76,13 @@ export class Filter extends Command {
 
         if(!voice) return this.followUpReply(int, embedify("You must be in a voice channel to use this command"));
 
-        this.setFilter(player, guild, args.filter_type);
+        this.setFilter(player, guild, filterType);
 
-        if(args.repeat === "one_song") {
+        if(repeat === "one_song") {
             filterTurnOff.add(guild.id);
         }
 
-        return this.followUpReply(int, embedify(`Filter \`${args.filter_type}\` being applied`));
+        return this.followUpReply(int, embedify(`Filter \`${filterType}\` being applied`));
     }
 
     setFilter(player: Player, guild: Guild, filter: string) {

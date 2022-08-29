@@ -13,7 +13,7 @@ export class SetBalance extends Command {
             args: [
                 {
                     name: "amount",
-                    type: ApplicationCommandOptionType.Number,
+                    type: ApplicationCommandOptionType.Integer,
                     desc: "Coin balance will be set to this value",
                     required: true
                 },
@@ -29,18 +29,16 @@ export class SetBalance extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const args = this.resolveArgs(int);
+        const amount = int.options.get("amount", true).value as number;
 
         if(!int.guild?.id) return this.reply(int, embedify("This command cannot be used in DM's"));
 
         const guildid = int.guild.id;
         
-        if(!args.amount && parseInt(args.amount) != 0) return this.reply(int, embedify("Please choose an amount to set the balance to."), true);
-
         const user = int.options.getUser("user") ?? int.user;
 
-        await setCoins(user.id, guildid, parseInt(args.amount));
+        await setCoins(user.id, guildid, amount);
 
-        return this.reply(int, embedify(`${user.id == int.user.id ? "Your" : `${user.username}'s`} balance has been set to ${args.amount}`));
+        return this.reply(int, embedify(`${user.id == int.user.id ? "Your" : `${user.username}'s`} balance has been set to ${amount}`));
     }
 }

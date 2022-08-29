@@ -84,7 +84,16 @@ export class Reminder extends Command
 
             const { member, guild } = int;
 
-            const args = { name: "", days: 0, hours: 0, minutes: 0, seconds: 0, ...this.resolveArgs(int) };
+            const args = {
+                name: int.options.get("name", true).value as string,
+                seconds: int.options.get("seconds")?.value as number ?? 0,
+                minutes: int.options.get("minutes")?.value as number ?? 0,
+                hours: int.options.get("hours")?.value as number ?? 0,
+                days: int.options.get("days")?.value as number ?? 0,
+                months: int.options.get("months")?.value as number ?? 0,
+                years: int.options.get("years")?.value as number ?? 0,
+            };
+
             const { name } = args;
             const timeStrings = [];
 

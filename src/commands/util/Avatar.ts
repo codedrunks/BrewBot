@@ -34,9 +34,10 @@ export class Avatar extends Command
     {
         await this.deferReply(int);
 
-        const { user, format: fmt } = this.resolveArgs(int);
+        const user = int.options.getUser("user");
+        const fmt = int.options.get("format")?.value as string | undefined;
 
-        const member = int.guild?.members.cache.find(m => user ? m.id === user : m.id === int.user.id);
+        const member = int.guild?.members.cache.find(m => user ? m.id === user.id : m.id === int.user.id);
         const usr = member?.user;
 
         const format = fmt as ("png" | "gif" | undefined) ?? "png";
