@@ -83,6 +83,11 @@ export class BtnMsg extends EmitterBase
             if(this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id))
                 this.emit("press", btn, int);
         });
+
+        this.opts.timeout > 0 && setTimeout(() => {
+            this.emit("timeout");
+            this.destroy();
+        }, this.opts.timeout);
     }
 
     /** Removes all listeners and triggers the registry to delete its reference to the buttons of this instance */
