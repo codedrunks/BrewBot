@@ -134,7 +134,7 @@ export class Steam extends Command
             {
                 const gamesPerPage = 20;
 
-                const sort = int.options.get("sort", true).value as SortType ?? "alphabetical";
+                const sort = int.options.get("sort")?.value as SortType ?? "alphabetical";
 
                 const embeds: EmbedBuilder[] = [];
                 const games = sort === "recent"
@@ -197,7 +197,7 @@ export class Steam extends Command
                     const pe = new PageEmbed(embeds, int.user.id, {
                         allowAllUsersTimeout: 1000 * 60,
                         goToPageBtn: embeds.length > 5,
-                        timeout: 1000 * 60 * 10,
+                        timeout: 1000 * 1 * 10,
                     });
 
                     await pe.useInt(int);

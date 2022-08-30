@@ -33,6 +33,8 @@ export class BtnMsg extends EmitterBase
 
     readonly btnId: string;
 
+    private timedOut = false;
+
     /**
      * Wrapper for discord.js' `ButtonBuilder`  
      * Contains convenience methods for easier creation of messages with attached buttons  
@@ -88,6 +90,7 @@ export class BtnMsg extends EmitterBase
         this.once("destroy", () => btnListener.removeListener("press", onPress));
 
         this.opts.timeout > 0 && setTimeout(() => {
+            this.timedOut = true;
             this.emit("timeout");
             this.destroy();
         }, this.opts.timeout);
@@ -139,7 +142,7 @@ export class BtnMsg extends EmitterBase
      */
     public getMsgOpts(): MessageOptions
     {
-        const actRow = this.toActionRowBuilder();
+        const actRow = this.toActionRowBuilder(this.destroyed || this.timedOut);
 
         const btns: Partial<MessageOptions> = { components: actRow ? [ actRow ] : [] };
 
@@ -158,10 +161,10 @@ export class BtnMsg extends EmitterBase
         return channel.send(this.getMsgOpts());
     }
 
-    protected toActionRowBuilder(): ActionRowBuilder<ButtonBuilder> | undefined
+    protected toActionRowBuilder(disableBtns = false): ActionRowBuilder<ButtonBuilder> | undefined
     {
         if(this.btns.length > 0 && !this.destroyed)
             return new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(this.btns);
+                .addComponents(disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns);
     }
 }

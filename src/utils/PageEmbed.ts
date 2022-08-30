@@ -395,7 +395,7 @@ export class PageEmbed extends EmitterBase
         if(!page)
             throw new Error(`PageEmbed index out of range: ${this.pageIdx} (allowed range: 0-${this.pages.length - 1})`);
 
-        const btns = disableBtns ? this.btns.map(b => { b.setDisabled(true); return b; }) : this.btns;
+        const btns = disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns;
 
         return {
             embeds: [ page ],
