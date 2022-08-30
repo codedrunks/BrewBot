@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, InteractionReplyOptions, ActionRowBuilder, ButtonBuilder, EmbedBuilder, MessageOptions, TextBasedChannel, APIButtonComponentWithURL, APIButtonComponentWithCustomId, ComponentEmojiResolvable } from "discord.js";
+import { ButtonInteraction, InteractionReplyOptions, ActionRowBuilder, ButtonBuilder, EmbedBuilder, MessageOptions, TextBasedChannel, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
@@ -43,7 +43,6 @@ export class BtnMsg extends EmitterBase
      * @param buttons Up to 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
      */
     constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonBuilder[], options?: Partial<BtnMsgOpts>)
-    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonBuilder[], options?: Partial<BtnMsgOpts>)
     {
         super();
 
@@ -51,30 +50,12 @@ export class BtnMsg extends EmitterBase
 
         this.msg = message instanceof EmbedBuilder ? [message] : message;
 
-        if(buttons instanceof ButtonBuilder || (Array.isArray(buttons) && buttons[0] instanceof ButtonBuilder))
-            this.btns = Array.isArray(buttons) ? buttons as ButtonBuilder[] : [buttons];
-        else
-        {
-            const btns: ButtonBuilder[] = [];
-
-            buttons.forEach(b => {
-                const mb = new ButtonBuilder();
-                b.data.label && mb.setLabel(b.data.label);
-                b.data.style && mb.setStyle(b.data.style);
-                b.data.emoji && mb.setEmoji(b.data.emoji as ComponentEmojiResolvable);
-                (b.data as Partial<APIButtonComponentWithURL>).url && mb.setURL((b.data as APIButtonComponentWithURL).url);
-
-                btns.push(mb);
+        this.btns = (Array.isArray(buttons) ? buttons : [buttons])
+            .map((b, i) => {
+                if(b.data.style !== ButtonStyle.Link)
+                    b.setCustomId(`${this.btnId}@${i}`);
+                return b;
             });
-
-            this.btns = btns;
-        }
-
-        this.btns = this.btns.map((b, i) => {
-            if(!(b.data as Partial<APIButtonComponentWithURL>).url)
-                b.setCustomId(`${this.btnId}@${i}`);
-            return b;
-        });
 
         const defaultOpts: BtnMsgOpts = {
             timeout: 1000 * 60 * 30,
