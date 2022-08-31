@@ -22,6 +22,7 @@ interface Game {
     ctx: CanvasRenderingContext2D;
     bm: BtnMsg;
     score: number;
+    latestInt: CommandInteraction | ButtonInteraction;
 }
 
 interface Cell {
@@ -166,6 +167,12 @@ export class TwentyFortyEight extends Command {
         this.GAP_SIZE * (this.CELL_COUNT + 1); // 950
 
     private readonly games = new Map<string, Game>();
+    private readonly neighbors = [
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+    ];
 
     constructor() {
         super({
@@ -219,6 +226,7 @@ export class TwentyFortyEight extends Command {
 
     async start(int: CommandInteraction) {
         const user = int.user;
+        // TODO: figure this out
         // if (this.games.has(user.id)) {
         //     return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
         // }
@@ -248,6 +256,7 @@ export class TwentyFortyEight extends Command {
             canvas: canvas,
             ctx: ctx,
             bm: bm,
+            latestInt: int,
         });
 
         const game = this.games.get(user.id)!;
@@ -260,7 +269,7 @@ export class TwentyFortyEight extends Command {
         bm.on("timeout", async () => {
             // TODO: remove this line when sv's branch is merged
             bm.btns.map((btn) => btn.setDisabled(true));
-            int.editReply({ ...bm.getReplyOpts() });
+            game.latestInt.editReply({ ...bm.getReplyOpts() });
             await this.cleanUpGame(user.id);
         });
 
@@ -283,8 +292,8 @@ export class TwentyFortyEight extends Command {
             return await this.editReply(int, embedify("You don't have a game running. Start one with `/2048 start`"));
         }
 
-        this.games.delete(user.id);
-        await fs.rm(path.join(os.tmpdir(), `${user.id}-2048.png`));
+        game.bm?.emit("timeout");
+        game.bm?.destroy();
         return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/2048 start`"));
     }
 
@@ -298,9 +307,33 @@ export class TwentyFortyEight extends Command {
             const randomCell = cells[Math.floor(Math.random() * cells.length)];
             game.board[randomCell.y][randomCell.x] = Math.random() < 0.9 ? 2 : 4;
         }
+
+        const validMoves = this.getAvailableMoves(game);
+        game.bm?.btns.map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
     }
 
-    // TODO: make this return an array of numbers
+    getAvailableMoves(game: Game): number[] {
+        const validMoves = new Set<number>();
+
+        for (let y = 0; y < this.CELL_COUNT; y++) {
+            for (let x = 0; x < this.CELL_COUNT; x++) {
+                if (game.board[y][x] === 0) {
+                    continue;
+                }
+
+                for (let i = 0; i < this.neighbors.length; i++) {
+                    const newY = Math.min(Math.max(0, y + this.neighbors[i].y), this.CELL_COUNT - 1);
+                    const newX = Math.min(Math.max(0, x + this.neighbors[i].x), this.CELL_COUNT - 1);
+                    if ((newY !== y || newX !== x) && (game.board[newY][newX] === 0 || game.board[newY][newX] === game.board[y][x])) {
+                        validMoves.add(i);
+                    }
+                }
+            }
+        }
+
+        return Array.from(validMoves);
+    }
+
     moveLeft(game: Game) {
         const mergedCells: Cell[] = [];
 
@@ -466,8 +499,23 @@ export class TwentyFortyEight extends Command {
     }
 
     gameover(game: Game): boolean {
-        // TODO: gameover logic
-        return false;
+
+        for (let y = 0; y < this.CELL_COUNT; y++) {
+            for (let x = 0; x < this.CELL_COUNT; x++) {
+                if (game.board[y][x] === 0) {
+                    return false;
+                }
+
+                for (let i = 0; i < this.neighbors.length; i++) {
+                    const newY = Math.min(Math.max(0, y + this.neighbors[i].y), this.CELL_COUNT - 1);
+                    const newX = Math.min(Math.max(0, x + this.neighbors[i].x), this.CELL_COUNT - 1);
+                    if ((newY !== y || newX !== x) && game.board[newY][newX] === game.board[y][x]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     getAvailableCells(game: Game): Cell[] {
@@ -621,26 +669,22 @@ export class TwentyFortyEight extends Command {
         }
 
         game.bm?.resetTimeout();
+        game.latestInt = int;
 
-        const validMoves: number[] = [0, 1, 2, 3];
         let win = false;
         let gameover = false;
 
         switch (btn.data.emoji?.id) {
         case Buttons.LEFT:
-            // TODO: assign validMoves
             this.moveLeft(game);
             break;
         case Buttons.RIGHT:
-            // TODO: assign validMoves
             this.moveRight(game);
             break;
         case Buttons.UP:
-            // TODO: assign validMoves
             this.moveUp(game);
             break;
         case Buttons.DOWN:
-            // TODO: assign validMoves
             this.moveDown(game);
             break;
         default:
@@ -651,7 +695,9 @@ export class TwentyFortyEight extends Command {
         const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         game.board[randomCell.y][randomCell.x] = Math.random() < 0.9 ? 2 : 4;
 
-        game.bm?.btns.map((b, i) => validMoves.includes(i) ? b : b.setDisabled(true));
+        const validMoves = this.getAvailableMoves(game);
+
+        game.bm?.btns.map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
         this.drawBoard(game);
 
         if (this.checkWin(game)) {
