@@ -12,7 +12,6 @@ export const settings: Settings = {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
     },
-    // TODO: remove
     moderation: {
         /** How many reaction votes are needed to ban someone */
         votesToBan: 2,
@@ -90,7 +89,6 @@ interface Settings {
     warningsThreshold: number;
     emojiList: string[];
     devs: string[];
-    devServer: string;
     commands: {
         execEnabled: boolean;
     }

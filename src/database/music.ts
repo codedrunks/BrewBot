@@ -1,7 +1,6 @@
 import { Collection, Role } from "discord.js";
 import { prisma } from "@database/client";
 import { getRedis } from "@src/redis";
-import { settings } from "@src/settings";
 
 const redis = getRedis();
 
@@ -23,9 +22,6 @@ export async function setPremium(guildId: string, set: boolean) {
 }
 
 export async function getPremium(guildId: string): Promise<boolean> {
-    if(guildId === settings.devServer)
-        return true;
-
     const redisCheck = await redis.get(`premium_${guildId}`);
 
     if(!redisCheck) {
