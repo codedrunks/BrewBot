@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, User } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { settings } from "@src/settings";
 import { Command } from "@src/Command";
 import { AxiosError } from "axios";
@@ -35,7 +35,7 @@ export class Avatar extends Command
     {
         await this.deferReply(int);
 
-        const usr = int.options.get("user") as User | null;
+        const usr = int.options.getUser("user");
         const fmt = int.options.get("format") as string | null;
 
         const format = (fmt ?? undefined) as ("png" | "gif" | undefined);
@@ -61,7 +61,7 @@ export class Avatar extends Command
             if(avatarUrl)
             {
                 const ebd = new EmbedBuilder()
-                    .setTitle(`Avatar of <@${usr.id}>:`)
+                    .setTitle(`Avatar of ${usr.username}:`)
                     .setColor(settings.embedColors.default)
                     .setImage(avatarUrl);
                 format && ebd.setFooter({ text: `[${format.toUpperCase()}]` });
