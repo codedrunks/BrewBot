@@ -248,7 +248,7 @@ export class Warning extends Command
                 if(!warnings.find(w => w.warningId === id))
                     throw new Error(`Couldn't find a warning with the ID ${id}`); // kinda dirty but I am tired
 
-            return this.editReply(int, embedify(`Successfully deleted ${ids.length} warning${ids.length === 1 ? "" : "s"} of <@${member.id}>.`));
+            return this.editReply(int, embedify(`Successfully deleted ${ids.length} warning${ids.length === 1 ? "" : "s"} of <@${member.id}>`));
         }
         catch(err)
         {
