@@ -66,7 +66,10 @@ export class Play extends Command {
 
         await this.deferReply(int);
         
-        const args = this.resolveArgs(int);
+        const song = int.options.get("song", true).value as string;
+        const source = int.options.get("source")?.value as string | undefined;
+        const position = int.options.get("position")?.value as string | undefined;
+        const shuffled = int.options.get("shuffled")?.value as boolean | undefined;
 
         const guild = int.guild;
 
@@ -91,13 +94,13 @@ export class Play extends Command {
 
         let res: SearchResult;
 
-        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(args.song)
-            || args.source == "spotify")) {
-            res = await manager.search(args.song, int.user);
+        if((/^(?:spotify:|https:\/\/[a-z]+\.spotify\.com\/(track\/|user\/(.*)\/playlist\/))(.*)$/.test(song)
+            || source == "spotify")) {
+            res = await manager.search(song, int.user);
         } else {
             res = await manager.search({
-                query: args.song,
-                source: args.source as SearchQuery["source"] ?? "youtube"
+                query: song,
+                source: source as SearchQuery["source"] ?? "youtube"
             }, int.user);
         }
 
@@ -117,8 +120,6 @@ export class Play extends Command {
 
         const channelMention = `<#${voice}>`;
 
-        const position = args.position || null;
-
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT" || res.loadType == "PLAYLIST_LOADED" && res.tracks.length == 1) {
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "current song"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
@@ -133,14 +134,14 @@ export class Play extends Command {
                 return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` to play next in ${channelMention}`));
             }
 
-            player.queue.add(res.tracks[0], args.shuffled ? randRange(0, player.queue.size) : undefined);
+            player.queue.add(res.tracks[0], shuffled ? randRange(0, player.queue.size) : undefined);
 
             if(!player.playing && !player.paused && !player.queue.size) player.play();
 
             return this.editReply(int, embedify(`Queued \`${res.tracks[0].title}\` in ${channelMention}`));
         } else if(res.loadType == "PLAYLIST_LOADED") {
 
-            const tracks = args.shuffled ? randomizeArray(res.tracks) : res.tracks;
+            const tracks = shuffled ? randomizeArray(res.tracks) : res.tracks;
 
             if(position == "now") {
                 this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "current song"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));

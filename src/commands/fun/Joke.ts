@@ -78,22 +78,21 @@ export class Joke extends Command
     async run(int: CommandInteraction): Promise<void> {
         await this.deferReply(int);
 
-        const args = this.resolveArgs(int);
+        const category = int.options.get("category")?.value as string | undefined;
+        const safeMode = int.options.get("safe-mode")?.value as boolean | undefined ?? true;
+        let amount = int.options.get("amount")?.value as number | undefined ?? NaN;
+        const contains = int.options.get("contains")?.value as string | undefined;
 
-        const { category, amount, contains } = args;
-        const safeMode = args["safe-mode"] ?? true;
-
-        let amt = parseInt(amount);
-        if(!isNaN(amt) && amt > 10)
-            amt = 10;
-        else if(isNaN(amt) || amt < 1)
-            amt = 1;
+        if(!isNaN(amount) && amount > 10)
+            amount = 10;
+        else if(isNaN(amount) || amount < 1)
+            amount = 1;
 
         const baseUrl = `https://v2.jokeapi.dev/joke/${category ?? "Any"}`;
         const urlParams = [];
 
         if(safeMode) urlParams.push("safe-mode");
-        if(amt) urlParams.push(`amount=${amt}`);
+        if(amount) urlParams.push(`amount=${amount}`);
         if(contains) urlParams.push(`contains=${encodeURIComponent(contains)}`);
 
         let url = baseUrl;
@@ -123,10 +122,10 @@ export class Joke extends Command
                 .setDescription(`${j.type === "single" ? j.joke : `${j.setup}\n\n${j.delivery}`}`)
                 .setColor(settings.embedColors.default);
 
-            const poweredBy = amt > 1 && i === amt - 1 || amt === 1 || !amt;
+            const poweredBy = amount > 1 && i === amount - 1 || amount === 1 || !amount;
 
             embed.setFooter({
-                text: `${jokes.length > 1 ? `(${i + 1}/${amt})${poweredBy ? " - " : ""}` : ""}${poweredBy ? "https://jokeapi.dev" : ""}`,
+                text: `${jokes.length > 1 ? `(${i + 1}/${amount})${poweredBy ? " - " : ""}` : ""}${poweredBy ? "https://jokeapi.dev" : ""}`,
                 ...(poweredBy ? { iconURL: "https://cdn.sv443.net/jokeapi/icon_tiny.png" } : {}),
             });
 

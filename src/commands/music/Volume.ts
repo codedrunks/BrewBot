@@ -14,7 +14,7 @@ export class Volume extends Command {
                 {
                     name: "volume",
                     desc: "how loud the bot should play music (1-100)",
-                    type: ApplicationCommandOptionType.Number,
+                    type: ApplicationCommandOptionType.Integer,
                     required: true,
                     max: 100,
                     min: 1
@@ -25,7 +25,7 @@ export class Volume extends Command {
 
     async run(int: CommandInteraction): Promise<void> {
 
-        const args = this.resolveArgs(int);
+        const volume = int.options.get("volume", true).value as number;
 
         const guild = int.guild;
 
@@ -46,8 +46,6 @@ export class Volume extends Command {
         if(!voice) return this.reply(int, embedify("You must be in a voice channel to use this command"));
 
         if(voice !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel as the bot"));
-
-        const volume = Number(args.volume);
 
         if(!volume || volume < 1 || volume > 100) return this.reply(int, embedify("Volume must a number between 1 and 100"));
 

@@ -38,8 +38,7 @@ export class Cat extends Command
         {
             await this.deferReply(int);
 
-            const args = this.resolveArgs(int);
-            let api = args.api as "illusion";
+            let api = "" as "illusion";
 
             let allowRetry = false;
 

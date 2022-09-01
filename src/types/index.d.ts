@@ -46,7 +46,7 @@ export type DataKey = keyof PersistentData;
 export type AnyCmdInteraction = CommandInteraction | ButtonInteraction | ModalSubmitInteraction | ContextMenuInteraction;
 
 /** A single argument of a slash command */
-type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);
+type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | IntegerCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);
 
 interface ChoiceCmdArg<T> {
     /** A set of predefined choices the user can pick from for this argument */
@@ -70,6 +70,12 @@ interface StringCommandArg extends ChoiceCmdArg<string> {
 
 interface NumberCommandArg extends ChoiceCmdArg<number> {
     type: ApplicationCommandOptionType.Number;
+    min?: number;
+    max?: number;
+}
+
+interface IntegerCommandArg extends ChoiceCmdArg<number> {
+    type: ApplicationCommandOptionType.Integer;
     min?: number;
     max?: number;
 }

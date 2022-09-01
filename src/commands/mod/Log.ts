@@ -25,7 +25,7 @@ export class Log extends Command {
                     name: "channel",
                     type: ApplicationCommandOptionType.Channel,
                     desc: "Name of log channel.",
-                    required: false,
+                    required: true,
                 },
                 {
                     name: "start",
@@ -39,32 +39,32 @@ export class Log extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-
         const { guild, channel } = int;
 
         if(!guild || !channel)
             return this.reply(int, embedify("This command can only be used in a server.", settings.embedColors.error), true);
 
-        const args = this.resolveArgs(int);
+        // TODO(sv): make channel arg not required and grab logChannel from db if channel arg is not filled
 
-        const amount = parseInt(args?.amount);
+        const amount = int.options.get("amount", true).value as number;
+        const logChannel = int.options.get("channel", true).channel as TextChannel;
+        const start = int.options.get("start")?.value as string | undefined;
 
         await this.deferReply(int, true);
 
         const g = await getGuild(guild.id);
         const gld = !g ? await createGuild(guild.id) : g;
 
-        const logChannel = int.client.guilds.cache.find(g => g.id == settings.guildID)?.channels.cache.find(ch => ch.id === settings.messageLogChannel) as TextChannel;
-        let startMessageID = args.start;
+        let startMessageID = start;
 
-        if (args.start?.match(/\/[0-9]+$/)) {
-            startMessageID = args.start.substring(args.start.lastIndexOf("/") + 1);
+        if (start?.match(/\/[0-9]+$/)) {
+            startMessageID = start.substring(start.lastIndexOf("/") + 1);
         }
 
         try {
             if (channel?.type === ChannelType.GuildText && typeof(logChannel?.send) === "function") {
 
-                if(!args.start) {
+                if(!start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {
                         const lastMessage = messages?.first();
 
@@ -82,7 +82,7 @@ export class Log extends Command {
                 channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
                     .then(async (messages) => {
                         
-                        messages.set(startMessageID, await channel.messages.fetch(startMessageID));
+                        messages.set(startMessageID!, await channel.messages.fetch(startMessageID!));
 
                         const lastMessage = messages?.first();
 

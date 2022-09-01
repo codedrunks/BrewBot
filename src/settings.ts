@@ -50,11 +50,6 @@ export const settings: Settings = {
     warningsThreshold: 3,
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
-    guildID: "693878197107949572",
-    // TODO: also remove -
-    messageLogChannel: "976942278637666376",
-    devServer: "693878197107949572",
-    // - end remove
     devs: [
         "427491040468140043",
         "407351772575694879",
@@ -94,8 +89,6 @@ interface Settings {
     }
     warningsThreshold: number;
     emojiList: string[];
-    guildID: string;
-    messageLogChannel: string;
     devs: string[];
     devServer: string;
     commands: {

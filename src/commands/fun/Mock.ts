@@ -32,10 +32,11 @@ export class Mock extends Command
 
         if(!channel) return;
 
-        const args = this.resolveArgs(int);
+        const text = int.options.get("text", true).value as string;
+        const copy = int.options.get("copy")?.value as boolean | undefined;
 
-        const mockified = args.text.split("").map((ch, i) => i % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase()).join("");
-        const ephemeral = (args.copy && args.copy.length > 0 && args.copy === "true") ? true : false;
+        const mockified = text.split("").map((ch, i) => i % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase()).join("");
+        const ephemeral = copy ?? false;
 
         if(ephemeral)
             return await this.reply(int, mockified, ephemeral);

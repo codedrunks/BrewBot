@@ -72,6 +72,19 @@ export abstract class Command
 
                         return opt;
                     });
+                else if(arg.type === ApplicationCommandOptionType.Integer)
+                    data.addIntegerOption(opt => {
+                        opt.setName(arg.name)
+                            .setDescription(arg.desc)
+                            .setRequired(arg.required ?? false);
+
+                        arg.min && opt.setMinValue(arg.min);
+                        arg.max && opt.setMaxValue(arg.max);
+
+                        arg.choices && opt.addChoices(...arg.choices);
+
+                        return opt;
+                    });
                 else if(arg.type === ApplicationCommandOptionType.Boolean)
                     data.addBooleanOption(opt =>
                         opt.setName(arg.name)
@@ -139,6 +152,19 @@ export abstract class Command
                             );
                         else if(arg.type === ApplicationCommandOptionType.Number)
                             sc.addNumberOption(opt => {
+                                opt.setName(arg.name)
+                                    .setDescription(arg.desc)
+                                    .setRequired(arg.required ?? false);
+
+                                arg.min && opt.setMinValue(arg.min);
+                                arg.max && opt.setMaxValue(arg.max);
+
+                                arg.choices && opt.addChoices(...arg.choices);
+
+                                return opt;
+                            });
+                        else if(arg.type === ApplicationCommandOptionType.Integer)
+                            sc.addIntegerOption(opt => {
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false);
@@ -258,26 +284,6 @@ export abstract class Command
         }
 
         return null;
-    }
-
-    /**
-     * Resolves a flat object of command arguments from an interaction
-     * @deprecated ❗ This doesn't work with subcommands so it was deprecated. Use `int.options.getWhatever()` instead
-     */
-    protected resolveArgs<T = string>({ options }: CommandInteraction): Record<string, T>
-    {
-        if(!Array.isArray(options.data))
-            return {};
-
-        const map = options.data.map(o => o.type === "SUB_COMMAND" ? o.options as CommandInteraction["options"] ?? undefined : o);
-        const filt = map.filter(v => typeof v !== "undefined");
-        const red = filt.reduce((acc, r) => {
-            if(!r) return acc;
-            const { name, value } = r;
-            return {...acc, [name]: value};
-        }, {});
-
-        return red;
     }
 
     /**

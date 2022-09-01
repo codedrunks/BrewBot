@@ -15,13 +15,13 @@ export class Skip extends Command {
                 {
                     name: "amount",
                     desc: "amount of songs to skip, including current song",
-                    type: ApplicationCommandOptionType.Number,
+                    type: ApplicationCommandOptionType.Integer,
                     min: 1
                 },
                 {
                     name: "to",
                     desc: "song to skip to in queue",
-                    type: ApplicationCommandOptionType.Number,
+                    type: ApplicationCommandOptionType.Integer,
                     min: 1
                 }
             ]
@@ -29,11 +29,8 @@ export class Skip extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const args = this.resolveArgs(int);
-
-        const amount = args.amount ? Number(args.amount) : 1;
-
-        const to = args.to ? Number(args.to) : 0;
+        const amount = int.options.get("amount")?.value as number | undefined ?? 1;
+        const to = int.options.get("to")?.value as number | undefined ?? 0;
 
         const total = amount + to;
 
@@ -53,7 +50,7 @@ export class Skip extends Command {
 
         if(voice.id !== player.voiceChannel) return this.reply(int, embedify("You must be in the same voice channel with the bot"), true);
 
-        if(args.to && Math.abs(parseInt(args.to)) > player.queue.length || args.amount && Math.abs(parseInt(args.amount)) > player.queue.length) return this.reply(int, embedify("You cannot skip more than the length of the queue"), true);
+        if(to && Math.abs(to) > player.queue.length || amount && Math.abs(amount) > player.queue.length) return this.reply(int, embedify("You cannot skip more than the length of the queue"), true);
 
         const djcheck = await isDJOnlyandhasDJRole(guild.id, (int.member?.roles as GuildMemberRoleManager).cache);
 
@@ -63,17 +60,17 @@ export class Skip extends Command {
         const memberCount = voice.members.size - 1;
 
         if(memberCount == 1) {
-            player.stop(args.to ? total - 1 : total);
+            player.stop(to ? total - 1 : total);
 
             if(skipVotes[voice.id]) delete skipVotes[voice.id];
 
-            return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${args.to ? total - 1 : total} tracks were skipped`));
+            return this.reply(int, embedify(total == 1 ? `\`${title}\` was skipped` : `${to ? total - 1 : total} tracks were skipped`));
         }
         
         if(!skipVotes[voice.id]) {
             skipVotes[voice.id]= {
                 votes: 1,
-                amount: args.to ? total - 1 : total,
+                amount: to ? total - 1 : total,
                 initiator: int.user,
                 skippers: new Set([int.user.id])
             };

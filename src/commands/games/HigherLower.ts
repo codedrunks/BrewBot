@@ -16,7 +16,7 @@ export class HigherLower extends Command
             args: [
                 {
                     name: "max",
-                    desc: "The maximum number that can be chosen. Defaults to 1000. Must be between 10 and 1 000 000 000",
+                    desc: "The maximum number that can be chosen. Defaults to 1000. Must be between 10 and 1,000,000,000",
                     type: ApplicationCommandOptionType.Number,
                     min: 10,
                     max: 1000000000,
@@ -45,14 +45,7 @@ export class HigherLower extends Command
 
         const author = int.user;
 
-        const args = this.resolveArgs(int);
-
-        const maxR = parseInt(args.max ?? 1000);
-
-        if(isNaN(maxR))
-            return await this.reply(int, "Please enter a valid maximum amount.", true);
-
-        const max = maxR < 10 ? 10 : (maxR > 1000000000 ? 1000000000 : maxR);
+        const max = int.options.get("max")?.value as number | undefined ?? 1000;
 
         const randNum = randRange(0, max);
 
