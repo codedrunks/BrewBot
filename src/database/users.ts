@@ -169,3 +169,48 @@ export async function deleteReminders(reminderIds: number[], userId: string): Pr
         },
     });
 }
+
+//#MARKER warnings
+
+export function getWarnings(guildId: string, userId: string)
+{
+    return prisma.warning.findMany({
+        where: {
+            Member: {
+                guildId,
+            },
+            userId,
+        },
+        orderBy: {
+            warningId: "asc",
+        },
+    });
+}
+
+export async function addWarning(guildId: string, userId: string, warnedById: string, reason: string)
+{
+    const mem = await getMember(guildId, userId);
+
+    if(!mem)
+        await createNewMember(guildId, userId);
+
+    let warningId = 1;
+
+    const warns = await getWarnings(guildId, userId);
+
+    if(warns && warns.length > 0)
+    {
+        const lastWarn = warns.sort((a, b) => a.warningId < b.warningId ? 1 : -1).at(0)!;
+        warningId = lastWarn.warningId + 1;
+    }
+
+    return prisma.warning.create({
+        data: {
+            warningId,
+            userId,
+            reason,
+            timestamp: new Date(),
+            warnedBy: warnedById,
+        },
+    });
+}

@@ -14,7 +14,7 @@ import { Sudoku } from "@commands/games/Sudoku";
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
 import { Say } from "@commands/mod/Say";
-import { Warn } from "@commands/mod/Warn";
+import { Warning } from "@src/commands/mod/Warning";
 
 import { Avatar } from "@commands/util/Avatar";
 import { Contest } from "@commands/fun/Contest/Contest";
@@ -73,7 +73,7 @@ export const commands = [
     Delete,
     Log,
     Say,
-    Warn,
+    Warning,
 
     // util
     Avatar,
