@@ -42,7 +42,7 @@ export class Log extends Command {
         // TODO(sv): make channel arg not required and grab logChannel from db if channel arg is not filled
 
         const amount = int.options.get("amount", true).value as number;
-        const logChannel = int.options.get("channel")?.channel as TextChannel;
+        const logChannel = int.options.get("channel", true).channel as TextChannel;
         const start = int.options.get("start")?.value as string | undefined;
 
         let startMessageID = start;
