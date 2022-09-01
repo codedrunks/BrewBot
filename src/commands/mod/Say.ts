@@ -31,25 +31,21 @@ export class Say extends Command
     {
         await this.deferReply(int, true);
 
-        const args = this.resolveArgs(int);
+        const message = int.options.get("message", true).value as string;
+        const channel = int.options.get("channel")?.channel;
 
-        if(args.message)
+        let sendChannel: TextBasedChannel | null | undefined;
+        if(channel)
+            sendChannel = int.guild?.channels.cache.find(ch => ch.id === channel.id) as TextBasedChannel;
+        else
+            sendChannel = int.channel;
+
+        if(typeof sendChannel?.send === "function")
         {
-            let sendChannel: TextBasedChannel | null | undefined;
-            if(args.channel)
-                sendChannel = int.guild?.channels.cache.find(ch => ch.id === args.channel) as TextBasedChannel;
-            else
-                sendChannel = int.channel;
-
-            if(typeof sendChannel?.send === "function")
-            {
-                await sendChannel.send({ content: args.message });
-                return await this.editReply(int, `Successfully sent the message${args.channel ? ` in <#${sendChannel.id}>` : ""}`);
-            }
-            else
-                return await this.editReply(int, "Couldn't find a channel with that name");
+            await sendChannel.send({ content: message });
+            return await this.editReply(int, `Successfully sent the message${channel ? ` in <#${sendChannel.id}>` : ""}`);
         }
         else
-            return await this.editReply(int, "Please enter a message to send");
+            return await this.editReply(int, "Couldn't find a channel with that name");
     }
 }

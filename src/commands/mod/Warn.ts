@@ -40,15 +40,15 @@ export class Warn extends Command
     async run(int: CommandInteraction): Promise<void> {
         const { guild } = int;
 
-        const args = this.resolveArgs(int);
-        const { member, reason } = args;
+        const user = int.options.getUser("member", true);
+        const reason = int.options.get("reason", true).value as string;
 
-        const user = guild?.members.cache.find(m => m.id === member);
+        const member = guild?.members.cache.find(m => m.id === user.id);
 
-        if(!user)
+        if(!member)
             return await this.reply(int, "Couldn't find the provided member", true);
 
-        const warnAmount = await this.addWarning(user, reason);
+        const warnAmount = await this.addWarning(member, reason);
 
         const bold = warnAmount >= settings.warningsThreshold ? "**" : "";
         return await this.reply(int, `Successfully warned the user. They now have ${bold}${warnAmount} warning${warnAmount != 1 ? "s" : ""}${bold} in total.`, true);

@@ -25,7 +25,7 @@ export class Emoji extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        const { emoji } = this.resolveArgs(int);
+        const emoji = int.options.get("emoji", true).value as string;
 
         const getEmUrl = (id: string, fmt: string) => `https://cdn.discordapp.com/emojis/${id}.${fmt}?size=4096&quality=lossless`;
         const trimmed = (str: string) => str.length > 16 ? str.substring(0, 16) + "+" : str;

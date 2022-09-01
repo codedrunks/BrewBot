@@ -35,13 +35,11 @@ export class Delete extends Command {
         await this.deferReply(int, true);
 
         const { channel } = int;
-        const args = this.resolveArgs(int);
-        const amtRaw = parseInt(args.amount);
+        const amount = int.options.get("amount")?.value as number ?? NaN;
+        const upUntil = int.options.get("up_until")?.value as string | undefined;
 
-        if(!args.up_until && isNaN(amtRaw))
-            return await this.editReply(int, `Please enter the amount of messages to delete, between 1 and ${delMaxAmt}`);
-
-        const amount = Math.min(Math.max(amtRaw, 1), delMaxAmt);
+        if(!upUntil && isNaN(amount))
+            return await this.editReply(int, "Please either enter the amount of messages to delete, or an ID/link of a message to delete until");
 
         if(!channel || channel?.type === ChannelType.DM)
             return;
@@ -50,7 +48,7 @@ export class Delete extends Command {
         {
             await channel.messages.fetch();
 
-            const until = String(args.up_until ?? "_");
+            const until = String(upUntil ?? "_");
             const untilType = until.match(/\/[0-9]+$/) ? "link" : (until.match(/^[0-9]+(-[0-9]+)?$/) ? "id" : undefined);
 
             let untilId = "";
@@ -58,13 +56,8 @@ export class Delete extends Command {
             switch(untilType)
             {
             default:
-                if(!isNaN(amtRaw))
-                {
-                    await channel.bulkDelete(amount);
-                    await this.editReply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`);
-                }
-                else
-                    await this.editReply(int, "Couldn't bulk delete messages");
+                await channel.bulkDelete(amount);
+                await this.editReply(int, `Deleted **${amount}** message${amount !== 1 ? "s" : ""}`);
                 return;
             case "link":
             {
