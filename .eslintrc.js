@@ -16,7 +16,8 @@ module.exports = {
         "@typescript-eslint"
     ],
     ignorePatterns: [
-        "out/**"
+        "out/**",
+        "test.*"
     ],
     rules: {
         "quotes": [ "error", "double" ],

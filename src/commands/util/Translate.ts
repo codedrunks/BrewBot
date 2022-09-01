@@ -1,5 +1,4 @@
 import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
-import { allOfType } from "svcorelib";
 import Fuse from "fuse.js";
 
 import { Command } from "@src/Command";
@@ -82,12 +81,21 @@ export class Translate extends Command
                 return null;
 
             const fromLang = data?.[2];
-            const translation = data?.[0]?.[0]?.[0];
+            let trParts = data?.[0];
 
-            // if(fromLang.match(/^\w+-\w+$/))
-            //     fromLang = fromLang.split("-")[0];
+            if(!fromLang || !trParts)
+                return null;
 
-            return allOfType([fromLang, translation], "string") ? { fromLang, translation } : null;
+            if(trParts.length > 1)
+                trParts = trParts.map((p: string[]) => p?.[0]);
+            else
+                trParts = [trParts?.[0]];
+
+            const translation = trParts
+                .filter((p: unknown) => typeof p === "string")
+                .join("").trim();
+
+            return { fromLang, translation };
         }
         catch(err)
         {
