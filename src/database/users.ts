@@ -214,3 +214,27 @@ export async function addWarning(guildId: string, userId: string, warnedById: st
         },
     });
 }
+
+export function deleteWarning(userId: string, warningId: number)
+{
+    return prisma.warning.delete({
+        where: {
+            warningId_userId: {
+                warningId,
+                userId,
+            }
+        },
+    });
+}
+
+export function deleteWarnings(userId: string, warningIds: number[])
+{
+    return prisma.warning.deleteMany({
+        where: {
+            userId,
+            warningId: {
+                in: warningIds,
+            },
+        },
+    });
+}

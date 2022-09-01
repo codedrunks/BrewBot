@@ -281,7 +281,7 @@ export class Reminder extends Command
                     else
                     {
                         // TODO: let user choose which reminder to delete
-                        return await int.editReply(useEmbedify("Found multiple reminders with this name.\nPlease use the reminder ID, found with `/reminder list`, instead."));
+                        return await int.editReply(useEmbedify("Found multiple reminders with this name.\nPlease use the reminder ID number, found with `/reminder list`, instead."));
                     }
                 }
             }
@@ -368,6 +368,12 @@ export class Reminder extends Command
             }
             catch(err)
             {
+                // TODO: track reminder "loss rate"
+                //
+                //  I  │ I I
+                // ────┼────
+                // I I │ I ⌐¬
+
                 void err;
             }
             finally
@@ -386,9 +392,9 @@ export class Reminder extends Command
 
                 try
                 {
-                    const dm = await usr?.createDM(true);
+                    const dm = await usr.createDM(true);
 
-                    const msg = await dm?.send({ embeds: [ getExpiredEbd(rem) ]});
+                    const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
 
                     if(!dm || !msg)
                         return guildFallback(rem);
