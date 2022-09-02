@@ -1,3 +1,6 @@
+# Brew Bot
+![Node CI](https://github.com/codedrunks/BrewBot/workflows/Node%20CI/badge.svg)
+
 ## Table of contents
 - [Installation](#installation)
 - [Development](#development)
