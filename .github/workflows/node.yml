@@ -22,7 +22,7 @@ jobs:
     - name: Install node-canvas dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev libgrsvg2-dev
+        sudo apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
       if: matrix.node-version == '18.x'
 
     - name: Install npm dependencies
