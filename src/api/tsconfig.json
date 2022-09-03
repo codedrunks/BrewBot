@@ -1,0 +1,44 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "rootDir": "../../",
+        "outDir": "./out/",
+        "target": "es2022",
+        "module": "commonjs",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "removeComments": true,
+        "strict": true,
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "paths": {
+            "@apisrc/*": ["./src/*"],
+            "@src/*": ["../*"],
+            "@database/*": ["../database/*"],
+            "@utils/*": ["../utils/*"],
+            "@assets/*": ["../assets/*"],
+        },
+    },
+    "files": [
+        "src/index.ts",
+    ],
+    "include": [
+        "src/**/*.ts",
+    ],
+    "exclude": [
+        "node_modules",
+        "out",
+        "src/test.ts"
+    ],
+    "tsc-alias": {
+        "replacers": {
+            "base-url": {
+                "enabled": false
+            }
+        }
+    }
+}

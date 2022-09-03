@@ -1,8 +1,9 @@
 {
   "name": "brewbot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engines": {
-    "node": ">=16.9"
+    "node": ">=16.9",
+    "npm": ">=8"
   },
   "scripts": {
     "start": "tsc && tsc-alias && node --enable-source-maps out/bot.js",
@@ -61,9 +62,22 @@
   "bin": {
     "brewbot": "./src/tools/cli.js"
   },
-  "engines": {
-    "npm": ">=8"
-  },
+  "maintainers": [
+    {
+      "name": "canarado"
+    },
+    {
+      "name": "IllusionMan1212"
+    },
+    {
+      "name": "kofskie"
+    },
+    {
+      "name": "Sv443",
+      "email": "contact@sv443.net",
+      "url": "https://github.com/Sv443"
+    }
+  ],
   "nodemonConfig": {
     "watch": [
       "src/*",

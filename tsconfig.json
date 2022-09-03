@@ -2,7 +2,7 @@
     "compilerOptions": {
         "baseUrl": ".",
         "target": "es2022",
-        "module": "CommonJS",
+        "module": "commonjs",
         "rootDir": "./src/",
         "outDir": "./out/",
         "strict": true,
@@ -37,6 +37,7 @@
     "exclude": [
         "node_modules",
         "out",
+        "src/api",
         "src/test.ts"
     ],
     "tsc-alias": {

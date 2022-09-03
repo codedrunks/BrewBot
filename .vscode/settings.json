@@ -46,6 +46,7 @@
     "files.exclude": {
         "**/.env": true,
         "out/**": true,
+        "src/api/out/**": true,
         "node_modules/": true
     },
     "git.branchPrefix": "feat/",
