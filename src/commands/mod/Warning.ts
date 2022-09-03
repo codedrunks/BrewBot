@@ -1,10 +1,12 @@
-import { CommandInteraction, GuildMember, EmbedBuilder, ApplicationCommandOptionType, User, CommandInteractionOption } from "discord.js";
+import { CommandInteraction, GuildMember, EmbedBuilder, ApplicationCommandOptionType, User, CommandInteractionOption, TextChannel, ButtonBuilder, ButtonStyle, ButtonInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { embedify, PageEmbed, toUnix10 } from "@src/utils";
-import { addWarning, deleteWarnings, getWarnings } from "@src/database/users";
+import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { addWarning, createNewMember, deleteWarnings, getMember, getWarnings } from "@src/database/users";
+import { Warning as WarningObj } from "@prisma/client";
 import { allOfType } from "svcorelib";
+import { createNewGuild, getGuild, getGuildSettings } from "@src/database/guild";
 
 export class Warning extends Command
 {
@@ -59,8 +61,20 @@ export class Warning extends Command
                         },
                         {
                             name: "warning_ids",
-                            desc: "One or multiple warning IDs separated by comma. Find IDs with /warning list. \"all\" to delete all.",
+                            desc: "One or multiple warning IDs (separated by comma). Find IDs with /warning list",
                             type: ApplicationCommandOptionType.String,
+                            required: true,
+                        },
+                    ],
+                },
+                {
+                    name: "delete_all",
+                    desc: "Deletes all warnings of a member",
+                    args: [
+                        {
+                            name: "member",
+                            desc: "Which member to delete all warnings of",
+                            type: ApplicationCommandOptionType.User,
                             required: true,
                         },
                     ],
@@ -75,6 +89,23 @@ export class Warning extends Command
         let action = "run the command";
         try
         {
+            if(!int.guild)
+                return await this.reply(int, embedify("This command can only be used in a server.", settings.embedColors.error), true);
+
+            await this.deferReply(int, true);
+
+            const member = await getMember(int.guild.id, int.user.id);
+
+            if(!member)
+            {
+                const guild = await getGuild(int.guild.id);
+
+                if(!guild)
+                    await createNewGuild(int.guild.id);
+
+                await createNewMember(int.guild.id, int.user.id);
+            }
+
             switch(opt.name)
             {
             case "add":
@@ -86,10 +117,14 @@ export class Warning extends Command
             case "delete":
                 action = "delete";
                 return this.deleteWarning(int);
+            case "delete_all":
+                action = "delete all";
+                return this.deleteWarning(int, true);
             }
         }
         catch(err)
         {
+            console.log(err);
             const ebd = embedify(`Couldn't ${action} due to an error:\n${err}`, settings.embedColors.error);
 
             if(int.replied || int.deferred)
@@ -119,15 +154,119 @@ export class Warning extends Command
         const member = this.findMember(int, int.options.getUser("member", true));
 
         if(!member || !guild)
-            return await this.reply(int, embedify("Couldn't find the provided member.", settings.embedColors.error), true);
-
-        await this.deferReply(int, true);
+            return await this.editReply(int, embedify("Couldn't find the provided member.", settings.embedColors.error));
 
         try
         {
+            const gldSett = await getGuildSettings(guild.id);
+
             await addWarning(guild.id, member.id, int.user.id, reason);
 
             const allWarnings = await getWarnings(guild.id, member.id);
+
+            let dmError = false;
+
+            try
+            {
+                const dm = await member.createDM(true);
+
+                const headerEbd = new EmbedBuilder()
+                    .setTitle("You've received a warning")
+                    .setDescription(`You have been warned in the server [${guild.name}](https://discord.com/channels/${guild.id})\n**Reason:** ${reason}\n\nYou have been warned ${allWarnings.length} time${allWarnings.length === 1 ? "" : "s"} in this server.`)
+                    .setFooter({ text: "If you have questions, please contact the moderators of the server." })
+                    .setColor(settings.embedColors.warning);
+
+                const warningPages: EmbedBuilder[] = [];
+                const warningsRest = [...allWarnings];
+
+                const warningsPerPage = 10;
+
+                while(warningsRest.length !== 0)
+                {
+                    const slice = warningsRest.splice(0, warningsPerPage);
+
+                    const e = new EmbedBuilder()
+                        .setDescription(slice.map(w => `> Warned on <t:${toUnix10(w.timestamp)}:f>\n> **Reason:** ${w.reason}`).join("\n\n"))
+                        .setColor(settings.embedColors.warning);
+
+                    warningPages.length === 0 && e.setTitle("These are all your warnings:");
+
+                    warningPages.push(e);
+                }
+
+                dm.send({ embeds: [headerEbd, ...(allWarnings.length > 1 ? warningPages : [])] });
+            }
+            catch(err)
+            {
+                dmError = true;
+                void err;
+            }
+
+            if(allWarnings.length === gldSett?.warningThreshold && gldSett?.botLogChannel)
+            {
+                const blChannel = guild.channels.cache.find(c => c.id === gldSett.botLogChannel) as TextChannel;
+
+                const descParts = [
+                    `The member <@${member.id}> now has ${allWarnings.length} warning${allWarnings.length === 1 ? "" : "s"} in total.`,
+                    `\nTo ban them, ${gldSett.banVoteAmt} reaction vote${gldSett.banVoteAmt === 1 ? " is" : "s are"} required.`,
+                    "Ignore this message to not ban the member.",
+                ];
+                dmError && descParts.push("\nI tried to notify the member but they have their DMs disabled.");
+
+                const ebd = new EmbedBuilder()
+                    .setTitle("Naughty alert")
+                    .setColor(settings.embedColors.warning)
+                    .setAuthor({
+                        name: member.user.username,
+                        iconURL: member.avatarURL() ?? member.displayAvatarURL(),
+                    })
+                    .setDescription(descParts.join("\n"));
+
+                const bm = new BtnMsg(ebd, [
+                    new ButtonBuilder()
+                        .setLabel("Show warnings")
+                        .setStyle(ButtonStyle.Primary)
+                ]);
+
+                const alertMsg = await bm.sendIn(blChannel);
+
+                bm.on("press", async (btn, int) => {
+                    await this.showWarnings(member, allWarnings, int, false);
+
+                    bm.destroy();
+                });
+
+                bm.on("destroy", () => alertMsg.edit(bm.getMsgOpts()));
+
+                alertMsg.react("<:banhammer:1015632683096871055>");
+
+                const coll = alertMsg.createReactionCollector({
+                    filter: (re, usr) => {
+                        if(re.emoji.id !== "1015632683096871055" || usr.bot)
+                            return false;
+
+                        const member = guild.members.cache.find(m => m.id === usr.id);
+
+                        return member?.permissions.has(PermissionFlagsBits.BanMembers) ?? false;
+                    },
+                    max: gldSett.banVoteAmt,
+                });
+
+                coll.on("end", async () => {
+                    try
+                    {
+                        await member.ban({
+                            reason: `[BrewBot] Banned${gldSett.banVoteAmt > 1 ? ` by ${gldSett.banVoteAmt} moderators` : ""} for having ${allWarnings.length} warning${allWarnings.length === 1 ? "" : "s"}`,
+                        });
+
+                        await alertMsg.reply(useEmbedify(`Successfully banned <@${member.id}>`, settings.embedColors.default));
+                    }
+                    catch(err)
+                    {
+                        await alertMsg.reply(useEmbedify(`I can't ban a user as noble as <@${member.id}>`, settings.embedColors.error));
+                    }
+                });
+            }
 
             // const bold = warnAmount >= settings.warningsThreshold ? "**" : "";
             const bold = "**";
@@ -147,14 +286,19 @@ export class Warning extends Command
         const member = this.findMember(int, int.options.getUser("member", true));
 
         if(!member || !guild)
-            return await this.reply(int, embedify("Couldn't find the provided member.", settings.embedColors.error), true);
-
-        await this.deferReply(int, true);
+            return await this.editReply(int, embedify("Couldn't find the provided member.", settings.embedColors.error));
 
         const warnings = await getWarnings(guild.id, member.id);
 
         if(!warnings || warnings.length === 0)
             return this.noWarnsYet(int, member);
+
+        this.showWarnings(member, warnings, int);
+    }
+
+    private async showWarnings(member: GuildMember, warnings: WarningObj[], int: CommandInteraction | ButtonInteraction, ephemeral = true)
+    {
+        !int.deferred && await int.deferReply({ ephemeral });
 
         const warningsPerPage = 5;
 
@@ -176,7 +320,7 @@ export class Warning extends Command
                         .join("\n\n"),
                     "\nTo delete warnings, use `/warning delete`",
                 ].join("\n"))
-                .setColor(settings.embedColors.default)
+                .setColor(settings.embedColors.warning)
                 .setThumbnail(avatar)
             );
         }
@@ -190,35 +334,40 @@ export class Warning extends Command
 
             await pe.useInt(int);
         }
+        else if(int.replied || int.deferred)
+            return this.editReply(int as CommandInteraction, pages[0]);
         else
-            return this.editReply(int, pages[0]);
+            return this.reply(int as CommandInteraction, pages[0]);
     }
 
     //#SECTION delete
-    private async deleteWarning(int: CommandInteraction)
+    private async deleteWarning(int: CommandInteraction, deleteAll = false)
     {
         const { guild } = int;
 
         const member = this.findMember(int, int.options.getUser("member", true));
 
         if(!member || !guild)
-            return await this.reply(int, embedify("Couldn't find the provided member.", settings.embedColors.error), true);
-
-        await this.deferReply(int, true);
+            return await this.editReply(int, embedify("Couldn't find the provided member.", settings.embedColors.error));
 
         const warnings = await getWarnings(guild.id, member.id);
 
         if(!warnings || warnings.length === 0)
             return this.noWarnsYet(int, member);
 
-        const idsArg = int.options.get("warning_ids", true).value as string;
+        const idsArg = deleteAll ? "_" : int.options.get("warning_ids", true).value as string;
 
         const argWrong = () => this.editReply(int, embedify(this.listHint, settings.embedColors.error));
 
         const ids = [];
         let type = "";
 
-        if(idsArg.match(/^\s*\d\s*$/))
+        if(deleteAll)
+        {
+            type = "a";
+            warnings.forEach(w => ids.push(w.warningId));
+        }
+        else if(idsArg.match(/^\s*\d\s*$/))
         {
             type = "1";
             ids.push(parseInt(idsArg));
@@ -232,13 +381,8 @@ export class Warning extends Command
 
             parsedId.forEach(id => ids.push(id));
         }
-        else if(idsArg.toLowerCase().includes("all"))
-        {
-            type = "a";
-            warnings.map(w => w.warningId).forEach(id => ids.push(id));
-        }
         else
-            return argWrong();
+            return await argWrong();
 
         try
         {
@@ -248,7 +392,7 @@ export class Warning extends Command
                 if(!warnings.find(w => w.warningId === id))
                     throw new Error(`Couldn't find a warning with the ID ${id}`); // kinda dirty but I am tired
 
-            return this.editReply(int, embedify(`Successfully deleted ${ids.length} warning${ids.length === 1 ? "" : "s"} of <@${member.id}>`));
+            return this.editReply(int, embedify(`Successfully deleted ${ids.length !== 1 && type === "a" ? "all " : ""}${ids.length} warning${ids.length === 1 ? "" : "s"} of <@${member.id}>`));
         }
         catch(err)
         {

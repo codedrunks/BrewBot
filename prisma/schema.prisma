@@ -19,13 +19,14 @@ model User {
 
 // guild member
 model Member {
-  guildId  String    @unique
-  userId   String    @unique
+  guildId  String
+  userId   String
   coins    Coins[]
   bonus    Bonus[]
   warnings Warning[]
 
   @@id([guildId, userId])
+  @@unique([guildId, userId])
 }
 
 model Reminder {
@@ -43,10 +44,11 @@ model Reminder {
 model Warning {
   warningId Int
   userId    String
+  guildId   String
   reason    String
   warnedBy  String
   timestamp DateTime
-  Member    Member   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  Member    Member   @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
   @@id([warningId, userId])
 }
@@ -59,7 +61,7 @@ model Bonus {
   lastdaily  Int?
   lastwork   Int?
   totalworks Int     @default(0)
-  Member     Member  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  Member     Member  @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
   memberId   String?
 
   @@id([guildId, userId])
@@ -69,7 +71,7 @@ model Coins {
   guildId  String
   userId   String
   amount   Int     @default(0)
-  Member   Member? @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  Member   Member? @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
   memberId String?
 
   @@id([guildId, userId])
@@ -91,6 +93,8 @@ model GuildSettings {
   djRoleIds        String[]
   djOnly           Boolean? @default(false)
   botLogChannel    String?
+  warningThreshold Int      @default(3)
+  banVoteAmt       Int      @default(2)
   Guild            Guild[]
 }
 

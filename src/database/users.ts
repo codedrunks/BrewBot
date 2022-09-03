@@ -1,4 +1,4 @@
-import { Member, Reminder, User } from "@prisma/client";
+import { Reminder, User } from "@prisma/client";
 import { prisma } from "@database/client";
 
 //#MARKER users
@@ -39,8 +39,8 @@ export function createNewUser(userId: string) {
 //#MARKER members
 
 /** Gets member via ID */
-export async function getMember(guildId: string, userId: string): Promise<Member | null> {
-    return await prisma.member.findUnique({
+export function getMember(guildId: string, userId: string) {
+    return prisma.member.findUnique({
         where: {
             guildId_userId: {
                 guildId,
@@ -63,29 +63,22 @@ export async function deleteMember(guildId: string, userId: string) {
 }
 
 /** Add new member to the database if they do not exist already */
-export function createNewMember(guildId: string, memberId: string, coins?: number) {
-    return prisma.member.upsert({
-        where: {
-            guildId_userId: {
-                userId: memberId,
-                guildId,
-            },
-        },
-        update: {},
-        create: {
-            userId: memberId,
+export function createNewMember(guildId: string, userId: string, coins?: number) {
+    return prisma.member.create({
+        data: {
+            userId,
             guildId,
             coins: {
                 create: {
-                    guildId,
-                    amount: coins ?? 0
-                }
+                    memberId: userId,
+                    amount: coins ?? 0,
+                },
             },
             bonus: {
                 create: {
-                    guildId,
-                }
-            }
+                    memberId: userId,
+                },
+            },
         },
     });
 }
@@ -208,6 +201,7 @@ export async function addWarning(guildId: string, userId: string, warnedById: st
         data: {
             warningId,
             userId,
+            guildId,
             reason,
             timestamp: new Date(),
             warnedBy: warnedById,
