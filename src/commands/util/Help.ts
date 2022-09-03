@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, PermissionFlagsBits, TextChannel } from "discord.js";
 import { getCommands } from "@src/registry";
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
@@ -50,6 +50,9 @@ export class Help extends Command {
 
         await this.deferReply(int);
 
+        const channel = int.channel as TextChannel | null;
+        const guild = int.guild!;
+
         Object.keys(commandObj).sort().forEach((k) => {
             if(k === "restricted")
                 return;
@@ -62,13 +65,16 @@ export class Help extends Command {
                     if(!Array.isArray(helpCmds[k]))
                         helpCmds[k] = [];
 
-                    const guildUser = int.guild?.members.cache.find(m => m.id === int.user.id);
+                    const member = int.guild?.members.cache.find(m => m.id === int.user.id);
 
-                    if(guildUser && Array.isArray(meta.perms) && meta.perms.length > 0)
+                    if(member && Array.isArray(meta.memberPerms) && meta.memberPerms.length > 0)
                     {
-                        const permNum = meta.perms.reduce((a, c) => a + (guildUser.permissions.has(c) ? 1 : 0), 0);
+                        const permNum = meta.memberPerms.reduce((a, c) => a + (member.permissions.has(c) ? 1 : 0), 0);
 
-                        if(permNum === meta.perms.length)
+                        if(meta.category === "mod" && channel && guild.roles.everyone.permissionsIn(channel).has(PermissionFlagsBits.ViewChannel) === true)
+                            return;
+
+                        if(permNum === meta.memberPerms.length)
                             helpCmds[k]?.push(meta);
                     }
                     else
