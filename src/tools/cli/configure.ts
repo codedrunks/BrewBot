@@ -154,7 +154,7 @@ async function configureGuild(id: string): Promise<unknown>
     }
     case "banVoteAmt":
     {
-        const banVoteAmt: string | undefined | null = await stringPrompt(`Current value: ${guildSettings.botLogChannel}\nSet a new value (empty for 2):`);
+        const banVoteAmt: string | undefined | null = await stringPrompt(`Current value: ${guildSettings.banVoteAmt}\nSet a new value (empty for 2):`);
 
         guildSettings.banVoteAmt = !banVoteAmt || banVoteAmt.length === 0 ? 2 : parseInt(banVoteAmt);
         await setGuildSettings(id, guildSettings);
