@@ -86,6 +86,8 @@ async function configureGuild(id: string): Promise<unknown>
             { value: "djRoleIds", title: `guildSettings.djRoleIds [${k.gray(String(guildSettings.djRoleIds))}]` },
             { value: "djOnly", title: `guildSettings.djOnly [${k.gray(String(guildSettings.djOnly))}]` },
             { value: "botLogChannel", title: `guildSettings.botLogChannel [${k.gray(String(guildSettings.botLogChannel))}]` },
+            { value: "warningThreshold", title: `guildSettings.warningThreshold [${k.gray(String(guildSettings.warningThreshold))}]` },
+            { value: "banVoteAmt", title: `guildSettings.banVoteAmt [${k.gray(String(guildSettings.banVoteAmt))}]` },
             { value: "back", title: k.yellow("Back") },
         ],
     });
@@ -139,6 +141,22 @@ async function configureGuild(id: string): Promise<unknown>
         const botLogChannel: string | undefined | null = await stringPrompt(`Current value: ${guildSettings.botLogChannel}\nSet a new value (empty for null):`);
 
         guildSettings.botLogChannel = !botLogChannel || botLogChannel.length === 0 ? null : botLogChannel;
+        await setGuildSettings(id, guildSettings);
+        break;
+    }
+    case "warningThreshold":
+    {
+        const warningThreshold: string | undefined | null = await stringPrompt(`Current value: ${guildSettings.warningThreshold}\nSet a new value (empty for 3):`);
+
+        guildSettings.warningThreshold = !warningThreshold || warningThreshold.length === 0 ? 3 : parseInt(warningThreshold);
+        await setGuildSettings(id, guildSettings);
+        break;
+    }
+    case "banVoteAmt":
+    {
+        const banVoteAmt: string | undefined | null = await stringPrompt(`Current value: ${guildSettings.botLogChannel}\nSet a new value (empty for 2):`);
+
+        guildSettings.banVoteAmt = !banVoteAmt || banVoteAmt.length === 0 ? 2 : parseInt(banVoteAmt);
         await setGuildSettings(id, guildSettings);
         break;
     }
