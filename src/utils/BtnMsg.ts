@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { ButtonInteraction, InteractionReplyOptions, ActionRowBuilder, ButtonBuilder, EmbedBuilder, MessageOptions, TextBasedChannel, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
+import { ButtonInteraction, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextBasedChannel, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
@@ -110,9 +110,9 @@ export class BtnMsg extends EmitterBase
      * await int.reply(new BtnMsg().getReplyOpts())
      * ```
      */
-    public getReplyOpts(): InteractionReplyOptions
+    public getReplyOpts()
     {
-        return this.getMsgOpts() as InteractionReplyOptions;
+        return this.getMsgOpts();
     }
 
     /**
@@ -121,11 +121,11 @@ export class BtnMsg extends EmitterBase
      * await channel.send(new BtnMsg().getMsgOpts())
      * ```
      */
-    public getMsgOpts(): MessageOptions
+    public getMsgOpts()
     {
         const actRow = this.toActionRowBuilder(this.destroyed || this.timedOut);
 
-        const btns: Partial<MessageOptions> = { components: actRow ? [ actRow ] : [] };
+        const btns = { components: actRow ? [ actRow ] : [] };
 
         return Array.isArray(this.msg) ? {
             embeds: this.msg,
@@ -144,7 +144,7 @@ export class BtnMsg extends EmitterBase
 
     protected toActionRowBuilder(disableBtns = false): ActionRowBuilder<ButtonBuilder> | undefined
     {
-        if(this.btns.length > 0 && !this.destroyed)
+        if(this.btns.length > 0)
             return new ActionRowBuilder<ButtonBuilder>()
                 .addComponents(disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns);
     }

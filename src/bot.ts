@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import k from "kleur";
 import { allOfType, system, Stringifiable } from "svcorelib";
 
-import persistentData from "@src/persistentData";
 import botLogs from "@src/botLogs";
 import { initRegistry, registerGuildCommands, registerEvents, getCommands, modalSubmitted, getCtxMenus, btnListener } from "@src/registry";
 import { commands as slashCmds } from "@src/commands";
@@ -28,8 +27,6 @@ async function init()
     registerFont("src/assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
     registerFont("src/assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
     registerFont("src/assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
-
-    await persistentData.init();
 
     const client = new Client({
         intents: settings.client.intents,

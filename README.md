@@ -72,9 +72,7 @@ Install these VS Code extensions for code auto-fix on save and special text high
 <br>
 
 ### Data persistence:
-Some data persistence is still done through the `data.json` file, which is kept up by `src/persistentData.ts`  
-This will probably change. Prisma is the new database provider, please see usage in [CLI/Prisma.](#prisma)  
-  
+A mixture of Prisma with a Postgres database, and Redis is used.  
 All database utils can be found in `/src/database`, the functions are organized in files based on what part of the database they are associated with, i.e. all user related functions such as creating a new user or deleting a user are in `/src/database/users.ts`. When creating new utils, please follow this standard accordingly.  
   
 See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node client library [here.](https://www.prisma.io/docs/reference)
