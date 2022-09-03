@@ -3,7 +3,7 @@ import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { createGuild, getGuild, setGuild } from "@src/database/guild";
+import { createNewGuild, getGuild, setGuild } from "@src/database/guild";
 import { embedify } from "@src/utils";
 
 export class Log extends Command {
@@ -53,7 +53,7 @@ export class Log extends Command {
         await this.deferReply(int, true);
 
         const g = await getGuild(guild.id);
-        const gld = !g ? await createGuild(guild.id) : g;
+        const gld = !g ? await createNewGuild(guild.id) : g;
 
         let startMessageID = start;
 
@@ -172,7 +172,7 @@ export class Log extends Command {
                         for await(const embed of messageSet) {
                             gld.lastLogColor = String(newEmbedColor);
 
-                            await setGuild(guild.id, gld);
+                            await setGuild(gld);
                             logChannel.send({ embeds: [embed] });
                         }
                     });

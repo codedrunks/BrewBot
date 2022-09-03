@@ -4,21 +4,23 @@ import { Guild, GuildSettings } from "@prisma/client";
 //#MARKER guild
 
 /** Creates a new guild by ID */
-export async function createGuild(guildId: string)
+export function createNewGuild(guildId: string)
 {
-    return setGuild(guildId, {
-        id: guildId,
-        lastLogColor: null,
-        premium: false,
+    return prisma.guild.create({
+        data: {
+            id: guildId,
+            lastLogColor: null,
+            premium: false,
+        },
     });
 }
 
 /** Creates or overrides a guild by ID */
-export function setGuild(guildId: string, guildObj: Guild)
+export function setGuild(guildObj: Guild)
 {
     return prisma.guild.upsert({
         where: {
-            id: guildId,
+            id: guildObj.id,
         },
         create: guildObj,
         update: guildObj,

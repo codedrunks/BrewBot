@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# TODO: cd to brewbot directory some fucking how so tsc-alias works globally
+
+tsc-alias && node --enable-source-maps out/tools/cli/index.js "$@"

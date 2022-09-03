@@ -1,12 +1,11 @@
-#!/usr/bin/env node
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const yargs = require("yargs");
-const { readFile } = require("fs-extra");
-const { resolve } = require("path");
-const { spawn } = require("child_process");
-const k = require("kleur");
-const { Errors } = require("svcorelib");
+import yargs from "yargs";
+import { readFile } from "fs-extra";
+import { join, resolve } from "path";
+import { spawn, fork } from "child_process";
+import k from "kleur";
+import { Errors } from "svcorelib";
 
 try
 {
@@ -26,7 +25,8 @@ async function run()
 
     const cmd = args && args._ ? args._[0] : null;
 
-    let command, commandArgs = [], needsStdin = false;
+    let command, file, needsStdin = false;
+    const commandArgs: string[] = [];
 
     switch(cmd)
     {
@@ -49,9 +49,13 @@ async function run()
     case "deploy":
         command = "npm run deploy";
         break;
+    case "configure":
+    case "cfg":
+        file = "configure.js";
+        break;
     default:
         if(typeof cmd !== "string")
-            return console.log(`${k.yellow("Please enter a command to run.")}\nUse ${k.underline("brewbot -h")} for a list of commands.`);
+            return console.log(`${k.yellow("Please enter a command to run.")}\nUse ${k.bold("brewbot -h")} for a list of commands.`);
 
         throw new Error(`Unrecognized command "${cmd}"`);
     }
@@ -59,12 +63,15 @@ async function run()
     if(needsStdin && !process.stdin.isTTY)
         throw new Errors.NoStdinError(`A stdin stream is needed to run the command "brewbot ${cmd}"`);
 
-    spawn(command, commandArgs, { stdio: "inherit", shell: true });
+    if(command)
+        spawn(command, commandArgs, { stdio: "inherit", shell: true });
+    else if(file)
+        fork(join(__dirname, file), { stdio: "inherit" });
 }
 
 async function prepareCLI()
 {
-    const { version } = JSON.parse((await readFile("./package.json")).toString());
+    const { version } = JSON.parse((await readFile(join(__dirname, "../../../package.json"))).toString());
 
     //#SECTION general
     yargs.scriptName("brewbot")
@@ -80,6 +87,13 @@ async function prepareCLI()
             describe: "Watches for file changes to automatically restart the bot",
             alias: "w",
             type: "boolean",
+        })
+    );
+
+    yargs.command([ "configure", "cfg" ], "Configures settings for a guild or user", cmd =>
+        cmd.positional("type", {
+            describe: "What to configure settings for",
+            choices: ["guild", "user"],
         })
     );
 

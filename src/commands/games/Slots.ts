@@ -111,7 +111,8 @@ export class Slots extends Command
         const coins = await getCoins(int.user.id, int.guild.id);
 
         if (!coins && coins != 0) {
-            return await createNewMember(int.guild.id, int.user.id);
+            await createNewMember(int.guild.id, int.user.id, 0);
+            return;
         }
 
         const bet = Number(int.options.get("bet", true).value);
