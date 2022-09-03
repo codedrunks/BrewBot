@@ -177,9 +177,10 @@ export class Warning extends Command
                     .setColor(settings.embedColors.warning);
 
                 const warningPages: EmbedBuilder[] = [];
-                const warningsRest = [...allWarnings];
+                const warningsRest = [...allWarnings.sort((a, b) => a.timestamp < b.timestamp ? 1 : -1)];
 
                 const warningsPerPage = 10;
+                const maxPage = Math.ceil(allWarnings.length / warningsPerPage);
 
                 while(warningsRest.length !== 0)
                 {
@@ -190,6 +191,7 @@ export class Warning extends Command
                         .setColor(settings.embedColors.warning);
 
                     warningPages.length === 0 && e.setTitle("These are all your warnings:");
+                    maxPage > 1 && e.setFooter({ text: `(${warningPages.length + 1}/${maxPage})` });
 
                     warningPages.push(e);
                 }
