@@ -11,6 +11,12 @@ interface Game {
     board: number[][];
     userInput: number[][];
     solution: number[][];
+    canvas: Canvas;
+    ctx: CanvasRenderingContext2D;
+    emptyCells: number[][];
+    filledCells: number[];
+    restrictedCells: number[];
+    solutions: number;
 }
 
 export class Sudoku extends Command
@@ -22,15 +28,8 @@ export class Sudoku extends Command
     private readonly MIN_HINTS = 40;
     private readonly BOARD_LENGTH = 9;
 
-    private readonly canvas: Canvas;
-    private readonly ctx: CanvasRenderingContext2D;
-
     private readonly games = new Map<string, Game>();
 
-    private emptyCells: number[][] = [];
-    private filledCells: number[] = new Array(81).fill(null).map((_, i) => i);
-    private restrictedCells: number[] = [];
-    private solutions = 0;
     constructor()
     {
         super({
@@ -82,16 +81,10 @@ export class Sudoku extends Command
                 }
             ],
         });
-
-        const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
-        const ctx = canvas.getContext("2d");
-        this.ctx = ctx;
-        this.canvas = canvas;
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
     {
-        this.drawEmptyBoard();
         await this.deferReply(int);
 
         switch (opt.name) {
@@ -111,6 +104,9 @@ export class Sudoku extends Command
         if (this.games.has(user.id)) {
             return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
         }
+
+        const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
+        const ctx = canvas.getContext("2d");
 
         this.games.set(user.id, {
             board: [
@@ -136,15 +132,21 @@ export class Sudoku extends Command
                 [0, 0, 0, 0, 0, 0, 0, 0, 0],
             ],
             solution: [],
+            emptyCells: [],
+            filledCells: new Array(81).fill(null).map((_, i) => i),
+            restrictedCells: [],
+            solutions: 0,
+            canvas: canvas,
+            ctx: ctx,
         });
 
         const game = this.games.get(user.id)!;
 
-        this.resetBoard();
+        this.drawEmptyBoard(game);
         this.generateRandomBoard(game);
         this.removeNumbers(game, this.BOARD_LENGTH * this.BOARD_LENGTH);
         this.drawBoard(game);
-        await this.renderBoard(user.id);
+        await this.renderBoard(game, user.id);
         return await this.sendBoard(int, user.id);
     }
 
@@ -174,7 +176,7 @@ export class Sudoku extends Command
         game.userInput[row][col] = choice;
 
         this.drawBoard(game);
-        await this.renderBoard(user.id);
+        await this.renderBoard(game, user.id);
 
         if (this.checkWin(game)) {
             await this.sendBoard(int, user.id);
@@ -193,7 +195,7 @@ export class Sudoku extends Command
         }
 
         this.drawBoard(game);
-        await this.renderBoard(user.id);
+        await this.renderBoard(game, user.id);
         return await this.sendBoard(int, user.id);
     }
 
@@ -225,14 +227,7 @@ export class Sudoku extends Command
         return true;
     }
 
-    resetBoard() {
-        this.emptyCells = [];
-        this.restrictedCells = [];
-        this.filledCells = new Array(81).fill(null).map((_, i) => i);
-        this.solutions = 0;
-    }
-
-    solver(emptyCells: number[][], board: number[][]): boolean {
+    solver(game: Game, emptyCells: number[][], board: number[][]): boolean {
         // backtracking algo
         // 1- create list of candidates for the current cell
         // 2- randomly choose a candidate
@@ -241,8 +236,8 @@ export class Sudoku extends Command
         // 5- recursively revert placements and run the function again until the board is filled and no cell contains a 0
 
         if (emptyCells.length === 0) {
-            this.solutions++;
-            if (this.solutions > 1) {
+            game.solutions++;
+            if (game.solutions > 1) {
                 return false;
             }
             return true;
@@ -254,7 +249,7 @@ export class Sudoku extends Command
         while (candidates.length) {
             const newCandidate = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
             board[nextRow][nextCol] = newCandidate;
-            if (this.solver(emptyCells, board)) {
+            if (this.solver(game, emptyCells, board)) {
                 return true;
             }
             board[nextRow][nextCol] = 0;
@@ -274,11 +269,11 @@ export class Sudoku extends Command
         // if that candidate also results in a solution, backtrack even more and try removing another digit other that this. if not, recursively remove another number
         // 5- continue until you reach whatever number of hints you want
 
-        while (hints > this.MIN_HINTS && this.filledCells.length) {
-            this.solutions = 0;
+        while (hints > this.MIN_HINTS && game.filledCells.length) {
+            game.solutions = 0;
 
-            const randCellIdx = Math.floor(Math.random() * this.filledCells.length);
-            const cell = this.filledCells.splice(randCellIdx, 1)[0];
+            const randCellIdx = Math.floor(Math.random() * game.filledCells.length);
+            const cell = game.filledCells.splice(randCellIdx, 1)[0];
             const removedRow = Math.floor(cell / 9);
             const removedCol = cell % 9;
 
@@ -286,25 +281,25 @@ export class Sudoku extends Command
             const removedVal = game.board[removedRow][removedCol];
             game.board[removedRow][removedCol] = 0;
 
-            this.emptyCells.push([removedRow, removedCol]);
+            game.emptyCells.push([removedRow, removedCol]);
 
             const candidates = this.getCandidates(removedRow, removedCol, game.board);
 
             while (candidates.length) {
                 candidates.splice(candidates.indexOf(removedVal), 1);
                 // 2- try solving board
-                this.solver(this.emptyCells.slice(), JSON.parse(JSON.stringify(game.board)));
+                this.solver(game, game.emptyCells.slice(), JSON.parse(JSON.stringify(game.board)));
                 // 3- if not solveable, put the number back
                 // if solveable and multiiple solutions, put number back and try somewhere else
-                if (this.solutions > 1) {
+                if (game.solutions > 1) {
                     game.board[removedRow][removedCol] = removedVal;
-                    this.emptyCells.pop();
-                    this.restrictedCells.push(cell);
+                    game.emptyCells.pop();
+                    game.restrictedCells.push(cell);
                     break;
                 }
             }
 
-            hints = this.filledCells.length + this.restrictedCells.length;
+            hints = game.filledCells.length + game.restrictedCells.length;
         }
     }
 
@@ -419,42 +414,42 @@ export class Sudoku extends Command
     /// Drawing Functions ///
     ////////////////////////
 
-    drawEmptyBoard() {
-        this.ctx.fillStyle = "#F0EBE3";
-        this.ctx.fillRect(0, 0, this.BOARD_WIDTH, this.BOARD_HEIGHT);
+    drawEmptyBoard(game: Game) {
+        game.ctx.fillStyle = "#F0EBE3";
+        game.ctx.fillRect(0, 0, this.BOARD_WIDTH, this.BOARD_HEIGHT);
 
-        this.ctx.strokeStyle = "#2C3639";
+        game.ctx.strokeStyle = "#2C3639";
         // draw the column dividers
         for (let i = 100; i < this.BOARD_WIDTH; i+= 100) {
-            this.ctx.beginPath();
+            game.ctx.beginPath();
             if (i % 300 == 0) {
-                this.ctx.lineWidth = 5;
+                game.ctx.lineWidth = 5;
             } else {
-                this.ctx.lineWidth = 1;
+                game.ctx.lineWidth = 1;
             }
-            this.ctx.moveTo(i, 0);
-            this.ctx.lineTo(i, this.BOARD_HEIGHT);
-            this.ctx.stroke();
+            game.ctx.moveTo(i, 0);
+            game.ctx.lineTo(i, this.BOARD_HEIGHT);
+            game.ctx.stroke();
         }
 
         // draw the row dividers
         for (let i = 100; i < this.BOARD_HEIGHT; i+= 100) {
-            this.ctx.beginPath();
+            game.ctx.beginPath();
             if (i % 300 == 0) {
-                this.ctx.lineWidth = 5;
+                game.ctx.lineWidth = 5;
             } else {
-                this.ctx.lineWidth = 1;
+                game.ctx.lineWidth = 1;
             }
-            this.ctx.moveTo(0, i);
-            this.ctx.lineTo(this.BOARD_WIDTH, i);
-            this.ctx.stroke();
+            game.ctx.moveTo(0, i);
+            game.ctx.lineTo(this.BOARD_WIDTH, i);
+            game.ctx.stroke();
         }
     }
 
-    drawNumber(box: number, cell: number, choice: number) {
-        this.ctx.font = "bold 46pt Roboto";
-        this.ctx.textAlign = "center";
-        this.ctx.textBaseline = "middle";
+    drawNumber(game: Game, box: number, cell: number, choice: number) {
+        game.ctx.font = "bold 46pt Roboto";
+        game.ctx.textAlign = "center";
+        game.ctx.textBaseline = "middle";
 
         const boxCol = (box - 1) % 3;
         const boxRow = Math.floor((box - 1) / 3);
@@ -464,7 +459,7 @@ export class Sudoku extends Command
 
         const xPos = (boxCol * 300) + (cellCol * 100) + this.CELL_WIDTH / 2;
         const yPos = (boxRow * 300) + (cellRow * 100) + this.CELL_HEIGHT / 2;
-        this.ctx.fillText(choice.toString(), xPos, yPos);
+        game.ctx.fillText(choice.toString(), xPos, yPos);
     }
 
     drawBoard(game: Game) {
@@ -477,20 +472,20 @@ export class Sudoku extends Command
                 const cellCol = col - (boxCol * 3);
                 const cell = (cellRow * 3 + cellCol) + 1;
                 if (game.board[row][col] != 0) {
-                    this.ctx.fillStyle = "#2C3639";
-                    this.drawNumber(box, cell, game.board[row][col]);
+                    game.ctx.fillStyle = "#2C3639";
+                    this.drawNumber(game, box, cell, game.board[row][col]);
                 }
 
                 if (game.userInput[row][col] != 0) {
-                    this.ctx.fillStyle = "#6E85B7";
-                    this.drawNumber(box, cell, game.userInput[row][col]);
+                    game.ctx.fillStyle = "#6E85B7";
+                    this.drawNumber(game, box, cell, game.userInput[row][col]);
                 }
             }
         }
     }
 
-    async renderBoard(userId: string) {
-        const buf = this.canvas.toBuffer("image/png");
+    async renderBoard(game: Game, userId: string) {
+        const buf = game.canvas.toBuffer("image/png");
         await fs.writeFile(path.join(os.tmpdir(), `${userId}-sudoku.png`), buf);
     }
 
