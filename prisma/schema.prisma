@@ -50,7 +50,7 @@ model Warning {
   timestamp DateTime
   Member    Member   @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
-  @@id([warningId, userId])
+  @@id([warningId, userId, guildId])
 }
 
 //#MARKER economy
@@ -60,19 +60,17 @@ model Bonus {
   userId     String
   lastdaily  Int?
   lastwork   Int?
-  totalworks Int     @default(0)
-  Member     Member  @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
-  memberId   String?
+  totalworks Int    @default(0)
+  Member     Member @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
   @@id([guildId, userId])
 }
 
 model Coins {
-  guildId  String
-  userId   String
-  amount   Int     @default(0)
-  Member   Member? @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
-  memberId String?
+  guildId String
+  userId  String
+  amount  Int     @default(0)
+  Member  Member? @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
   @@id([guildId, userId])
 }

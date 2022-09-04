@@ -70,13 +70,12 @@ export function createNewMember(guildId: string, userId: string, coins?: number)
             guildId,
             coins: {
                 create: {
-                    memberId: userId,
                     amount: coins ?? 0,
                 },
             },
             bonus: {
                 create: {
-                    memberId: userId,
+                    totalworks: 0,
                 },
             },
         },
@@ -209,19 +208,12 @@ export async function addWarning(guildId: string, userId: string, warnedById: st
     });
 }
 
-export function deleteWarning(userId: string, warningId: number)
+export function deleteWarning(userId: string, guildId: string, warningId: number)
 {
-    return prisma.warning.delete({
-        where: {
-            warningId_userId: {
-                warningId,
-                userId,
-            }
-        },
-    });
+    return deleteWarnings(userId, guildId, [warningId]);
 }
 
-export function deleteWarnings(userId: string, warningIds: number[])
+export function deleteWarnings(userId: string, guildId: string, warningIds: number[])
 {
     return prisma.warning.deleteMany({
         where: {
@@ -229,6 +221,7 @@ export function deleteWarnings(userId: string, warningIds: number[])
             warningId: {
                 in: warningIds,
             },
+            guildId,
         },
     });
 }

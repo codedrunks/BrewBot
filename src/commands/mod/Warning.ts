@@ -388,7 +388,7 @@ export class Warning extends Command
 
         try
         {
-            await deleteWarnings(member.id, ids);
+            await deleteWarnings(member.id, guild.id, ids);
 
             for(const id of ids)
                 if(!warnings.find(w => w.warningId === id))
