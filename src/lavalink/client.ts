@@ -65,7 +65,7 @@ function initializeManagerFromClient(cl: Client): Manager {
         autoPlay: false
     });
 
-    manager.once("nodeConnect", (node) => console.log(`\nNode ${node.options.identifier} connected.`))
+    manager.on("nodeConnect", (node) => console.log(`\nNode ${node.options.identifier} connected.`))
         .on("trackStart", (player, track) => {
             trackStart(player, track, client);
         })
