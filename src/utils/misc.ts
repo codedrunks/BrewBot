@@ -6,5 +6,5 @@ export function truncStr(str: string, length: number, endStr = "...")
 
 export function truncField(content: string, endStr = "...")
 {
-    return truncStr(content, 1000, endStr);
+    return truncStr(content, 1024 - endStr.length, endStr);
 }
