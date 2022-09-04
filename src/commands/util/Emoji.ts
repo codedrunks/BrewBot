@@ -1,6 +1,7 @@
 import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, ApplicationCommandOptionType } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+import { halves } from "svcorelib";
 
 const maxEmojiAmt = 10;
 
@@ -70,19 +71,14 @@ export class Emoji extends Command
 
         if(embeds.length > 5)
         {
-            const halves = <T>(arr: T[]) => {
-                const half = Math.ceil(arr.length / 2);
-                const first = arr.slice(0, half);
-                const second = arr.slice((arr.length - half) * -1);
+            const [firstEbd, secondEbd] = halves(embeds);
+            const [firstBtn, secondBtn] = halves(btns);
 
-                return [first, second];
-            };
-
-            await this.reply(int, halves(embeds)[0], false, halves(btns)[0]);
+            await this.reply(int, firstEbd, false, firstBtn);
 
             await int.channel?.send({
-                ...Command.useButtons(halves(btns)[1]),
-                embeds: halves(embeds)[1],
+                ...Command.useButtons(secondBtn),
+                embeds: secondEbd,
             });
         }
         else if(embeds.length > 0)
