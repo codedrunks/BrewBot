@@ -232,10 +232,10 @@ export const btnListener = new BtnListener();
  */
 export function registerModal(modal: Modal)
 {
-    modals.set(modal.btnId, modal);
+    modals.set(modal.modalId, modal);
 
     modal.once("destroy", () => {
-        modals.delete(modal.btnId);
+        modals.delete(modal.modalId);
     });
 }
 

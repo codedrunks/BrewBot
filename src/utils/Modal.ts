@@ -18,17 +18,17 @@ export interface Modal {
 
 /** Base class for all Modals */
 export abstract class Modal extends EmitterBase {
-    readonly btnId: string;
+    readonly modalId: string;
     private readonly internalModal: DjsModal;
 
     /** Base class for all Modals */
     constructor(data: ModalConstructor) {
         super();
 
-        this.btnId = randomUUID();
+        this.modalId = randomUUID();
 
         this.internalModal = new DjsModal()
-            .setCustomId(this.btnId)
+            .setCustomId(this.modalId)
             .setTitle(data.title);
 
         const components = new Array(data.inputs.length).fill(null).map((_, i) => {

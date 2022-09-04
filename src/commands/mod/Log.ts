@@ -52,10 +52,10 @@ export class Log extends Command {
         await this.deferReply(int, true);
 
         const g = await getGuild(guild.id);
-        const gld = !g ? await createNewGuild(guild.id) : g;
+        const gld = g ?? await createNewGuild(guild.id);
 
         const gs = await getGuildSettings(guild.id);
-        const gldSettings = !gs ? await createGuildSettings(guild.id) : gs;
+        const gldSettings = gs ?? await createGuildSettings(guild.id);
 
         const logChannel = (logChan ?? guild.channels.cache.find(c => c.id === gldSettings.botLogChannel) ?? undefined) as TextChannel | undefined;
 
@@ -190,7 +190,7 @@ export class Log extends Command {
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
 
             if(int.replied || int.deferred)
-                return await this.reply(int, embedify("Error logging messages", settings.embedColors.error));
+                return await this.editReply(int, embedify("Error logging messages", settings.embedColors.error));
             else
                 return await this.reply(int, embedify("Error logging messages", settings.embedColors.error));
         }

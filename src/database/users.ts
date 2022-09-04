@@ -1,5 +1,6 @@
-import { Reminder, User } from "@prisma/client";
+import { Prisma, Reminder, User } from "@prisma/client";
 import { prisma } from "@database/client";
+import { DatabaseError } from "./util";
 
 //#MARKER users
 
@@ -52,14 +53,25 @@ export function getMember(guildId: string, userId: string) {
 
 /** Remove member from the database */
 export async function deleteMember(guildId: string, userId: string) {
-    await prisma.member.delete({
-        where: {
-            guildId_userId: {
-                guildId,
-                userId,
+    try {
+        await prisma.member.delete({
+            where: {
+                guildId_userId: {
+                    guildId,
+                    userId,
+                },
             },
-        },
-    }).catch(); // this will be updated once prisma implements a doesNotExist thing
+        });
+    }
+    catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            if (e.code === "P2025") { // Operation depends on required record that was not found
+                return DatabaseError.OPERATION_DEPENDS_ON_REQUIRED_RECORD_THAT_WAS_NOT_FOUND;
+            }
+        }
+        console.error(e);
+        return DatabaseError.UNKNOWN;
+    }
 }
 
 /** Add new member to the database if they do not exist already */

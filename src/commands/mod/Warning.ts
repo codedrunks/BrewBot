@@ -270,8 +270,7 @@ export class Warning extends Command
                 });
             }
 
-            // const bold = warnAmount >= settings.warningsThreshold ? "**" : "";
-            const bold = "**";
+            const bold = gldSett?.warningThreshold && allWarnings.length >= gldSett.warningThreshold ? "**" : "";
             return this.editReply(int, embedify(`Successfully warned <@${member.id}>\nThey now have ${bold}${allWarnings.length} warning${allWarnings.length != 1 ? "s" : ""}${bold} in total.`, settings.embedColors.default));
         }
         catch(err)
