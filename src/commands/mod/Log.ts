@@ -51,11 +51,8 @@ export class Log extends Command {
 
         await this.deferReply(int, true);
 
-        const g = await getGuild(guild.id);
-        const gld = g ?? await createNewGuild(guild.id);
-
-        const gs = await getGuildSettings(guild.id);
-        const gldSettings = gs ?? await createGuildSettings(guild.id);
+        const gld = await getGuild(guild.id) ?? await createNewGuild(guild.id);
+        const gldSettings = await getGuildSettings(guild.id) ?? await createGuildSettings(guild.id);
 
         const logChannel = (logChan ?? guild.channels.cache.find(c => c.id === gldSettings.botLogChannel) ?? undefined) as TextChannel | undefined;
 
