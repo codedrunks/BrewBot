@@ -12,8 +12,8 @@ export class MemberLeave extends Event
         this.enabled = false;
     }
 
-    async run({ displayName }: GuildMember | PartialGuildMember)
+    async run({ displayName, guild }: GuildMember | PartialGuildMember)
     {
-        sendLogMsg(`🛑 Member ${displayName} left`);
+        sendLogMsg(guild.id, `🛑 Member ${displayName} left`);
     }
 }

@@ -14,6 +14,7 @@
 - [Debugging](#debugging)
 - [Redis](#redis)
 - [Discord API quirks](#discord-api-quirks)
+    - [Markdown reference](#markdown-reference)
     - [Length limits](#length-limits)
 - [Classes](#classes)
     - [BtnMsg](#btnmsg)
@@ -23,9 +24,7 @@
 <br><br>
 
 ### Invite URL
-```
-https://discord.com/oauth2/authorize?client_id=__CLIENT_ID__&permissions=8&scope=bot%20applications.commands
-```
+https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&scope=bot%20applications.commands
 
 <br>
 
@@ -76,9 +75,7 @@ Install these VS Code extensions for code auto-fix on save and special text high
 <br>
 
 ### Data persistence:
-Some data persistence is still done through the `data.json` file, which is kept up by `src/persistentData.ts`  
-This will probably change. Prisma is the new database provider, please see usage in [CLI/Prisma.](#prisma)  
-  
+A mixture of Prisma with a Postgres database, and Redis is used.  
 All database utils can be found in `/src/database`, the functions are organized in files based on what part of the database they are associated with, i.e. all user related functions such as creating a new user or deleting a user are in `/src/database/users.ts`. When creating new utils, please follow this standard accordingly.  
   
 See prisma docs [here](https://www.prisma.io/docs/) and a reference to the node client library [here.](https://www.prisma.io/docs/reference)
@@ -113,6 +110,11 @@ Then, right-click the finished task and click "Run" to test it.
 <br>
 
 ## CLI
+Run `npm link` to globally register the `brewbot` command, which you can use for some special commands.  
+See `brewbot -h` for help.  
+
+<br>
+
 ### General
 | Command | Description |
 | --- | --- |
@@ -122,6 +124,7 @@ Then, right-click the finished task and click "Run" to test it.
 | `npm test` | runs the script at `src/test.ts` |
 | `npm run clearCommands` | clears all global and guild commands (takes a few minutes) |
 | `npm run deploy` | runs prisma deployment scripts and launches the bot without watching |
+| `npm run predeploy` | only runs prisma deployment scripts without launching the bot |
 | `npm run win-redis` | use this command on Windows devices to launch redis-server in a WSL window |
 
 <br>
@@ -151,6 +154,28 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 - If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
 
 <br>
+
+### Markdown reference
+Discord has multiple subsets of markdown, depending on the type of message.  
+They can be combined, but monospace and code blocks need to be on the innermost "layer".  
+  
+All messages can have:
+- Bold (`**text**`), italic (`*text*`), underline (`__text__`), strikethrough (`~~text~~`)
+- Monospace (\`text\`), code blocks (\`\`\`text\`\`\`)
+- Quotes (`> text`), multiline quotes (`>>> text`)
+
+<br>
+
+Interaction replies and MessageEmbeds (title, fields & description) can have:
+- Hyperlinks (`[text](url)`)
+
+<br>
+
+Markdown that isn't allowed anywhere:
+- Tables
+- HTML mixins (`<details>` etc)
+
+<br><br>
 
 ### Length limits
 | What | Limit |
@@ -200,6 +225,7 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 >   
 > #### Methods:
 > - `sendIn()` sends this PageEmbed in the provided channel. If you want a custom message implementation, use `setMsg()` and `getMsg()`
+> - `useInt()` instead replies to or edits a Command-/ButtonInteraction
 > - `getMsgOpts()` returns properties that can be passed to a `channel.send()` or `(msg | int).reply()` method
 > - `setPages()` is for dynamically changing the pages of the instance. If the current page index is out of range after the pages have changed, it gets lowered automatically.
 > - `first()`, `prev()`, `next()` and `last()` can be used just like the users use the MessageButtons to navigate the PageEmbed.
@@ -213,7 +239,7 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 > - `press` is emitted whenever a button is pressed by a user and gets passed the ButtonInteraction instance and a string telling you which button was pressed.  
 > - `timeout` is emitted when the timeout of the PageEmbed, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called.
 > - `destroy` is emitted whenever the `.destroy()` method is called.
-> - `update` is emitted after the associated message on the Discord API has been edited.
+> - `update` is emitted after the associated message or interaction on the Discord API has been edited.
 
 <br>
 

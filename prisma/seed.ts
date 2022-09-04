@@ -1,7 +1,9 @@
 import { prisma } from "../src/database/client";
-import { contests, submissions } from "./contestData";
+import { contests, guildId, submissions } from "./contestData";
 
 const run = async () => {
+    await prepareDb();
+
     await Promise.all(
         contests.map(async (contest) => {
             return prisma.contest.upsert({
@@ -54,3 +56,25 @@ run()
     .finally(async () => {
         await prisma.$disconnect();
     });
+
+async function prepareDb()
+{
+    const hasContChan = (await prisma.guildSettings.findUnique({
+        where: {
+            guildId,
+        },
+    }))?.contestChannelId;
+
+    !hasContChan && await prisma.guildSettings.upsert({
+        where: {
+            guildId,
+        },
+        update: {
+            contestChannelId: "715561909482422363"
+        },
+        create: {
+            guildId,
+            contestChannelId: "715561909482422363"
+        },
+    });
+}

@@ -10,21 +10,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//#MARKER users
+// global user
 model User {
-  id        String     @id
-  coins     Coins[]
+  id        String     @id @unique
   reminders Reminder[]
-  bonus     Bonus[]
+}
+
+// guild member
+model Member {
+  guildId  String
+  userId   String
+  coins    Coins[]
+  bonus    Bonus[]
+  warnings Warning[]
+
+  @@id([guildId, userId])
+  @@unique([guildId, userId])
 }
 
 model Reminder {
-  guild        String
+  reminderId   Int
+  userId       String
   name         String
-  dueTimestamp Int
-  User         User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String @id
+  dueTimestamp DateTime
+  guild        String?
+  channel      String?
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([reminderId, userId])
 }
 
+model Warning {
+  warningId Int
+  userId    String
+  guildId   String
+  reason    String
+  warnedBy  String
+  timestamp DateTime
+  Member    Member   @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
+
+  @@id([warningId, userId, guildId])
+}
+
+//#MARKER economy
 // cooldowns for economy, this is how coins are 'minted'
 model Bonus {
   guildId    String
@@ -32,7 +61,7 @@ model Bonus {
   lastdaily  Int?
   lastwork   Int?
   totalworks Int    @default(0)
-  User       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Member     Member @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
   @@id([guildId, userId])
 }
@@ -40,22 +69,34 @@ model Bonus {
 model Coins {
   guildId String
   userId  String
-  amount  Int    @default(0)
-  User    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount  Int     @default(0)
+  Member  Member? @relation(fields: [userId, guildId], references: [userId, guildId], onDelete: Cascade)
 
   @@id([guildId, userId])
 }
 
+//#MARKER guild
 model Guild {
-  id               String    @id
+  id            String         @id
+  premium       Boolean?       @default(false)
+  lastLogColor  String?
+  contests      Contest[]
+  GuildSettings GuildSettings? @relation(fields: [id], references: [guildId], onDelete: Cascade)
+}
+
+model GuildSettings {
+  guildId          String   @id
   contestRoleId    String?
   contestChannelId String?
   djRoleIds        String[]
-  djOnly           Boolean?  @default(false)
-  premium          Boolean?  @default(false)
-  contests         Contest[]
+  djOnly           Boolean? @default(false)
+  botLogChannel    String?
+  warningThreshold Int      @default(3)
+  banVoteAmt       Int      @default(2)
+  Guild            Guild[]
 }
 
+//#MARKER contest
 model Contest {
   id          Int
   guildId     String

@@ -1,24 +1,26 @@
-import { Client, EmbedBuilder, TextBasedChannel } from "discord.js";
-import persistentData from "@src/persistentData";
+import { Client, EmbedBuilder, TextChannel } from "discord.js";
+import { getGuildSettings } from "./database/guild";
 
+let client: Client;
 
-let botLogsChannel: TextBasedChannel | undefined;
-
-export function init(client: Client)
+export async function init(cl: Client)
 {
-    const botLogs = persistentData.get("botLogs");
-    botLogsChannel = client?.guilds.cache.find(g => g.id === botLogs?.guild)?.channels.cache.find(ch => ch.id === botLogs?.channel) as TextBasedChannel | undefined;
+    client = cl;
 }
 
 /** @deprecated This needs to be overhauled */
-export async function sendLogMsg(msg: string | EmbedBuilder | EmbedBuilder[])
+export async function sendLogMsg(guildId: string, msg: string | EmbedBuilder | EmbedBuilder[])
 {
-    if(botLogsChannel)
+    const gs = await getGuildSettings(guildId);
+
+    if(gs?.botLogChannel)
     {
+        const botLogChannel = client.guilds.cache.find(g => g.id === guildId)?.channels.cache.find(c => c.id === gs.botLogChannel) as TextChannel | undefined;
+
         if(typeof msg === "string")
-            return await botLogsChannel.send(msg);
+            return await botLogChannel?.send(msg);
         else
-            return await botLogsChannel.send({ embeds: Array.isArray(msg) ? msg : [msg] });
+            return await botLogChannel?.send({ embeds: Array.isArray(msg) ? msg : [msg] });
     }
 }
 

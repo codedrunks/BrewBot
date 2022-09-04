@@ -21,7 +21,7 @@ const cl = new Client({
 
 cl.login(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
-cl.on("ready", async (client) => {
+cl.once("ready", async (client) => {
     await client.user?.setPresence({ status: "dnd" });
 
     console.log(k.yellow("\nClearing all global and guild commands."), "\nThis might take a while since the 5 requests/s rule applies and I was too lazy to time them better.\n");

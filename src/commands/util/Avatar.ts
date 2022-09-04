@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { settings } from "@src/settings";
 import { Command } from "@src/Command";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { axios, embedify } from "@src/utils";
 
 export class Avatar extends Command
 {
@@ -34,13 +35,10 @@ export class Avatar extends Command
     {
         await this.deferReply(int);
 
-        const user = int.options.getUser("user");
-        const fmt = int.options.get("format")?.value as string | undefined;
+        const usr = int.options.getUser("user");
+        const fmt = int.options.get("format") as string | null;
 
-        const member = int.guild?.members.cache.find(m => user ? m.id === user.id : m.id === int.user.id);
-        const usr = member?.user;
-
-        const format = fmt as ("png" | "gif" | undefined) ?? "png";
+        const format = (fmt ?? undefined) as ("png" | "gif" | undefined);
 
         if(usr)
         {
@@ -61,16 +59,19 @@ export class Avatar extends Command
             const avatarUrl = (status >= 400 ? usr.avatarURL({ extension: "png", size: 4096 }) : requestedAvUrl);
 
             if(avatarUrl)
-                return await this.editReply(int, new EmbedBuilder()
-                    .setTitle(`Avatar of **${member?.displayName ?? usr.username}**:`)
+            {
+                const ebd = new EmbedBuilder()
+                    .setTitle(`Avatar of ${usr.username}:`)
                     .setColor(settings.embedColors.default)
-                    .setImage(avatarUrl)
-                    .setFooter({ text: `[${format.toUpperCase()}]` })
-                );
+                    .setImage(avatarUrl);
+                format && ebd.setFooter({ text: `[${format.toUpperCase()}]` });
+
+                return await this.editReply(int, ebd);
+            }
             else
-                return await this.editReply(int, "That user has no avatar");
+                return await this.editReply(int, embedify("This user doesn't have an avatar", settings.embedColors.default));
         }
         else
-            await this.editReply(int, "Couldn't find that user");
+            await this.editReply(int, embedify("Couldn't find this user", settings.embedColors.error));
     }
 }

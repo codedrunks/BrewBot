@@ -1,28 +1,44 @@
 import { hyperlink, roleMention, time, userMention } from "@discordjs/builders";
-import { Contest, ContestSubmission, Guild } from "@prisma/client";
-import { checkContestTimes, getContestWinners } from "@database/contest";
+import { GuildSettings } from "@prisma/client";
+import { checkContestTimes, EndingContest, getContestWinners, StartingContest } from "@database/contest";
 import { settings } from "@src/settings";
 import { Client, EmbedBuilder, TextBasedChannel } from "discord.js";
+import { getMultipleGuildSettings } from "@src/database/guild";
+import k from "kleur";
 
 export async function doContestStuff(cl: Client) {
-    console.log("checking contest stuff");
     const { starting, ending } = await checkContestTimes();
 
-    runStartingContestsJobs(cl, starting);
-    runEndingContestsJobs(cl, ending);
+    const allGuildSettings = await getMultipleGuildSettings(starting.map(c => c.guildId));
+
+    const remapStarting = (cons: StartingContest[]) =>
+        cons.map(c => ({
+            ...c,
+            guildSettings: allGuildSettings.find(gs => gs.guildId === c.guildId),
+        }));
+
+    // i hate typescript
+    const remapEnding = (cons: EndingContest[]) =>
+        remapStarting(cons) as (EndingContest & { guildSettings: GuildSettings })[];
+
+    runStartingContestsJobs(cl, remapStarting(starting));
+    runEndingContestsJobs(cl, remapEnding(ending));
 
     setInterval(async () => {
-        console.log("checking contest stuff");
-        const { starting, ending } = await checkContestTimes();
+        try {
+            const { starting, ending } = await checkContestTimes();
 
-        runStartingContestsJobs(cl, starting);
-        runEndingContestsJobs(cl, ending);
+            runStartingContestsJobs(cl, remapStarting(starting));
+            runEndingContestsJobs(cl, remapEnding(ending));
+        }
+        catch(err) {
+            console.error(k.red("Error while checking contests:\n"), err);
+        }
     }, 3600000);
 }
 
-function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild })[]) {
+function runStartingContestsJobs(cl: Client, starting: (StartingContest & { guildSettings?: GuildSettings })[]) {
     starting.forEach(contest => {
-        console.log("getting ready to start contest: " + contest.id);
         const timeTillStart = contest.startDate.getTime() - new Date().getTime();
 
         const description = `${contest.description}\n\n\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
@@ -38,18 +54,22 @@ function runStartingContestsJobs(cl: Client, starting: (Contest & { guild: Guild
             ])
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
+        const { guildSettings } = contest;
+
+        if(!guildSettings)
+            return; // TODO: error msg?
+
         setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "New Contest"),
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "New Contest"),
                 embeds: [embed]
             });
         }, timeTillStart);
     });
 }
 
-function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[]) {
+function runEndingContestsJobs(cl: Client, ending: (EndingContest & { guildSettings?: GuildSettings })[]) {
     ending.forEach(contest => {
-        console.log("getting ready to end contest: " + contest.id);
         const timeTillEnd = contest.endDate.getTime() - new Date().getTime();
 
         const votingEnd = new Date(contest.endDate.setDate(contest.endDate.getDate() + 1));
@@ -78,10 +98,14 @@ function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, su
             .addFields([{ name: "Submissions", value: submissions }])
             .setFooter({ text: `Contest ID: ${contest.id}` });
 
+        const { guildSettings } = contest;
+
+        if(!guildSettings)
+            return; // TODO: error msg?
 
         setTimeout(async () => {
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Voting Started"),
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "Voting Started"),
                 embeds: [votingEmbed]
             });
         }, timeTillEnd);
@@ -172,9 +196,9 @@ function runEndingContestsJobs(cl: Client, ending: (Contest & { guild: Guild, su
                 .addFields([{name :"Result", value: winnersResult }])
                 .setFooter({ text: `Contest ID: ${contest.id}` });
 
-            await (cl.channels.cache.find(channel => channel.id === contest.guild.contestChannelId) as TextBasedChannel).send({
-                content: roleMention(contest.guild.contestRoleId ?? "Winner Announcement"),
-                embeds: [winnerEmbed]
+            await (cl.channels.cache.find(channel => channel.id === guildSettings.contestChannelId) as TextBasedChannel).send({
+                content: roleMention(guildSettings.contestRoleId ?? "Winner Announcement"),
+                embeds: [winnerEmbed],
             });
         }, 24 * 3600 * 1000);
     });

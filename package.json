@@ -1,35 +1,41 @@
 {
-  "name": "bot",
+  "name": "brewbot",
   "version": "0.2.0",
   "engines": {
-    "node": ">=16.9"
+    "node": ">=16.9",
+    "npm": ">=8"
   },
   "scripts": {
-    "start": "tsc && tsc-alias && node out/bot.js",
+    "start": "tsc && tsc-alias && node --enable-source-maps out/bot.js",
     "test": "ts-node src/test.ts",
     "lint": "tsc --noEmit && eslint .",
-    "watch": "nodemon --watch .env --watch \"src/**/*\" -e ts --inspect npm start",
+    "watch": "nodemon -e ts --inspect npm start",
     "clearCommands": "ts-node src/tools/clearCommands.ts",
-    "deploy": "npx prisma generate && npx prisma migrate deploy && tsc && tsc-alias && node out/bot.js",
-    "win-redis": "call src\\tools\\redis.bat"
+    "predeploy": "npx prisma generate && npx prisma migrate deploy",
+    "deploy": "tsc && tsc-alias && node out/bot.js",
+    "win-redis": "call src\\tools\\redis.bat",
+    "link": "npm link"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jabrils-Discord-Server/bot.git"
+    "url": "git+https://github.com/codedrunks/BrewBot.git"
   },
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/Jabrils-Discord-Server/bot/issues"
+    "url": "https://github.com/codedrunks/BrewBot/issues"
   },
-  "homepage": "https://github.com/Jabrils-Discord-Server/bot#readme",
+  "homepage": "https://github.com/codedrunks/BrewBot#readme",
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^17.0.23",
+    "@types/prompts": "^2.0.14",
     "@types/steamapi": "^2.2.2",
+    "@types/yargs": "^17.0.12",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13.0",
     "nodemon": "^2.0.18",
+    "prompts": "^2.4.2",
     "ts-node": "^10.7.0",
     "tsc-alias": "^1.6.11",
     "typescript": "^4.6.3"
@@ -48,16 +54,20 @@
     "fs-extra": "^10.1.0",
     "fuse.js": "^6.6.2",
     "kleur": "^4.1.4",
-    "parse-relative-time": "^1.1.0",
     "prisma": "^3.15.1",
     "redis": "^4.2.0",
     "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
-    "svcorelib": "^1.16.0"
+    "svcorelib": "^1.16.0",
+    "yargs": "^17.5.1"
+  },
+  "bin": {
+    "brewbot": "./src/tools/cli/cli"
   },
   "nodemonConfig": {
     "watch": [
-      "src/*"
+      "src/*",
+      ".env"
     ],
     "ignore": [
       "out/*",

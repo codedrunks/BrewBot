@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOpt
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { getCoins } from "@src/database/economy";
-import { createNewUser } from "@src/database/users";
+import { createNewMember } from "@src/database/users";
 
 export class Account extends Command {
     constructor() {
@@ -41,7 +41,7 @@ export class Account extends Command {
             let coins = await getCoins(user.id, int.guild.id);
         
             if(!coins && coins != 0) {
-                await createNewUser(user.id, guildid, 0);
+                await createNewMember(guildid, user.id, 0);
                 coins = 0;
             }
     

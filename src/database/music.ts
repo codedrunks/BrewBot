@@ -30,12 +30,13 @@ export async function getPremium(guildId: string): Promise<boolean> {
                 id: guildId
             },
             select: {
-                premium: true
-            }
+                premium: true,
+            },
         });
 
         return premium?.premium ?? false;
-    } else return redisCheck === "true";
+    }
+    else return redisCheck === "true";
 }
 
 export async function togglePremium(guildId: string): Promise<boolean> {
@@ -71,19 +72,19 @@ export async function addDJRoleId(guildId: string, roleId: string) {
         await redis.expire(`dj_${guildId}`, 300);
     }
 
-    await prisma.guild.upsert({
+    await prisma.guildSettings.upsert({
         where: {
-            id: guildId
+            guildId,
         },
         update: {
             djRoleIds: {
-                push: roleId
-            }
+                push: roleId,
+            },
         },
         create: {
-            id: guildId,
-            djRoleIds: [roleId]
-        }
+            guildId,
+            djRoleIds: [roleId],
+        },
     });
 }
 
@@ -91,9 +92,9 @@ export async function getDJOnly(guildId: string): Promise<boolean> {
     const redisCheck = await redis.hGetAll(`dj_${guildId}`);
 
     if(!redisCheck.djonly || !redisCheck.ids) {
-        const i = await prisma.guild.findFirst({
+        const i = await prisma.guildSettings.findFirst({
             where: {
-                id: guildId
+                guildId,
             },
             select: {
                 djOnly: true,
@@ -117,17 +118,17 @@ export async function toggleDJOnly(guildId: string): Promise<boolean> {
     await redis.hSet(`dj_${guildId}`, "djonly", `${!c}`);
     await redis.expire(`dj_${guildId}`, 300);
 
-    await prisma.guild.upsert({
+    await prisma.guildSettings.upsert({
         where: {
-            id: guildId
+            guildId,
         },
         update: {
-            djOnly: !c
+            djOnly: !c,
         },
         create: {
-            id: guildId,
+            guildId,
             djOnly: false,
-        }
+        },
     });
 
     return !c;
@@ -137,13 +138,13 @@ export async function getDJRoleIds(guildId: string): Promise<Array<string>> {
     const redisCheck = await redis.hGetAll(`dj_${guildId}`);
 
     if(!redisCheck.ids) {
-        const i = await prisma.guild.findFirst({
+        const i = await prisma.guildSettings.findFirst({
             where: {
-                id: guildId
+                guildId,
             },
             select: {
-                djRoleIds: true
-            }
+                djRoleIds: true,
+            },
         });
 
         return i?.djRoleIds ?? [];
@@ -160,13 +161,13 @@ export async function removeDJRoleId(guildId: string, roleId: string): Promise<b
     await redis.hSet(`dj_${guildId}`, "ids", newIds.join(","));
     await redis.expire(`dj_${guildId}`, 300);
 
-    await prisma.guild.update({
+    await prisma.guildSettings.update({
         where: {
-            id: guildId
+            guildId,
         },
         data: {
-            djRoleIds: newIds
-        }
+            djRoleIds: newIds,
+        },
     });
 }
 

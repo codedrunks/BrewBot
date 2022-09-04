@@ -1,8 +1,10 @@
 import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
-import persistentData from "@src/persistentData";
+import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
+import { createGuildSettings, createNewGuild, getGuild, getGuildSettings, setGuild } from "@src/database/guild";
+import { embedify, toUnix10 } from "@src/utils";
 
 export class Log extends Command {
     constructor() {
@@ -23,7 +25,6 @@ export class Log extends Command {
                     name: "channel",
                     type: ApplicationCommandOptionType.Channel,
                     desc: "Name of log channel.",
-                    required: true,
                 },
                 {
                     name: "start",
@@ -37,13 +38,23 @@ export class Log extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const { channel } = int;
+        const { guild, channel } = int;
+
+        if(!guild || !channel)
+            return this.reply(int, embedify("This command can only be used in a server.", settings.embedColors.error), true);
 
         // TODO(sv): make channel arg not required and grab logChannel from db if channel arg is not filled
 
         const amount = int.options.get("amount", true).value as number;
-        const logChannel = int.options.get("channel", true).channel as TextChannel;
+        const logChan = int.options.get("channel")?.channel;
         const start = int.options.get("start")?.value as string | undefined;
+
+        await this.deferReply(int, true);
+
+        const gld = await getGuild(guild.id) ?? await createNewGuild(guild.id);
+        const gldSettings = await getGuildSettings(guild.id) ?? await createGuildSettings(guild.id);
+
+        const logChannel = (logChan ?? guild.channels.cache.find(c => c.id === gldSettings.botLogChannel) ?? undefined) as TextChannel | undefined;
 
         let startMessageID = start;
 
@@ -69,7 +80,7 @@ export class Log extends Command {
                 const embedColors: ColorResolvable[] = ["#294765", "#152E46"];
                 let newEmbedColor: ColorResolvable = embedColors[0];
 
-                channel.messages.fetch({ limit: amount > 1 ? amount - 1 : amount, before: startMessageID })
+                channel.messages.fetch({ limit: amount, before: startMessageID })
                     .then(async (messages) => {
                         
                         messages.set(startMessageID!, await channel.messages.fetch(startMessageID!));
@@ -80,8 +91,7 @@ export class Log extends Command {
                             messages.delete(lastMessage.id);
                         }
 
-
-                        if(persistentData.get("lastLogColor") == embedColors[0]) {
+                        if(gld.lastLogColor == embedColors[0] || !gld.lastLogColor) {
                             newEmbedColor = embedColors[1];
                         }
 
@@ -123,26 +133,26 @@ export class Log extends Command {
                                 messageEmbedString += (`\
 
 
-                                <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
-                                ${messageAttachmentString}
-                                > [link](${message.url})`);
+                                <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
+                                ${message.embeds.length > 0 ? "(embed)" : (messageAttachmentString.length > 0 ? messageAttachmentString : "(other)")}
+                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
                             } else {
                                 messageEmbedString += (`\
 
 
-                                <@${message.author.id}> in <#${channel.id}> - ${messageDate.getDate()} ${messageDate.toLocaleString("default", { month: "long" })} ${messageDate.getFullYear()} | ${messageDate.getHours().toString().padStart(2, "0")}:${messageDate.getMinutes().toString().padStart(2, "0")}
-                                > ${message.content}
-                                > [link](${message.url})`);
+                                <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
+                                > ${message.embeds.length > 0 ? "(embed)" : (message.content && message.content.length > 0 ? message.content : "(other)")}
+                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
                             }
 
                             if(i === 10 || (10 * setNum) + i === messages.size) {
                                 const loggedMessagesEmbed = new EmbedBuilder()
-                                    .setDescription(messageEmbedString)
+                                    .setDescription(`Logged by <@${int.user.id}> in channel <#${channel.id}>${messageEmbedString}`)
                                     .setFooter({ text: `${setNum + 1}/${messagesSize}` })
                                     .setColor(newEmbedColor);
 
                                 if(setNum == 0) {
-                                    loggedMessagesEmbed.setTitle(`Displaying **${messages.size}** ${messages.size > 1 ? "messages" : "message"}, logged by ${int.user.username}#${int.user.discriminator}.`);
+                                    loggedMessagesEmbed.setTitle(`Displaying **${messages.size}** logged ${messages.size > 1 ? "messages" : "message"}`);
                                 }
                             
                                 const embedLength = messageEmbedString.length;
@@ -155,27 +165,31 @@ export class Log extends Command {
                                 if (embedLength < 6000) {
                                     messageSet.push(loggedMessagesEmbed);
                                 } else {
-                                    return this.reply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
+                                    return this.editReply(int, "Log exceeded 6000 characters. Try logging fewer messages at a time.");
                                 }
                             }
                         });
-                    }).then(() => {
-                        messageSet.forEach((messageEmbed) => {
-                            persistentData.set("lastLogColor", newEmbedColor).then(() => {
-                                logChannel.send({ embeds: [messageEmbed] });
-                            });
-                        });
+                    }).then(async () => {
+                        for await(const embed of messageSet) {
+                            gld.lastLogColor = String(newEmbedColor);
+
+                            await setGuild(gld);
+                            logChannel.send({ embeds: [embed] });
+                        }
+
+                        return await this.editReply(int, embedify(`Successfully logged **${amount}** message${amount === 1 ? "" : "s"} to **#${logChannel.name}**`, settings.embedColors.default));
                     });
-                    
-                return await this.reply(int, `Successfully logged **${amount}** messages to **#${logChannel.name}**`);
             }
             else
-                return await this.reply(int, "Error logging messages");
+                return await this.editReply(int, embedify("Error logging messages. Please make sure you set a default log channel or provided the channel command argument.", settings.embedColors.error));
         }
         catch (err) {
             console.error(k.red(err instanceof Error ? String(err) : "Unknown Error"));
 
-            return await this.reply(int, "Error logging messages");
+            if(int.replied || int.deferred)
+                return await this.editReply(int, embedify("Error logging messages", settings.embedColors.error));
+            else
+                return await this.reply(int, embedify("Error logging messages", settings.embedColors.error));
         }
     }
 }

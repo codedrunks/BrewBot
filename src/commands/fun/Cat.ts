@@ -1,6 +1,7 @@
 import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { randomItem } from "svcorelib";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { axios } from "@src/utils";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 

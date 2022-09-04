@@ -1,7 +1,6 @@
 import { CommandInteraction, CommandInteractionOption, PermissionFlagsBits } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
-import { settings } from "@src/settings";
 import { getPremium, togglePremium } from "@src/database/music";
 
 export class Premium extends Command {
@@ -32,8 +31,6 @@ export class Premium extends Command {
         if(!int.guild?.id) return this.followUpReply(int, embedify("This command cannot be used in DMs"));
 
         if(opt.name == "toggle") {
-            if(!settings.devs.includes(int.user.id)) return this.followUpReply(int, embedify("You cannot use this command"), true);
-
             const a = await togglePremium(int.guild.id);
 
             return this.followUpReply(int, embedify(`${int.guild.name} ${a ? "now has" : "no longer has"} premium`));

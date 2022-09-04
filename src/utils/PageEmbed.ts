@@ -1,13 +1,14 @@
-import { Message, EmbedBuilder, ButtonInteraction, TextBasedChannel, ButtonBuilder, ButtonStyle, APIButtonComponentWithCustomId } from "discord.js";
+import { Message, EmbedBuilder, ButtonInteraction, TextBasedChannel, ButtonBuilder, ButtonStyle, APIButtonComponentWithCustomId, CommandInteraction, User } from "discord.js";
 import { time } from "@discordjs/builders";
 import { clamp } from "svcorelib";
 import { APIEmbed } from "discord-api-types/v10";
+import { randomUUID } from "crypto";
 import { EmitterBase } from "@utils/EmitterBase";
 import { Command } from "@src/Command";
-import * as registry from "@src/registry";
-import { randomUUID } from "crypto";
+import { btnListener } from "@src/registry";
 import { useEmbedify } from "./embedify";
 import { settings } from "@src/settings";
+import { AnyCmdInteraction } from "@src/types";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
@@ -56,6 +57,7 @@ export class PageEmbed extends EmitterBase
     private readonly settings: PageEmbedSettings;
 
     private msg?: Message;
+    private int?: AnyCmdInteraction;
     private btns: ButtonBuilder[];
 
     private pages: APIEmbed[] = [];
@@ -67,7 +69,7 @@ export class PageEmbed extends EmitterBase
     private collectorRunning = false;
     private timedOut = false;
 
-    private readonly btnId = randomUUID();
+    readonly btnId: string;
 
     /**
      * A wrapper for EmbedBuilder that handles scrolling through multiple of them via ButtonBuilders
@@ -79,7 +81,9 @@ export class PageEmbed extends EmitterBase
     {
         super();
 
-        this.setPages(pages);
+        this.btnId = randomUUID();
+
+        this.pages = pages.map(p => p instanceof EmbedBuilder ? p.toJSON() : p);
 
         const defSett: PageEmbedSettings = {
             firstLastBtns: true,
@@ -93,25 +97,17 @@ export class PageEmbed extends EmitterBase
 
         this.btns = this.createBtns();
 
-        registry.btnListener.addBtns(this.btns);
-        registry.btnListener.on("press", async (int, btn) => {
-            let btIdx;
-            this.btns.forEach(({ data }, i) => {
-                if((data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id)
-                    btIdx = i;
-            });
+        btnListener.addBtns(this.btns);
 
-            if(btIdx !== undefined)
-            {
-                await int.deferUpdate();
-                await this.onPress(int, btIdx);
-            }
-        });
+        const onPress = (int: ButtonInteraction, btn: ButtonBuilder) => this.onPress(int, btn);
+
+        btnListener.on("press", onPress);
+        this.once("destroy", () => btnListener.removeListener("press", onPress));
 
         this.authorId = authorId;
 
         this.settings.timeout >= 0 &&
-            setTimeout(() => {
+            setTimeout(async () => {
                 this.timedOut = true;
                 this.emit("timeout");
                 this.destroy();
@@ -123,54 +119,71 @@ export class PageEmbed extends EmitterBase
             setTimeout(() => this.setAllowAllUsers(true), this.settings.allowAllUsersTimeout);
     }
 
-    private onPress(int: ButtonInteraction, btIdx: number)
+    private async onPress(int: ButtonInteraction, btn: ButtonBuilder)
     {
-        if(!int.channel)
-            return;
+        let btIdx;
+        this.btns.forEach(({ data }, i) => {
+            if((data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id)
+                btIdx = i;
+        });
 
-        if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp)
+        if(btIdx !== undefined)
         {
-            const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
+            if(!int.channel)
+                return;
 
-            setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.gameWon)),
-                clamp(useIn - Date.now(), 0, Number.MAX_SAFE_INTEGER));
+            if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp)
+            {
+                const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
 
-            return int.reply({
-                ...useEmbedify(useIn
-                    ? `You can use these buttons ${time(new Date(useIn), "R")}`
-                    : "You can't use these buttons yet", settings.embedColors.error),
-                ...(!int.replied ? { ephemeral: true } : {}),
-            });
+                const now = Date.now();
+
+                setTimeout(() => int.editReply(useEmbedify("You can use the buttons now :)", settings.embedColors.success)),
+                    clamp(useIn - now, 0, Number.MAX_SAFE_INTEGER));
+
+                return int.reply({
+                    ...useEmbedify(
+                        useIn > now
+                            ? `You can use these buttons ${time(new Date(useIn), "R")}`
+                            : "You can't use these buttons yet", settings.embedColors.error
+                    ),
+                    ...(!int.replied ? { ephemeral: true } : {}),
+                });
+            }
+
+            const btns2 = ["prev"];
+            this.settings.goToPageBtn && btns2.push("goto");
+            btns2.push("next");
+            const btns4 = ["first", ...btns2, "last"];
+
+            const type = (this.settings.firstLastBtns ? btns4 : btns2)[btIdx];
+
+            switch(type)
+            {
+            case "first":
+                this.first();
+                break;
+            case "prev":
+                this.prev();
+                break;
+            case "goto":
+                int.deferUpdate();
+                return this.askGoToPage(int);
+            case "next":
+                this.next();
+                break;
+            case "last":
+                this.last();
+                break;
+            default:
+                return;
+            }
+
+            this.emit("press", int, type);
+
+            if(!int.deferred || !int.replied)
+                this.once("update", () => int.deferUpdate());
         }
-
-        const btns2 = ["prev"];
-        this.settings.goToPageBtn && btns2.push("goto");
-        btns2.push("next");
-        const btns4 = ["first", ...btns2, "last"];
-
-        const type = (this.settings.firstLastBtns ? btns4 : btns2)[btIdx];
-
-        switch(type)
-        {
-        case "first":
-            this.first();
-            break;
-        case "prev":
-            this.prev();
-            break;
-        case "goto":
-            return this.askGoToPage(int);
-        case "next":
-            this.next();
-            break;
-        case "last":
-            this.last();
-            break;
-        default:
-            return;
-        }
-
-        this.emit("press", int, type);
     }
 
     private pressAllowed(userId: string)
@@ -183,25 +196,27 @@ export class PageEmbed extends EmitterBase
     {
         const ids = this.btns.map(b => (b.data as APIButtonComponentWithCustomId).custom_id);
 
+        this.timedOut = true;
+
         await this.updateMsg(true);
 
-        registry.btnListener.delBtns(ids);
+        btnListener.delBtns(ids);
 
         this.emit("destroy", ids);
 
         this._destroy(false);
     }
 
+    /** Whether all users can use the buttons (true) or only the author (false) */
+    public getAllowAllUsers()
+    {
+        return this.allowAllUsers;
+    }
+
     /** Change whether all users can use the buttons (true) or only the author (false) */
     public setAllowAllUsers(allowAll: boolean)
     {
         this.allowAllUsers = allowAll;
-    }
-
-    /** Returns the Message object that contains the PageEmbed */
-    public getMsg()
-    {
-        return this.msg;
     }
 
     //#SECTION pages
@@ -272,15 +287,15 @@ export class PageEmbed extends EmitterBase
         this.setPageIdx(this.pages.length - 1);
     }
 
-    /** Creates a MessageCollector so the user can go to an entered page */
-    public async askGoToPage({ user, channel }: ButtonInteraction)
+    /** Creates a MessageCollector so the user can go to an entered page - takes the initiating Command-/ButtonInteraction object as argument */
+    public async askGoToPage({ user, channel }: { user: User, channel?: TextBasedChannel | null })
     {
         if(this.collectorRunning)
             return;
 
-        if(channel && this.msg)
+        if(channel)
         {
-            const hintMsg = await this.msg.reply(useEmbedify("Please type the number of the page you want to go to."));
+            const hintMsg = await this.msg?.reply({ ...useEmbedify(`<@${user.id}>, please type the number of the page you want to go to.`) });
 
             this.collectorRunning = true;
 
@@ -320,13 +335,11 @@ export class PageEmbed extends EmitterBase
                 }
             });
 
-            this.on("destroy", () => {
-                coll.stop();
-            });
+            this.once("destroy", coll.stop);
 
             coll.on("end", () => {
                 this.collectorRunning = false;
-                hintMsg.delete();
+                hintMsg?.delete();
             });
         }
     }
@@ -372,7 +385,7 @@ export class PageEmbed extends EmitterBase
     }
 
     /** Returns properties that can be used to send or edit messages */
-    public getMsgProps()
+    public getMsgProps(disableBtns = false)
     {
         if(this.pages.length === 0)
             return { embeds: [], components: [] };
@@ -382,9 +395,11 @@ export class PageEmbed extends EmitterBase
         if(!page)
             throw new Error(`PageEmbed index out of range: ${this.pageIdx} (allowed range: 0-${this.pages.length - 1})`);
 
+        const btns = disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns;
+
         return {
             embeds: [ page ],
-            ...(this.pages.length === 1 ? { components: [] } : Command.useButtons(this.btns)),
+            ...(this.pages.length === 1 ? { components: [] } : Command.useButtons(btns)),
         };
     }
 
@@ -397,17 +412,59 @@ export class PageEmbed extends EmitterBase
         return this.msg = await channel.send(this.getMsgProps());
     }
 
-    /** Edits the message with the currently stored local `msg` */
+    /** Replies to a passed interaction with this PageEmbed */
+    public async reply(int: CommandInteraction | ButtonInteraction, ephemeral = false)
+    {
+        if(this.getPageIdx() < 0)
+            this.setPageIdx(0);
+
+        return int.reply({ ...this.getMsgProps(), ephemeral });
+    }
+
+    /** Edits a passed interaction with the content of this PageEmbed */
+    public async editReply(int: CommandInteraction | ButtonInteraction)
+    {
+        if(this.getPageIdx() < 0)
+            this.setPageIdx(0);
+
+        return int.editReply(this.getMsgProps());
+    }
+
+    /** Edits the message with the currently stored local `msg` with this PageEmbed's content */
     public async updateMsg(removeButtons = false)
     {
         if(this.timedOut)
             removeButtons = true;
 
-        if(this.msg && this.msg.editable)
+        const msgProps = this.getMsgProps(removeButtons);
+
+        if(this.int)
         {
-            const m = await this.msg.edit({ ...this.getMsgProps(), ...(removeButtons ? { components: [] } : {})});
-            this.emit("update", m);
+            try {
+                if(!this.msg)
+                {
+                    const m = await this.int?.fetchReply();
+                    if(m instanceof Message)
+                        this.setMsg(m);
+                }
+            }
+            catch(e) { void(e); }
+
+            if(this.int?.replied || this.int?.deferred)
+                await this.int.editReply(msgProps);
+            else
+                await this.int?.reply(msgProps);
         }
+        else if(this.msg && this.msg.editable)
+            this.msg = await this.msg?.edit(msgProps);
+
+        this.emit("update", this.msg);
+    }
+
+    /** Returns the Message object associated with this PageEmbed */
+    public getMsg()
+    {
+        return this.msg;
     }
 
     /** If you want to send the message yourself, make sure to call this function so this instance has a reference to it! */
@@ -417,5 +474,30 @@ export class PageEmbed extends EmitterBase
             this.pageIdx = 0;
 
         this.msg = msg;
+    }
+
+    /** Call this function once to reply to or edit an interaction with this PageEmbed. This is the interactions' equivalent of `sendIn()` */
+    public async useInt(int: AnyCmdInteraction, ephemeral = false)
+    {
+        if(!int.deferred)
+            await int.deferReply();
+
+        this.int = int;
+
+        const m = await int.fetchReply();
+        const msg = m instanceof Message ? m : undefined;
+
+        msg && this.setMsg(msg);
+
+        if(this.getPageIdx() < 0)
+            this.setPageIdx(0);
+
+        const updatePageEbd = () =>
+            int.replied || int.deferred
+                ? int.editReply(this.getMsgProps())
+                : int.reply({ ...this.getMsgProps(), ephemeral });
+
+        this.on("press", updatePageEbd);
+        await updatePageEbd();
     }
 }

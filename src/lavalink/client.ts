@@ -34,7 +34,8 @@ process.env.LAVALINK_HOSTS?.split(",").map((v) => {
         host: host,
         port: 2333,
         password: pass,
-        retryDelay: 5000
+        retryDelay: 1000,
+        retryAmount: 30,
     });
 });
 

@@ -106,14 +106,15 @@ export class Play extends Command {
 
         if(voice !== player.voiceChannel) return this.editReply(int, embedify("You must be in the same voice channel as the bot"));
 
-        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify("That URL type is not supported or something went wrong"));
-        
+        if(res.loadType == "LOAD_FAILED") return this.editReply(int, embedify(`Error while playing song${res.exception ? `: \`${res.exception.message}\`` : ""}`));
+
         if(res.loadType == "NO_MATCHES") return this.editReply(int, embedify("No songs were found with that title"));
 
         // there was no pretty way of doing this tbh but illusion is a fucking whore so, so be it ig
         if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours 
             && !(await getPremium(guild.id)))
-            return this.editReply(int, embedify("Total queue time will be over 4 hours, please purchase premium to add more songs to your queue"));
+            return this.editReply(int, embedify("Total queue time will be over 4 hours, please upgrade to our premium tier to add more songs to your queue."));
+        // TODO: link to premium ^
 
         if(player.state !== "CONNECTED") player.connect();
 
@@ -121,9 +122,9 @@ export class Play extends Command {
 
         if(res.loadType == "TRACK_LOADED" || res.loadType == "SEARCH_RESULT" || res.loadType == "PLAYLIST_LOADED" && res.tracks.length == 1) {
             if(position == "now") {
-                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
+                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "current song"} and queueing \`${res.tracks[0].title}\` in ${channelMention}`));
                 player.queue.add(res.tracks[0], 0);
-                
+
                 setTimeout(() => { if(player.queue.totalSize > 1) player.stop(); }, 200); //find golden timing
 
                 return;
@@ -143,7 +144,7 @@ export class Play extends Command {
             const tracks = shuffled ? randomizeArray(res.tracks) : res.tracks;
 
             if(position == "now") {
-                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "nothing"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
+                this.editReply(int, embedify(`Skipped ${player.queue.current ? `\`${player.queue.current.title}\`` : "current song"} and queueing \`${res.playlist?.name}\` with ${res.tracks.length} tracks in ${channelMention}`));
                 player.queue.add(tracks, 0);
 
                 player.stop();

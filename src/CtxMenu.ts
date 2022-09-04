@@ -10,6 +10,8 @@ export abstract class CtxMenu
 {
     public readonly meta: CtxMeta;
     public readonly ctxMenuJson: RESTPostAPIApplicationCommandsJSONBody;
+    /** Set to false to disable this command */
+    public enabled = true;
 
     constructor(meta: CtxMeta)
     {

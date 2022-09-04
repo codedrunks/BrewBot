@@ -4,17 +4,17 @@ import { DatabaseError } from "@database/util";
 
 export async function setContestChannel(guildId: string, channelId: string): Promise<DatabaseError> {
     try {
-        await prisma.guild.upsert({
+        await prisma.guildSettings.upsert({
             where: {
-                id: guildId
+                guildId,
             },
             update: {
-                contestChannelId: channelId
+                contestChannelId: channelId,
             },
             create: {
-                id: guildId,
-                contestChannelId: channelId
-            }
+                guildId,
+                contestChannelId: channelId,
+            },
         });
     } catch (e) {
         console.error(e);
@@ -26,17 +26,17 @@ export async function setContestChannel(guildId: string, channelId: string): Pro
 
 export async function setContestRole(guildId: string, roleId: string): Promise<DatabaseError> {
     try {
-        await prisma.guild.upsert({
+        await prisma.guildSettings.upsert({
             where: {
-                id: guildId
+                guildId,
             },
             update: {
-                contestRoleId: roleId
+                contestRoleId: roleId,
             },
             create: {
-                id: guildId,
-                contestRoleId: roleId
-            }
+                guildId,
+                contestRoleId: roleId,
+            },
         });
     } catch (e) {
         console.error(e);
@@ -198,7 +198,10 @@ export async function deleteContestSubmission(guildId: string, contestId: number
     return submission;
 }
 
-export async function checkContestTimes(): Promise<{ starting: (Contest & { guild: Guild })[], ending: (Contest & { guild: Guild, submissions: ContestSubmission[] })[] }> {
+export type StartingContest = Contest & { guild: Guild };
+export type EndingContest = Contest & { guild: Guild, submissions: ContestSubmission[] };
+
+export async function checkContestTimes(): Promise<{ starting: StartingContest[], ending: EndingContest[] }> {
     const now = new Date();
     const nowPlusHour = new Date(now.getTime());
     nowPlusHour.setMinutes(now.getMinutes() + 1);

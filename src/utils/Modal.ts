@@ -18,12 +18,14 @@ export interface Modal {
 
 /** Base class for all Modals */
 export abstract class Modal extends EmitterBase {
-    readonly id: string = randomUUID();
+    readonly id: string;
     private readonly internalModal: DjsModal;
 
     /** Base class for all Modals */
     constructor(data: ModalConstructor) {
         super();
+
+        this.id = randomUUID();
 
         this.internalModal = new DjsModal()
             .setCustomId(this.id)

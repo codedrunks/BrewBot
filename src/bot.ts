@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import k from "kleur";
 import { allOfType, system, Stringifiable } from "svcorelib";
 
-import persistentData from "@src/persistentData";
 import botLogs from "@src/botLogs";
 import { initRegistry, registerGuildCommands, registerEvents, getCommands, modalSubmitted, getCtxMenus, btnListener } from "@src/registry";
 import { commands as slashCmds } from "@src/commands";
@@ -25,11 +24,9 @@ async function init()
     if(!allOfType([ env.BOT_TOKEN, env.CLIENT_ID ], "string"))
         throw new Error("Missing environment variable(s). Please correct them according to the .env.template");
 
-    registerFont("assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
-    registerFont("assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
-    registerFont("assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
-
-    await persistentData.init();
+    registerFont("src/assets/external/fonts/Roboto-Bold.ttf", {family: "Roboto"});
+    registerFont("src/assets/external/fonts/ChrysanthiUnicode-Regular.ttf", {family: "Chrysanthi Unicode"});
+    registerFont("src/assets/external/fonts/NotoSans-Regular.ttf", {family: "Noto Sans"});
 
     const client = new Client({
         intents: settings.client.intents,
@@ -39,7 +36,7 @@ async function init()
 
     client.login(env.BOT_TOKEN ?? "ERR_NO_ENV");
 
-    client.on("ready", async (cl) => {
+    client.once("ready", async (cl) => {
         const { user, guilds } = cl;
 
         user.setPresence({
@@ -66,14 +63,11 @@ async function init()
         });
 
         console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
+        printDbgItmList(guilds.cache.map(g => g.name), 4);
 
         await doContestStuff(cl);
 
         clientReadyInitLava(cl);
-
-        printDbgItmList(guilds.cache.map(g => g.name), 4);
-
-        await doContestStuff(cl);
 
         console.log(k.green(`\n${user.username} is ready.\n`));
 

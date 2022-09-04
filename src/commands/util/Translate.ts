@@ -1,10 +1,8 @@
 import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
-import { allOfType } from "svcorelib";
-import axios from "axios";
 import Fuse from "fuse.js";
 
 import { Command } from "@src/Command";
-import { embedify } from "@utils/embedify";
+import { axios, embedify } from "@src/utils";
 import { settings } from "@src/settings";
 import languages from "@assets/languages.json";
 
@@ -25,7 +23,7 @@ export class Translate extends Command
                 },
                 {
                     name: "language",
-                    desc: "Name of the language to translate to",
+                    desc: "English name of the language to translate to",
                     type: ApplicationCommandOptionType.String,
                     required: true,
                 }
@@ -38,18 +36,18 @@ export class Translate extends Command
         const text = (int.options.get("text", true).value as string).trim();
         const lang = (int.options.get("language", true).value as string).trim();
 
-        const fuse = new Fuse(
-            Object.entries(languages).map(([k, v]) => ({ code: k, name: v })),
-            {
-                keys: [ "name" ],
-                threshold: 0.5,
-            }
-        );
+        const langs = Object.entries(languages)
+            .map(([name, code]) => ({ name, code }));
+
+        const fuse = new Fuse(langs, {
+            keys: [ "name" ],
+            threshold: 0.5,
+        });
 
         const res = fuse.search(lang);
 
         if(res.length === 0)
-            return await this.reply(int, embedify("Couldn't find that language", settings.embedColors.error), true);
+            return await this.reply(int, embedify(`Couldn't find the language \`${lang}\``, settings.embedColors.error), true);
 
         const resLang = res[0].item;
 
@@ -62,12 +60,13 @@ export class Translate extends Command
 
         const { fromLang, translation } = tr;
 
-        const fromLangName = (languages as Record<string, string>)[fromLang];
+        const fromLangName = Object.entries(languages).find(([_n, code]) => code === fromLang)?.[0];
+        const toLangName = Object.entries(languages).find(([_n, code]) => code === resLang.code)?.[0];
 
         const ebd = new EmbedBuilder()
-            .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${resLang.name}**:`)
+            .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${toLangName}**:`)
             .setColor(settings.embedColors.default)
-            .setDescription(`> **Text:**\n> ${text}\n\n> **Translation:**\n> ${translation}`);
+            .setDescription(`> **Translation:**\n> ${translation}\n\n> **Original text:**\n> ${text}`);
 
         return await this.editReply(int, ebd);
     }
@@ -76,18 +75,27 @@ export class Translate extends Command
     {
         try
         {
-            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&ie=UTF-8&oe=UTF-8&sl=auto&tl=${targetLang}&q=${encodeURI(text)}`);
+            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?sl=auto&tl=${targetLang}&q=${encodeURI(text)}&client=gtx&dt=t&ie=UTF-8&oe=UTF-8`);
 
             if(status < 200 || status >= 300)
                 return null;
 
-            let fromLang = data?.[2];
-            const translation = data?.[0]?.[0]?.[0];
+            const fromLang = data?.[2];
+            let trParts = data?.[0];
 
-            if(fromLang.match(/^\w+-\w+$/))
-                fromLang = fromLang.split("-")[0];
+            if(!fromLang || !trParts)
+                return null;
 
-            return allOfType([fromLang, translation], "string") ? { fromLang, translation } : null;
+            if(trParts.length > 1)
+                trParts = trParts.map((p: string[]) => p?.[0]);
+            else
+                trParts = [trParts?.[0]];
+
+            const translation = trParts
+                .filter((p: unknown) => typeof p === "string")
+                .join("").trim();
+
+            return { fromLang, translation };
         }
         catch(err)
         {

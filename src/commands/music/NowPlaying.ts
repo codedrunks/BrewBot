@@ -3,7 +3,8 @@ import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
-import { isDJOnlyandhasDJRole } from "@src/database/music";
+import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
+import { fetchSongInfo, resolveTitle } from "./global.music";
 
 const ten_secs = 10_000;
 
@@ -36,9 +37,18 @@ export class NowPlaying extends Command {
 
         const readableTime = musicReadableTimeString(currentTime, duration);
 
-        const embed = embedify(
-            `Artist: \`${current.author}\`\n\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`
-        ).setThumbnail(`https://img.youtube.com/vi/${current?.identifier}/mqdefault.jpg`).setTitle(`${current?.title}`);
+        const info = await fetchSongInfo(resolveTitle(current.title));
+
+        let lyricsLink = "";
+        if(await getPremium(int.guild.id))
+        {
+            if(info?.url)
+                lyricsLink = `Lyrics: [click to open <:open_in_browser:994648843331309589>](${info.url})\n`;
+        }
+
+        const embed = embedify(`Artist: \`${info?.meta.artists ?? current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`)
+            .setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`)
+            .setTitle(`${current.title}`);
 
         if(current?.uri) embed.setURL(current.uri);
 
@@ -46,8 +56,8 @@ export class NowPlaying extends Command {
             new ButtonBuilder().setEmoji("⏪").setLabel("- 10s").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setEmoji("⏯️").setLabel("Pause/Resume").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setEmoji("⏩").setLabel("+ 10s").setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setEmoji("⏭").setLabel("Skip").setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setEmoji("⏹️").setLabel("Stop").setStyle(ButtonStyle.Primary)
+            new ButtonBuilder().setEmoji("⏭").setLabel("Skip").setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setEmoji("⏹️").setLabel("Stop").setStyle(ButtonStyle.Secondary)
         ];
 
         const button = new BtnMsg(embed, btns, { timeout: current.isStream ? -1 : (current.duration as number) - player.position });
@@ -86,7 +96,7 @@ export class NowPlaying extends Command {
             }
         });
 
-        button.on("timeout", async () => {
+        button.once("timeout", async () => {
             await this.deleteReply(int);
             button.destroy();
         });

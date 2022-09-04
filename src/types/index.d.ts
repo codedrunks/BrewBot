@@ -1,47 +1,10 @@
-import { ClientEvents, ColorResolvable, ApplicationCommandOptionType } from "discord.js";
+import { ClientEvents, ApplicationCommandOptionType } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ContextMenuCommandType } from "@discordjs/builders";
 
-
-//#MARKER persistent data
-
-/** Persistent data stored in `./data.json` */
-export interface PersistentData
-{
-    /** Timestamp of when the bot last started up */
-    startupTime: number;
-    /** Reaction roles messages and emojis */
-    reactionMessages?: ReactionMsg[];
-    /** Color of previously ran log command, used to help visually separate log sets */
-    lastLogColor?: ColorResolvable;
-    /** Bot logs channel */
-    botLogs: {
-        guild: string;
-        channel: string;
-    };
-    /** Warnings given to users */
-    warnings?: {
-        /** Guild ID */
-        guild: string;
-        /** Member ID */
-        member: string;
-        warnings: {
-            reason: string;
-            timestamp: number;
-        }[];
-    }[];
-    reminders?: {
-        member: string;
-        guild: string;
-        name: string;
-        dueTimestamp: number;
-    }[];
-}
-
-/** Keys of the persistent data object */
-export type DataKey = keyof PersistentData;
-
 //#MARKER commands
+
+export type AnyCmdInteraction = CommandInteraction | ButtonInteraction | ModalSubmitInteraction | ContextMenuInteraction;
 
 /** A single argument of a slash command */
 type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | IntegerCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);

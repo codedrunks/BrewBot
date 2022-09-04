@@ -47,7 +47,25 @@ export class Queue extends Command {
 
             if(!tracks.length && !player.queue.current) return this.editReply(int, embedify("No tracks in the queue"));
 
-            const embed = embedify(`Current: [${player.queue.current.title}](${player.queue.current.uri}) <@${(player.queue.current.requester as User).id}>\n\n${tracks.map((v, i) => `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) <@${(v.requester as User).id}>`).join("\n")}`).setTitle("Current Queue");
+            // TODO: parallelize
+            // const hasPremium = await getPremium(int.guild.id);
+
+            // const getLyrics = async ({ title }: { title: string }) => {
+            //     if(!hasPremium)
+            //         return "";
+            //     const lyricsUrl = await fetchLyricsUrl(title);
+            //     if(lyricsUrl)
+            //         return ` - [lyrics <:open_in_browser:994648843331309589>](${lyricsUrl})\n`;
+            //     return "";
+            // };
+
+            let embedLines = `Current: [${player.queue.current.title}](${player.queue.current.uri}) - <@${(player.queue.current.requester as User).id}>${/*await getLyrics(player.queue.current)*/""}\n\n`;
+            let i = 0;
+            
+            for(const v of tracks)
+                embedLines += `${((page - 1) * multiple) + (++i)}: [${v.title}](${v.uri}) - <@${(v.requester as User).id}>${/*await getLyrics(v)*/""}\n`;
+
+            const embed = embedify(embedLines).setTitle("Current Queue");
 
             if(player.queue.current.thumbnail) embed.setThumbnail(player.queue.current.thumbnail);
 
@@ -93,7 +111,7 @@ export class Queue extends Command {
                     }
                 });
 
-                button.on("timeout", async () => {
+                button.once("timeout", async () => {
                     delete pages[int.user.id];
 
                     await this.deleteReply(int);

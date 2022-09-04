@@ -2,7 +2,7 @@ import { CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@utils/index";
 import { addCoins, getLastDaily, setLastDaily } from "@database/economy";
-import { createNewUser, getUser } from "@database/users";
+import { createNewMember, getMember } from "@database/users";
 
 const secs24hours = 86400;
 const dailyCoinsAward = 100;
@@ -28,9 +28,9 @@ export class Daily extends Command {
 
         const guildid = int.guild.id;
 
-        const userInDB = await getUser(userid);
+        const memberInDB = await getMember(guildid, userid);
 
-        if(!userInDB) await createNewUser(userid, guildid);
+        if(!memberInDB) await createNewMember(guildid, userid);
 
         const lastdaily = await getLastDaily(userid, int.guild.id);
 

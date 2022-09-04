@@ -11,8 +11,8 @@ export class MemberJoin extends Event
         this.enabled = false;
     }
 
-    async run({ displayName }: GuildMember)
+    async run({ displayName, guild }: GuildMember)
     {
-        sendLogMsg(`▶️ Member ${displayName} joined`);
+        sendLogMsg(guild.id, `▶️ Member ${displayName} joined`);
     }
 }

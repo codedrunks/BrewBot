@@ -16,6 +16,18 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "CLI",
+            "program": "${workspaceFolder}/src/tools/cli/index.ts",
+            "preLaunchTask": "prelaunch",
+            "outFiles": ["${workspaceFolder}/out/**/*.js"],
+            "console": "integratedTerminal",
+            "args": [
+                "-h"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "test.ts",
             "program": "${workspaceFolder}/src/test.ts",
             "preLaunchTask": "prelaunch",

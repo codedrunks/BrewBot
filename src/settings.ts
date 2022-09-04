@@ -38,14 +38,14 @@ export const settings: Settings = {
         ],
     },
     embedColors: {
-        default: Colors.DarkPurple,
-        gameWon: Colors.Green,
+        default: "#faba05",
+        success: Colors.Green,
         gameLost: Colors.Grey,
         warning: Colors.Orange,
         error: Colors.DarkRed,
         contestWinner: Colors.Gold,
     },
-    /** When a user is warned this many times, a message is sent to the botLogs channel */
+    /** TODO: remove - When a user is warned this many times, a message is sent to the botLogs channel */
     warningsThreshold: 3,
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
@@ -56,7 +56,7 @@ export const settings: Settings = {
         "415597358752071693"
     ],
     commands: {
-        execEnabled: envVarEquals("EXEC_CMD_ENABLED", false) ? false : true,
+        execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
     },
 };
 
@@ -80,7 +80,7 @@ interface Settings {
     }
     embedColors: {
         default: ColorResolvable;
-        gameWon: ColorResolvable;
+        success: ColorResolvable;
         gameLost: ColorResolvable;
         warning: ColorResolvable;
         error: ColorResolvable;
