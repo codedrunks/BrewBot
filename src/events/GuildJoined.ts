@@ -14,6 +14,6 @@ export class GuildJoined extends Event
     {
         await registerGuildCommands(guild.id);
 
-        // await sendLogMsg(`I just joined the guild "${guild.name}" and registered all slash commands there`);
+        // TODO: add logger lib here
     }
 }
