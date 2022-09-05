@@ -1,6 +1,10 @@
-import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption, EmbedBuilder, PermissionFlagsBits } from "discord.js";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
+import { embedify, PageEmbed, toUnix10, truncStr } from "@src/utils";
+import { settings } from "@src/settings";
+import { getPolls } from "@src/database/guild";
+import { halves } from "svcorelib";
 
 export class Poll extends Command
 {
@@ -13,11 +17,11 @@ export class Poll extends Command
             subcommands: [
                 {
                     name: "create",
-                    desc: "Creates a reaction-based poll in this channel",
+                    desc: "Creates a poll in this channel",
                     args: [
                         {
                             name: "headline",
-                            desc: "Enter pings and extra explanatory text to notify users of this poll.",
+                            desc: "Enter pings (be mindful of who you ping) and extra explanatory text to notify users of this poll.",
                             type: ApplicationCommandOptionType.String,
                         },
                         // TODO:
@@ -28,15 +32,81 @@ export class Poll extends Command
                         // },
                     ],
                 },
+                {
+                    name: "list",
+                    desc: "Lists all polls that are active on this server",
+                },
+                // {
+                //     name: "cancel",
+                //     desc: "Cancels a poll",
+                //     perms: [PermissionFlagsBits.ManageChannels],
+                // },
             ],
         });
     }
 
-    async run(int: CommandInteraction): Promise<void>
+    async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
     {
-        const headline = int.options.get("headline")?.value as string | undefined;
-        const modal = new CreatePollModal(true, headline);
+        const { guild, channel } = int;
 
-        return await int.showModal(modal.getInternalModal());
+        if(!guild || !channel)
+            return this.reply(int, embedify("Please use this command in a server.", settings.embedColors.error), true);
+
+        switch(opt.name)
+        {
+        case "create":
+        {
+            const headline = int.options.get("headline")?.value as string | undefined;
+            const modal = new CreatePollModal(true, headline);
+
+            return await int.showModal(modal.getInternalModal());
+        }
+        case "list":
+        {
+            await this.deferReply(int);
+
+            const polls = await getPolls(guild.id);
+
+            if(!polls || polls.length === 0)
+                return this.editReply(int, embedify("Currently no polls are active on this server.\nYou can create a new one with `/poll create`", settings.embedColors.error));
+
+            const pollList = [...polls];
+            const pages: EmbedBuilder[] = [];
+            const pollsPerPage = 20;
+            const totalPages = Math.ceil(polls.length / pollsPerPage);
+
+            while(pollList.length > 0)
+            {
+                const pollSlices = halves(pollList.splice(0, pollsPerPage));
+
+                const ebd = new EmbedBuilder()
+                    .setTitle("Active polls")
+                    .setColor(settings.embedColors.default)
+                    .addFields(pollSlices.map(sl =>
+                        ({ name: "\u200B", value: sl.reduce((a, c) => `${a}\n\n> **${truncStr(c.topic, 32)}**\n> By <@${c.createdBy}> in <#${c.channel}>\nExpires <t:${toUnix10(c.dueTimestamp)}:R>`, "") })
+                    ));
+
+                totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages})` });
+
+                pages.push(ebd);
+            }
+
+            if(pages.length > 1)
+            {
+                const pe = new PageEmbed(pages, int.user.id, {
+                    allowAllUsersTimeout: 60 * 1000,
+                    goToPageBtn: pages.length > 5,
+                });
+
+                return pe.useInt(int);
+            }
+            else
+                return this.editReply(int, pages[0]);
+        }
+        case "cancel":
+        {
+            return;
+        }
+        }
     }
 }
