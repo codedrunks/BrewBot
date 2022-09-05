@@ -101,6 +101,7 @@ model Poll {
   pollId       Int
   guildId      String
   channel      String
+  messages     String[]
   createdBy    String
   headline     String?
   topic        String

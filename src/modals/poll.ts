@@ -3,6 +3,7 @@ import { EmbedBuilder, Message, MessageOptions, ModalSubmitInteraction, TextInpu
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
 import { embedify } from "@src/utils";
+import { createNewPoll, getPolls } from "@src/database/guild";
 
 export class CreatePollModal extends Modal
 {
@@ -50,11 +51,15 @@ export class CreatePollModal extends Modal
         const voteOptions = int.fields.getTextInputValue("vote_options").trim().split(/\n/gm).filter(v => v.length > 0);
         const headline = this.headline;
 
-        if(!expiry.match(/^\s*(\d{4}\/\d{2}\/\d{2})[\s.,_](\d{2}:\d{2}:\d{2})\s*$/))
+        if(!expiry.match(/^\s*\d{4}\/\d{2}\/\d{2}[\s.,_]\d{2}:\d{2}:\d{2}\s*$/))
             return this.reply(int, embedify("Please make sure the poll end date and time are formatted like this (in UTC time):\n```YYYY/MM/DD hh:mm:ss```", settings.embedColors.error), true);
         if(voteOptions.length > settings.emojiList.length)
             return this.reply(int, embedify(`Please enter ${settings.emojiList.length} vote options at most.`, settings.embedColors.error), true);
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const [_, ...rest] = /^\s*(\d{4})\/(\d{2})\/(\d{2})[\s.,_](\d{2}):(\d{2}):(\d{2})\s*$/.exec(expiry) as string[];
+
+        const dueTimestamp = new Date(...(rest.map(v => parseInt(v))) as [number]);
         const descOptions = voteOptions.reduce((a, c, i) => `${a}\n${settings.emojiList[i]} - ${c}`, "");
 
         const ebd = new EmbedBuilder()
@@ -90,6 +95,29 @@ export class CreatePollModal extends Modal
                 await msgs[i].react(emoji);
             i++;
         }
+
+        const allPolls = await getPolls(guild.id);
+
+        let pollId = 1;
+        if(allPolls && allPolls.length)
+        {
+            allPolls.forEach(p => {
+                if(p.pollId >= pollId)
+                    pollId = p.pollId + 1;
+            });
+        }
+
+        await createNewPoll({
+            pollId,
+            guildId: guild.id,
+            channel: channel.id,
+            messages: msgs.map(m => m.id),
+            createdBy: int.user.id,
+            headline: headline ?? null,
+            topic,
+            voteOptions,
+            dueTimestamp,
+        });
 
         // TODO: collectors
 

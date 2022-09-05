@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption, EmbedBuilder, PermissionFlagsBits } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
 import { embedify, PageEmbed, toUnix10, truncStr } from "@src/utils";
@@ -8,6 +8,8 @@ import { halves } from "svcorelib";
 
 export class Poll extends Command
 {
+    private interval: NodeJS.Timer;
+
     constructor()
     {
         super({
@@ -43,6 +45,9 @@ export class Poll extends Command
                 // },
             ],
         });
+
+        this.checkPolls();
+        this.interval = setInterval(this.checkPolls, 1000);
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
@@ -105,8 +110,15 @@ export class Poll extends Command
         }
         case "cancel":
         {
+            // TODO:
             return;
         }
         }
+    }
+
+    async checkPolls()
+    {
+        // TODO: check for expired polls
+        void 0;
     }
 }
