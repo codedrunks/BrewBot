@@ -197,7 +197,6 @@ export class Steam extends Command
                     const pe = new PageEmbed(embeds, int.user.id, {
                         allowAllUsersTimeout: 1000 * 60,
                         goToPageBtn: embeds.length > 5,
-                        timeout: 1000 * 1 * 10,
                     });
 
                     await pe.useInt(int);
