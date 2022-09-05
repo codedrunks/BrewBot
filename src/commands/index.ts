@@ -9,6 +9,7 @@ import { Joke } from "@commands/fun/Joke";
 import { Mock } from "@commands/fun/Mock";
 import { Steam } from "@commands/fun/Steam";
 import { Sudoku } from "@commands/games/Sudoku";
+import { TwentyFortyEight } from "@commands/games/2048";
 
 // import { ReactionRoles } from "@commands/mod/ReactionRoles";
 import { Delete } from "@commands/mod/Delete";
@@ -68,6 +69,7 @@ export const commands = [
     Slots,
     Steam,
     Sudoku,
+    TwentyFortyEight,
 
     // mod
     // ReactionRoles,
