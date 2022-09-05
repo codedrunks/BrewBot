@@ -172,7 +172,7 @@ export class Warning extends Command
 
                 const headerEbd = new EmbedBuilder()
                     .setTitle("You've received a warning")
-                    .setDescription(`You have been warned in the server [${guild.name}](https://discord.com/channels/${guild.id})\n**Reason:** ${reason}\n\nYou have been warned ${allWarnings.length} time${allWarnings.length === 1 ? "" : "s"} in this server.`)
+                    .setDescription(`You have been warned in the server [${guild.name}](https://discord.com/channels/${guild.id})\n**Reason:** ${reason}\n\n${allWarnings.length === 1 ? "This is your first warning" : `You have been warned ${allWarnings.length} times`} in this server.`)
                     .setFooter({ text: "If you have questions, please contact the moderators of the server." })
                     .setColor(settings.embedColors.warning);
 
