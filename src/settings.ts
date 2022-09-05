@@ -7,7 +7,11 @@ const Intents = GatewayIntentBits;
 
 dotenv.config();
 
-export const settings: Settings = {
+/**
+ * Global miscellaneous settings for the bot
+ * @readonly
+ */
+export const settings: Settings = Object.freeze({
     debug: {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
@@ -58,7 +62,7 @@ export const settings: Settings = {
     commands: {
         execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
     },
-};
+}) as Settings;
 
 /** Tests if the environment variable `varName` equals `value` - value is case insensitive */
 function envVarEquals(varName: string, value: Stringifiable)
