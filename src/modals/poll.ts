@@ -30,7 +30,7 @@ export class CreatePollModal extends Modal
                     .setCustomId("vote_options")
                     .setLabel("Vote options")
                     .setPlaceholder(`The options the users can choose.\n- One option per line, ${settings.emojiList.length} max.\nSupports Discord's Markdown.`)
-                    .setStyle(TextInputStyle.Short)
+                    .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true),
             ],
         });
