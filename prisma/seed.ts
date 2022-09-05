@@ -1,5 +1,6 @@
 import { prisma } from "../src/database/client";
 import { contests, guildId, submissions } from "./contestData";
+import { entries } from "./2048leaderboardData";
 
 const run = async () => {
     await prepareDb();
@@ -46,6 +47,26 @@ const run = async () => {
             });
         })
     );
+
+    await Promise.all(
+        entries.map(async (entry) => {
+            return prisma.twentyFortyEightLeaderboardEntry.upsert({
+                where: {
+                    guildId_userId: {
+                        guildId: entry.guildId,
+                        userId: entry.userId,
+                    },
+                },
+                update: {},
+                create: {
+                    guildId: entry.guildId,
+                    userId: entry.userId,
+                    score: entry.score,
+                    gamesWon: entry.gamesWon,
+                },
+            });
+        })
+    );
 };
 
 run()
@@ -59,6 +80,35 @@ run()
 
 async function prepareDb()
 {
+    const guild = await prisma.guild.findUnique({
+        where: {
+            id: guildId,
+        },
+    });
+
+    if (!guild) {
+        await prisma.guild.create({
+            data: {
+                id: guildId,
+            },
+        });
+
+        await prisma.guildSettings.upsert({
+            where: {
+                guildId,
+            },
+            update: {
+                contestChannelId: "715561909482422363"
+            },
+            create: {
+                guildId,
+                contestChannelId: "715561909482422363"
+            },
+        });
+
+        return;
+    }
+
     const hasContChan = (await prisma.guildSettings.findUnique({
         where: {
             guildId,
@@ -76,5 +126,21 @@ async function prepareDb()
             guildId,
             contestChannelId: "715561909482422363"
         },
+    });
+
+    entries.map(async (entry) => {
+        await prisma.member.upsert({
+            where: {
+                guildId_userId: {
+                    guildId: entry.guildId,
+                    userId: entry.userId,
+                }
+            },
+            update: {},
+            create: {
+                guildId: entry.guildId,
+                userId: entry.userId,
+            },
+        });
     });
 }

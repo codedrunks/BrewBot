@@ -330,7 +330,6 @@ export class Contest extends Command
                         .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}` });
 
                     for (let i = 0; i < fields.length; i++) {
-                        console.log(fields[i]);
                         newEmbed.addFields([{ name: "\u200b", value: fields[i], inline: true }]);
                     }
 
@@ -401,7 +400,6 @@ export class Contest extends Command
                     .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}` });
 
                 for (let i = 0; i < fields.length; i++) {
-                    console.log(fields[i]);
                     newEmbed.addFields([{ name: "\u200b", value: fields[i], inline: true }]);
                 }
 

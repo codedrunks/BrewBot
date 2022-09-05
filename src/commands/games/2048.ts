@@ -13,8 +13,10 @@ import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { settings } from "@src/settings";
-import { bold } from "@discordjs/builders";
-import { BtnMsg, embedify } from "@src/utils";
+import { bold, userMention } from "@discordjs/builders";
+import { BtnMsg, embedify, PageEmbed, useEmbedify } from "@src/utils";
+import { addOrUpdateLeaderboardEntry, getLeaderboard } from "@src/database/2048";
+import { DatabaseError } from "@src/database/util";
 
 interface Game {
     board: number[][];
@@ -70,6 +72,26 @@ enum TextColors {
     LIGHT = "#F9F6F2",
     DARK = "#776E65",
 }
+
+export enum Sort {
+    Score = "score",
+    GamesWon = "gamesWon"
+}
+
+export enum Order {
+    Asc = "asc",
+    Desc = "desc",
+}
+
+const sortChoices = [
+    { name: "Score", value: Sort.Score },
+    { name: "Games Won", value: Sort.GamesWon },
+];
+
+const orderByChoices = [
+    { name: "Ascending", value: Order.Asc },
+    { name: "Descending", value: Order.Desc },
+];
 
 const colorsMap: ColorsMap = {
     2: {
@@ -156,6 +178,10 @@ const colorsMap: ColorsMap = {
 };
 
 export class TwentyFortyEight extends Command {
+    private readonly embedFieldsLimit = 25;
+    private readonly fieldValueLimit = 1024;
+    private readonly usersPerEmbedField = 12;
+
     private readonly GAP_SIZE = 30;
     private readonly CELL_COUNT = 4;
     private readonly CELL_SIZE = 200;
@@ -182,7 +208,7 @@ export class TwentyFortyEight extends Command {
             subcommands: [
                 {
                     name: "start",
-                    desc: "Start a new game of 2048 (games are globally unique?)",
+                    desc: "Start a new game of 2048",
                 },
                 {
                     name: "discard",
@@ -193,10 +219,22 @@ export class TwentyFortyEight extends Command {
                     desc: "Displays a leaderboard of highscores and games played.",
                     args: [
                         {
-                            name: "local",
-                            desc: "Whether to show server or global leaderboard. Defaults to local",
+                            name: "global",
+                            desc: "Whether to show server or global leaderboard. Defaults to server",
                             type: ApplicationCommandOptionType.Boolean,
                         },
+                        {
+                            name: "sort",
+                            desc: "What to sort by. Defaults to Score",
+                            type: ApplicationCommandOptionType.String,
+                            choices: sortChoices.map(({ name, value }) => ({ name, value })),
+                        },
+                        {
+                            name: "order_by",
+                            desc: "Which order to order the results in. Defaults to Descending",
+                            type: ApplicationCommandOptionType.String,
+                            choices: orderByChoices.map(({ name, value }) => ({ name, value })),
+                        }
                     ],
                 },
             ],
@@ -226,10 +264,10 @@ export class TwentyFortyEight extends Command {
 
     async start(int: CommandInteraction) {
         const user = int.user;
-        // TODO: figure this out
-        // if (this.games.has(user.id)) {
-        //     return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
-        // }
+        const guild = int.guild!;
+        if (this.games.has(`${guild.id}_${user.id}`)) {
+            return await this.editReply(int, embedify("You already have a game running! Games are unique by server"));
+        }
 
         const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         const ctx = canvas.getContext("2d");
@@ -245,7 +283,7 @@ export class TwentyFortyEight extends Command {
             { timeout: 1000 * 60 * 5 }
         );
 
-        this.games.set(user.id, {
+        this.games.set(`${guild.id}_${user.id}`, {
             board: [
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
@@ -259,7 +297,7 @@ export class TwentyFortyEight extends Command {
             latestInt: int,
         });
 
-        const game = this.games.get(user.id)!;
+        const game = this.games.get(`${guild.id}_${user.id}`)!;
 
         bm.on("press", async (b, i) => {
             await i.deferUpdate();
@@ -267,27 +305,128 @@ export class TwentyFortyEight extends Command {
         });
 
         bm.on("timeout", async () => {
-            // TODO: remove this line when sv's branch is merged
             bm.btns.map((btn) => btn.setDisabled(true));
             game.latestInt.editReply({ ...bm.getReplyOpts() });
-            await this.cleanUpGame(user.id);
+            await this.cleanUpGame(guild.id, user.id);
         });
 
         this.generateInitialBoard(game);
 
         this.drawBoard(game);
-        await this.renderBoard(game, user.id);
-        return await this.sendBoard(int, user.id, game);
+        await this.renderBoard(game, guild.id, user.id);
+        return await this.sendBoard(int, guild.id, user.id, game);
     }
 
     async leaderboard(int: CommandInteraction) {
-        // TODO: implement this
-        throw new Error("Method not implemented.");
+        const guild = int.guild!;
+        const global = int.options.get("global")?.value as boolean ?? false;
+        const sort = int.options.get("sort")?.value as string ?? Sort.Score;
+        const orderBy = int.options.get("order_by")?.value as string ?? Order.Desc;
+
+        const entries = await getLeaderboard(guild.id, global, sort, orderBy);
+
+        // TODO: for global leaderboard add a button on the second row that links to the website
+
+        if (!entries.length) {
+            return await this.editReply(int, embedify(`No leaderboard entries found ${global ? "globally" : "in this server"}`));
+        }
+
+        let users = "";
+        let scores = "";
+        let gamesWon = "";
+
+        entries.forEach((entry, i) => {
+            const username = userMention(entry.userId);
+            users += `- ${username}`;
+            scores += `${entry.score}`;
+            gamesWon += `${entry.gamesWon}`;
+            if (i !== entries.length - 1) {
+                users += "\n";
+                scores += "\n";
+                gamesWon += "\n";
+            }
+        });
+
+        const entriesEmbeds = [];
+        
+        // TODO: just render a table in canvas and send that instead of fucking embeds
+
+        if (users.length > this.fieldValueLimit || scores.length > this.fieldValueLimit || gamesWon.length > this.fieldValueLimit) {
+            const usersArr = users.split("\n");
+            const scoresArr = scores.split("\n");
+            const gamesWonArr = gamesWon.split("\n");
+
+            let userField = "";
+            let scoreField = "";
+            let gamesWonField = "";
+            let usersInField = 0;
+            const usersFields: string[] = [];
+            const scoresFields: string[] = [];
+            const gamesWonFields: string[] = [];
+
+            while (usersArr.length) {
+                const entryUsername = usersArr.splice(0, 1)[0];
+                const entryScore = scoresArr.splice(0, 1)[0];
+                const entryGamesWon = gamesWonArr.splice(0, 1)[0];
+                if (usersInField >= this.usersPerEmbedField) {
+                    usersFields.push(userField);
+                    scoresFields.push(scoreField);
+                    gamesWonFields.push(gamesWonField);
+                    userField = "";
+                    scoreField = "";
+                    gamesWonField = "";
+                    usersInField = 0;
+                }
+                userField += entryUsername + "\n";
+                scoreField += entryScore + "\n";
+                gamesWonField += entryGamesWon + "\n";
+                usersInField++;
+
+                if (!usersArr.length) {
+                    usersFields.push(userField);
+                    scoresFields.push(scoreField);
+                    gamesWonFields.push(gamesWonField);
+                    userField = "";
+                    scoreField = "";
+                    gamesWonField = "";
+                    usersInField = 0;
+                }
+            }
+
+            const numOfEmbeds = Math.floor((usersFields.length * 3) / this.embedFieldsLimit) + 1;
+
+            for (let i = 0; i < numOfEmbeds; i++) {
+                const newEmbed = new EmbedBuilder()
+                    .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
+                    .setColor(settings.embedColors.default)
+                    .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}${global ? " - For the full leaderboard go to: https://TODO.com/leaderboard" : "" }` });
+
+                const limit = i === numOfEmbeds- 1 ? usersFields.length%8 : 8;
+                for (let j = 0; j < limit; j++) {
+                    newEmbed.addFields([{ name: j === 0 ? "Player" : "\u200b", value: usersFields[(i * 8) + j], inline: true }]);
+                    newEmbed.addFields([{ name: j === 0 ? "Score" : "\u200b", value: scoresFields[(i * 8) + j], inline: true }]);
+                    newEmbed.addFields([{ name: j === 0 ? "Games Won" : "\u200b", value: gamesWonFields[(i * 8) + j], inline: true }]);
+                }
+
+                entriesEmbeds.push(newEmbed);
+            }
+        } else {
+            const entriesEmbed = new EmbedBuilder()
+                .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
+                .setDescription(users)
+                .setColor(settings.embedColors.default);
+            entriesEmbeds.push(entriesEmbed);
+        }
+
+        const pe = new PageEmbed(entriesEmbeds, int.user.id, { timeout: 1000 * 60 * 10 });
+
+        return await pe.useInt(int);
     }
 
     async discard(int: CommandInteraction) {
         const user = int.user;
-        const game = this.games.get(user.id);
+        const guild = int.guild;
+        const game = this.games.get(`${guild?.id}_${user.id}`);
         if (!game) {
             return await this.editReply(int, embedify("You don't have a game running. Start one with `/2048 start`"));
         }
@@ -634,26 +773,26 @@ export class TwentyFortyEight extends Command {
         game.ctx.fillText("Game Over", this.BOARD_WIDTH / 2, this.BOARD_HEIGHT / 2 + 130);
     }
 
-    async renderBoard(game: Game, userId: string) {
+    async renderBoard(game: Game, guildId: string, userId: string) {
         const buf = game.canvas.toBuffer("image/png");
-        await fs.writeFile(path.join(os.tmpdir(), `${userId}-2048.png`), buf);
+        await fs.writeFile(path.join(os.tmpdir(), `${guildId}_${userId}-2048.png`), buf);
     }
 
-    async sendBoard(int: CommandInteraction, userId: string, game: Game) {
+    async sendBoard(int: CommandInteraction, guildId: string, userId: string, game: Game) {
         const owner = int.client.users.cache.get(userId);
         (game.bm?.msg as EmbedBuilder[])[0]
             .setTitle(`Score: ${bold(game.score.toString())}`)
             .setAuthor({ name: owner?.username ?? "Unknown User", iconURL: owner?.avatarURL() ?? "" })
-            .setImage(`attachment://${userId}-2048.png`)
-            .setColor(Number(settings.embedColors.default.toString()));
+            .setImage(`attachment://${guildId}_${userId}-2048.png`)
+            .setColor(settings.embedColors.default);
 
         await int.editReply({
             ...game.bm?.getReplyOpts(),
             files: [
                 {
-                    attachment: path.join(os.tmpdir(), `${userId}-2048.png`),
-                    name: `${userId}-2048.png`,
-                    description: `2048 Game for user ${userId}`,
+                    attachment: path.join(os.tmpdir(), `${guildId}_${userId}-2048.png`),
+                    name: `${guildId}_${userId}-2048.png`,
+                    description: `2048 Game for user ${userId} on guild ${guildId}`,
                 },
             ],
         });
@@ -667,6 +806,8 @@ export class TwentyFortyEight extends Command {
         if (int.user.id !== userId) {
             return;
         }
+
+        const guildId = int.guild!.id;
 
         game.bm?.resetTimeout();
         game.latestInt = int;
@@ -710,7 +851,7 @@ export class TwentyFortyEight extends Command {
             gameover = true;
         }
 
-        await this.renderBoard(game, userId);
+        await this.renderBoard(game, guildId, userId);
 
         (game.bm?.msg as EmbedBuilder[])[0]
             .setTitle(`Score: ${bold(game.score.toString())}`);
@@ -718,21 +859,25 @@ export class TwentyFortyEight extends Command {
             ...game.bm?.getReplyOpts(),
             files: [
                 {
-                    attachment: path.join(os.tmpdir(), `${userId}-2048.png`),
-                    name: `${userId}-2048.png`,
-                    description: `2048 Game for user ${userId}`,
+                    attachment: path.join(os.tmpdir(), `${guildId}_${userId}-2048.png`),
+                    name: `${guildId}_${userId}-2048.png`,
+                    description: `2048 Game for user ${userId} on guild ${guildId}`,
                 },
             ],
         });
 
         if (win || gameover) {
+            const error = await addOrUpdateLeaderboardEntry(int.guild!.id, int.user.id, game.score, win);
+            if (error !== DatabaseError.SUCCESS) {
+                await int.followUp(useEmbedify("Failed to save score to db", settings.embedColors.error));
+            }
             game.bm?.emit("timeout");
             game.bm?.destroy();
         }
     }
 
-    async cleanUpGame(userId: string) {
-        this.games.delete(userId);
-        await fs.rm(path.join(os.tmpdir(), `${userId}-2048.png`));
+    async cleanUpGame(guildId: string, userId: string) {
+        this.games.delete(`${guildId}_${userId}`);
+        await fs.rm(path.join(os.tmpdir(), `${guildId}_${userId}-2048.png`));
     }
 }
