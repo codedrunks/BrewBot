@@ -1,5 +1,5 @@
 import { prisma } from "@database/client";
-import { Guild, GuildSettings } from "@prisma/client";
+import { Guild, GuildSettings, Poll } from "@prisma/client";
 
 //#MARKER guild
 
@@ -92,6 +92,46 @@ export function getMultipleGuildSettings(guildIds: string[])
         where: {
             guildId: {
                 in: guildIds,
+            },
+        },
+    });
+}
+
+export function getPolls(guildId: string)
+{
+    return prisma.poll.findMany({
+        where: {
+            guildId,
+        },
+    });
+}
+
+export function getPoll(guildId: string, pollId: number)
+{
+    return prisma.poll.findUnique({
+        where: {
+            pollId_guildId: {
+                guildId,
+                pollId,
+            },
+        },
+    });
+}
+
+export function createNewPoll(poll: Poll)
+{
+    return prisma.poll.create({
+        data: poll,
+    });
+}
+
+export function deletePoll(guildId: string, pollId: number)
+{
+    return prisma.poll.delete({
+        where: {
+            pollId_guildId: {
+                guildId,
+                pollId,
             },
         },
     });

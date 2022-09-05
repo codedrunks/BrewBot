@@ -19,7 +19,13 @@ export class Poll extends Command
                             name: "headline",
                             desc: "Enter pings and extra explanatory text to notify users of this poll.",
                             type: ApplicationCommandOptionType.String,
-                        }
+                        },
+                        // TODO:
+                        // {
+                        //     name: "allow_rethinking",
+                        //     desc: "Set this to false to disallow people to change their mind and choose another option.",
+                        //     type: ApplicationCommandOptionType.Boolean,
+                        // },
                     ],
                 },
             ],

@@ -81,6 +81,7 @@ model Guild {
   premium       Boolean?       @default(false)
   lastLogColor  String?
   contests      Contest[]
+  polls         Poll[]
   GuildSettings GuildSettings? @relation(fields: [id], references: [guildId], onDelete: Cascade)
 }
 
@@ -94,6 +95,20 @@ model GuildSettings {
   warningThreshold Int      @default(3)
   banVoteAmt       Int      @default(2)
   Guild            Guild[]
+}
+
+model Poll {
+  pollId       Int
+  guildId      String
+  channel      String
+  createdBy    String
+  headline     String?
+  topic        String
+  voteOptions  String[]
+  dueTimestamp DateTime
+  Guild        Guild    @relation(fields: [guildId], references: [id])
+
+  @@id([pollId, guildId])
 }
 
 //#MARKER contest
