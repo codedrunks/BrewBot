@@ -23,13 +23,13 @@ export class CreatePollModal extends Modal
                 new TextInputBuilder()
                     .setCustomId("expiry_date_time")
                     .setLabel("Poll end date and time")
-                    .setPlaceholder("The end date and time of the poll in the format YYYY/MM/DD hh:mm:ss UTC")
+                    .setPlaceholder("YYYY/MM/DD hh:mm:ss (UTC Timezone)")
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true),
                 new TextInputBuilder()
                     .setCustomId("vote_options")
                     .setLabel("Vote options")
-                    .setPlaceholder(`The options the users can choose.\n- One option per line, ${settings.emojiList.length} max.\nSupports Discord's Markdown.`)
+                    .setPlaceholder(`The options the users can choose.\nOne option per line, ${settings.emojiList.length} max.\nSupports Discord's Markdown.`)
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true),
             ],
@@ -51,7 +51,7 @@ export class CreatePollModal extends Modal
         const headline = this.headline;
 
         if(!expiry.match(/^\s*(\d{4}\/\d{2}\/\d{2})[\s.,_](\d{2}:\d{2}:\d{2})\s*$/))
-            return this.reply(int, embedify("Please enter a topic that the users should vote on.", settings.embedColors.error), true);
+            return this.reply(int, embedify("Please make sure the poll end date and time are formatted like this (in UTC time):\n```YYYY/MM/DD hh:mm:ss```", settings.embedColors.error), true);
         if(voteOptions.length > settings.emojiList.length)
             return this.reply(int, embedify(`Please enter ${settings.emojiList.length} vote options at most.`, settings.embedColors.error), true);
 
