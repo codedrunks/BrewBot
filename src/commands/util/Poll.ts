@@ -5,10 +5,11 @@ import { embedify, PageEmbed, toUnix10, truncStr } from "@src/utils";
 import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { halves } from "svcorelib";
+import k from "kleur";
 
 export class Poll extends Command
 {
-    private interval: NodeJS.Timer;
+    private interval?: NodeJS.Timer;
 
     constructor()
     {
@@ -45,9 +46,16 @@ export class Poll extends Command
                 // },
             ],
         });
+    
+        try {
+            this.checkPolls();
+            this.interval = setInterval(this.checkPolls, 2000);
+        }
+        catch(err) {
+            console.error(k.red("Error while checking polls:"), err);
+        }
 
-        this.checkPolls();
-        this.interval = setInterval(this.checkPolls, 1000);
+        ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, () => clearInterval(this.interval)));
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
@@ -61,8 +69,7 @@ export class Poll extends Command
         {
         case "create":
         {
-            const headline = int.options.get("headline")?.value as string | undefined;
-            const modal = new CreatePollModal(true, headline);
+            const modal = new CreatePollModal(int.options.get("headline")?.value as string | undefined);
 
             return await int.showModal(modal.getInternalModal());
         }
@@ -91,7 +98,7 @@ export class Poll extends Command
                         .filter(sl => sl && sl.length > 0)
                         .map(sl => ({
                             name: "\u200B",
-                            value: sl.reduce((a, c) => `${a}\n\n> **\`${c.pollId}\` - ${truncStr(c.topic.replace(/\n+/gm, " "), 64)}**\n> By <@${c.createdBy}> - **open <:open_in_browser:994648843331309589>**\nPoll ends <t:${toUnix10(c.dueTimestamp)}:R>`, "")
+                            value: sl.reduce((a, c) => `${a}\n\n> **\`${c.pollId}\` - ${c.topic ? `${truncStr(c.topic.replace(/\n+/gm, " "), 64)}**\n> ` : ""}By <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - **open <:open_in_browser:994648843331309589>**\nPoll ends <t:${toUnix10(c.dueTimestamp)}:R>`, "")
                         }))
                     );
 

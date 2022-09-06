@@ -104,7 +104,7 @@ export class Reminder extends Command
             {
                 // since the constructor is called exactly once at startup, this should work just fine
                 this.checkReminders(client);
-                setInterval(() => this.checkReminders(client), 1000);
+                setInterval(() => this.checkReminders(client), 2000);
             }
             catch(err)
             {
