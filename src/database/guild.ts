@@ -97,6 +97,8 @@ export function getMultipleGuildSettings(guildIds: string[])
     });
 }
 
+//#SECTION polls
+
 export function getPolls(guildId: string)
 {
     return prisma.poll.findMany({
@@ -114,6 +116,20 @@ export function getPoll(guildId: string, pollId: number)
                 guildId,
                 pollId,
             },
+        },
+    });
+}
+
+export function getExpiredPolls()
+{
+    return prisma.poll.findMany({
+        where: {
+            dueTimestamp: {
+                lt: new Date(),
+            },
+        },
+        orderBy: {
+            dueTimestamp: "asc",
         },
     });
 }

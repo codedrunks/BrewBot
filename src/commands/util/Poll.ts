@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
 import { embedify, PageEmbed, toUnix10, truncStr } from "@src/utils";
 import { settings } from "@src/settings";
-import { getPolls } from "@src/database/guild";
+import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { halves } from "svcorelib";
 
 export class Poll extends Command
@@ -87,9 +87,13 @@ export class Poll extends Command
                 const ebd = new EmbedBuilder()
                     .setTitle("Active polls")
                     .setColor(settings.embedColors.default)
-                    .addFields(pollSlices.map(sl =>
-                        ({ name: "\u200B", value: sl.reduce((a, c) => `${a}\n\n> **${truncStr(c.topic, 32)}**\n> By <@${c.createdBy}> in <#${c.channel}>\nExpires <t:${toUnix10(c.dueTimestamp)}:R>`, "") })
-                    ));
+                    .addFields(pollSlices
+                        .filter(sl => sl && sl.length > 0)
+                        .map(sl => ({
+                            name: "\u200B",
+                            value: sl.reduce((a, c) => `${a}\n\n> **\`${c.pollId}\` - ${truncStr(c.topic.replace(/\n+/gm, " "), 64)}**\n> By <@${c.createdBy}> - **open <:open_in_browser:994648843331309589>**\nPoll ends <t:${toUnix10(c.dueTimestamp)}:R>`, "")
+                        }))
+                    );
 
                 totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages})` });
 
@@ -118,7 +122,11 @@ export class Poll extends Command
 
     async checkPolls()
     {
-        // TODO: check for expired polls
-        void 0;
+        const expPolls = await getExpiredPolls();
+
+        expPolls.forEach(({ guildId, pollId }) => {
+            // TODO: display conclusion message & final vote numbers
+            deletePoll(guildId, pollId);
+        });
     }
 }
