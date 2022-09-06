@@ -1,16 +1,19 @@
-import { EmbedBuilder, Message, MessageOptions, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
+import { EmbedBuilder, EmbedField, Message, MessageOptions, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
 
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
 import { embedify } from "@src/utils";
 import { createNewGuild, createNewPoll, getGuild, getPolls } from "@src/database/guild";
+import { halves } from "svcorelib";
 
 export class CreatePollModal extends Modal
 {
     private headline;
+    private votesPerUser;
 
-    constructor(headline?: string)
+    constructor(headline?: string, votesPerUser = 1)
     {
+        // TODO: persist initial value of modal inputs with redis so the data is kept when a user fucks up the time
         super({
             title: "Create a poll",
             inputs: [
@@ -40,6 +43,22 @@ export class CreatePollModal extends Modal
         });
 
         this.headline = headline;
+        this.votesPerUser = votesPerUser;
+    }
+
+    public static reduceOptionFields(opts: string[], twoFields = true): EmbedField[]
+    {
+        // TODO: Fix
+        return (twoFields ? halves(opts) : [opts])
+            .reduce((a, o, i) => {
+                a.push(o.map(opt => ({ opt, emoji: settings.emojiList[i] })) as never);
+                return a;
+            }, [])
+            .map(() => ({
+                name: "\u200B",
+                value: opts.reduce((a, c, i) => `${a}\n${c.emoji} \u200B ${c.opt}`, ""),
+                inline: true,
+            }));
     }
 
     async submit(int: ModalSubmitInteraction<"cached">): Promise<void> {
@@ -72,19 +91,21 @@ export class CreatePollModal extends Modal
         const d = new Date(),
             today = rest.length > 4 ? [] : [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
 
-        const timeParts = [...today, ...rest.map(v => parseInt(v))] as [number];
+        const timeParts = [...today, ...rest.map((v, i) => i != 0 ? parseInt(v) : parseInt(v) - new Date().getTimezoneOffset() / 60)] as [number];
 
         const dueTimestamp = new Date(...timeParts);
-        const descOptions = voteOptions.reduce((a, c, i) => `${a}\n${settings.emojiList[i]} - ${c}`, "");
+        const optionFields = CreatePollModal.reduceOptionFields(voteOptions);
 
         if(dueTimestamp.getTime() < Date.now() + 1000 * 30)
             return this.reply(int, embedify("Please enter a date and time that is at least one minute from now.", settings.embedColors.error), true);
 
         const ebd = new EmbedBuilder()
             .setTitle("Poll")
-            .setDescription(`${topic.length > 0 ? `This poll was created to vote about:\n${topic}\n\nYour options are:\n` : ""}${descOptions}`)
-            .setFields()
+            .addFields(optionFields)
+            .setFooter({ text: "Click the reaction emojis under this message to cast a vote." })
             .setColor(settings.embedColors.default);
+
+        topic.length > 0 && ebd.setDescription(`**Topic of the vote:**\n> ${topic}\n\n**Your options are:**\n`);
 
         await this.deferReply(int, true);
 
@@ -143,6 +164,7 @@ export class CreatePollModal extends Modal
                 headline: headline ?? null,
                 topic: topic.length > 0 ? topic : null,
                 voteOptions,
+                votesPerUser: this.votesPerUser,
                 dueTimestamp,
             });
 

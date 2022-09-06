@@ -24,3 +24,18 @@ export function toUnix10(time: Date | number)
 {
     return Math.floor((typeof time === "number" ? time : time.getTime()) / 1000);
 }
+
+export type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
+
+/** Converts a time object into */
+export function timeToMs(timeObj: Partial<TimeObj>)
+{
+    return Math.floor(
+        1000 * (timeObj?.seconds ?? 0)
+        + 1000 * 60 * (timeObj?.minutes ?? 0)
+        + 1000 * 60 * 60 * (timeObj?.hours ?? 0)
+        + 1000 * 60 * 60 * 24 * (timeObj?.days ?? 0)
+        + 1000 * 60 * 60 * 24 * 30.5 * (timeObj?.months ?? 0)
+        + 1000 * 60 * 60 * 24 * 365 * (timeObj?.years ?? 0)
+    );
+}

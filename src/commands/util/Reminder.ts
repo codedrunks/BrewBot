@@ -5,12 +5,10 @@ import { settings } from "@src/settings";
 import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
-import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
-
-type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
 
 export class Reminder extends Command
 {
@@ -115,15 +113,6 @@ export class Reminder extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">)
     {
-        const getTime = (timeObj: TimeObj) => {
-            return 1000 * timeObj.seconds
-                + 1000 * 60 * timeObj.minutes
-                + 1000 * 60 * 60 * timeObj.hours
-                + 1000 * 60 * 60 * 24 * timeObj.days
-                + 1000 * 60 * 60 * 24 * 30 * timeObj.months
-                + 1000 * 60 * 60 * 24 * 365 * timeObj.years;
-        };
-
         const { user, guild, channel } = int;
 
         let action = "";
@@ -148,7 +137,7 @@ export class Reminder extends Command
 
                 const { name, ...timeObj } = args;
 
-                const dueInMs = getTime(timeObj);
+                const dueInMs = timeToMs(timeObj);
 
                 if(dueInMs < 1000 * 5)
                     return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);

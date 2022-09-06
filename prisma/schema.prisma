@@ -106,6 +106,7 @@ model Poll {
   headline     String?
   topic        String?
   voteOptions  String[]
+  votesPerUser Int
   dueTimestamp DateTime
   Guild        Guild    @relation(fields: [guildId], references: [id])
 
