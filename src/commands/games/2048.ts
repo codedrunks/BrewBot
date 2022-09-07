@@ -13,10 +13,12 @@ import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { settings } from "@src/settings";
-import { bold, userMention } from "@discordjs/builders";
+import { bold } from "@discordjs/builders";
 import { BtnMsg, embedify, PageEmbed, useEmbedify } from "@src/utils";
 import { addOrUpdateLeaderboardEntry, getLeaderboard } from "@src/database/2048";
 import { DatabaseError } from "@src/database/util";
+import { TwentyFortyEightLeaderboardEntry } from "@prisma/client";
+import { DiscordAPIFile } from "@src/types";
 
 interface Game {
     board: number[][];
@@ -178,10 +180,6 @@ const colorsMap: ColorsMap = {
 };
 
 export class TwentyFortyEight extends Command {
-    private readonly embedFieldsLimit = 25;
-    private readonly fieldValueLimit = 1024;
-    private readonly usersPerEmbedField = 12;
-
     private readonly GAP_SIZE = 30;
     private readonly CELL_COUNT = 4;
     private readonly CELL_SIZE = 200;
@@ -191,6 +189,9 @@ export class TwentyFortyEight extends Command {
     private readonly BOARD_HEIGHT =
         this.CELL_COUNT * this.CELL_SIZE +
         this.GAP_SIZE * (this.CELL_COUNT + 1); // 950
+    private readonly LEADERBOARD_WIDTH = 800;
+    private readonly LEADERBOARD_ENTRY_HEIGHT = 50;
+    private readonly LEADERBOARD_MAX_PAGE_ENTRIES = 20;
 
     private readonly games = new Map<string, Game>();
     private readonly neighbors = [
@@ -239,7 +240,6 @@ export class TwentyFortyEight extends Command {
                 },
             ],
         });
-
     }
 
     async run(
@@ -325,102 +325,13 @@ export class TwentyFortyEight extends Command {
 
         const entries = await getLeaderboard(guild.id, global, sort, orderBy);
 
-        // TODO: for global leaderboard add a button on the second row that links to the website
+        // TODO: add a button on the second row that links to the website
 
         if (!entries.length) {
             return await this.editReply(int, embedify(`No leaderboard entries found ${global ? "globally" : "in this server"}`));
         }
 
-        let users = "";
-        let scores = "";
-        let gamesWon = "";
-
-        entries.forEach((entry, i) => {
-            const username = userMention(entry.userId);
-            users += `- ${username}`;
-            scores += `${entry.score}`;
-            gamesWon += `${entry.gamesWon}`;
-            if (i !== entries.length - 1) {
-                users += "\n";
-                scores += "\n";
-                gamesWon += "\n";
-            }
-        });
-
-        const entriesEmbeds = [];
-        
-        // TODO: just render a table in canvas and send that instead of fucking embeds
-
-        if (users.length > this.fieldValueLimit || scores.length > this.fieldValueLimit || gamesWon.length > this.fieldValueLimit) {
-            const usersArr = users.split("\n");
-            const scoresArr = scores.split("\n");
-            const gamesWonArr = gamesWon.split("\n");
-
-            let userField = "";
-            let scoreField = "";
-            let gamesWonField = "";
-            let usersInField = 0;
-            const usersFields: string[] = [];
-            const scoresFields: string[] = [];
-            const gamesWonFields: string[] = [];
-
-            while (usersArr.length) {
-                const entryUsername = usersArr.splice(0, 1)[0];
-                const entryScore = scoresArr.splice(0, 1)[0];
-                const entryGamesWon = gamesWonArr.splice(0, 1)[0];
-                if (usersInField >= this.usersPerEmbedField) {
-                    usersFields.push(userField);
-                    scoresFields.push(scoreField);
-                    gamesWonFields.push(gamesWonField);
-                    userField = "";
-                    scoreField = "";
-                    gamesWonField = "";
-                    usersInField = 0;
-                }
-                userField += entryUsername + "\n";
-                scoreField += entryScore + "\n";
-                gamesWonField += entryGamesWon + "\n";
-                usersInField++;
-
-                if (!usersArr.length) {
-                    usersFields.push(userField);
-                    scoresFields.push(scoreField);
-                    gamesWonFields.push(gamesWonField);
-                    userField = "";
-                    scoreField = "";
-                    gamesWonField = "";
-                    usersInField = 0;
-                }
-            }
-
-            const numOfEmbeds = Math.floor((usersFields.length * 3) / this.embedFieldsLimit) + 1;
-
-            for (let i = 0; i < numOfEmbeds; i++) {
-                const newEmbed = new EmbedBuilder()
-                    .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
-                    .setColor(settings.embedColors.default)
-                    .setFooter({ text: `Page ${i + 1}/${numOfEmbeds}${global ? " - For the full leaderboard go to: https://TODO.com/leaderboard" : "" }` });
-
-                const limit = i === numOfEmbeds- 1 ? usersFields.length%8 : 8;
-                for (let j = 0; j < limit; j++) {
-                    newEmbed.addFields([{ name: j === 0 ? "Player" : "\u200b", value: usersFields[(i * 8) + j], inline: true }]);
-                    newEmbed.addFields([{ name: j === 0 ? "Score" : "\u200b", value: scoresFields[(i * 8) + j], inline: true }]);
-                    newEmbed.addFields([{ name: j === 0 ? "Games Won" : "\u200b", value: gamesWonFields[(i * 8) + j], inline: true }]);
-                }
-
-                entriesEmbeds.push(newEmbed);
-            }
-        } else {
-            const entriesEmbed = new EmbedBuilder()
-                .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
-                .setDescription(users)
-                .setColor(settings.embedColors.default);
-            entriesEmbeds.push(entriesEmbed);
-        }
-
-        const pe = new PageEmbed(entriesEmbeds, int.user.id, { timeout: 1000 * 60 * 10 });
-
-        return await pe.useInt(int);
+        return await this.renderAndSendLeaderboard(int, entries, global, guild.id);
     }
 
     async discard(int: CommandInteraction) {
@@ -796,6 +707,78 @@ export class TwentyFortyEight extends Command {
                 },
             ],
         });
+    }
+
+    async renderAndSendLeaderboard(int: CommandInteraction, entries: TwentyFortyEightLeaderboardEntry[], global: boolean, guildId: string) {
+        const pages = Math.floor(entries.length / this.LEADERBOARD_MAX_PAGE_ENTRIES) + 1;
+        const embeds: EmbedBuilder[] = [];
+        const files: DiscordAPIFile[] = [];
+
+        for (let i = 0; i < pages; i++) {
+            const players = Math.min(this.LEADERBOARD_MAX_PAGE_ENTRIES, entries.length);
+            const height = (players * this.LEADERBOARD_ENTRY_HEIGHT) + this.LEADERBOARD_ENTRY_HEIGHT;
+            const canvas = createCanvas(this.LEADERBOARD_WIDTH, height);
+            const ctx = canvas.getContext("2d");
+
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            ctx.fillStyle = "#EEE3CB";
+            ctx.fillRect(0, 0, this.LEADERBOARD_WIDTH, height);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#323232";
+
+            ctx.moveTo(this.LEADERBOARD_WIDTH/2, 0);
+            ctx.lineTo(this.LEADERBOARD_WIDTH/2, height);
+            ctx.stroke();
+            ctx.moveTo(this.LEADERBOARD_WIDTH/2 + this.LEADERBOARD_WIDTH/4, 0);
+            ctx.lineTo(this.LEADERBOARD_WIDTH/2 + this.LEADERBOARD_WIDTH/4, height);
+            ctx.stroke();
+            ctx.moveTo(0, this.LEADERBOARD_ENTRY_HEIGHT);
+            ctx.lineTo(this.LEADERBOARD_WIDTH, this.LEADERBOARD_ENTRY_HEIGHT);
+            ctx.stroke();
+
+            const playerXPos = this.LEADERBOARD_WIDTH/4;
+            const scoreXPos = this.LEADERBOARD_WIDTH/2 + ((this.LEADERBOARD_WIDTH / 2)/4);
+            const gamesWonXPos = this.LEADERBOARD_WIDTH - ((this.LEADERBOARD_WIDTH / 2)/4);
+
+            ctx.fillStyle = "#121212";
+            ctx.font = "bold 20pt Roboto";
+            ctx.fillText("Player", playerXPos, this.LEADERBOARD_ENTRY_HEIGHT/2);
+            ctx.fillText("Score", scoreXPos, this.LEADERBOARD_ENTRY_HEIGHT/2);
+            ctx.fillText("Games Won", gamesWonXPos, this.LEADERBOARD_ENTRY_HEIGHT/2);
+
+            for (let j = 0; j < players; j++) {
+                const entry = entries[j];
+                const user = int.client.users.cache.get(entry.userId);
+
+                ctx.fillText(user?.username ?? entry.userId, playerXPos, this.LEADERBOARD_ENTRY_HEIGHT/2 + ((j + 1) * this.LEADERBOARD_ENTRY_HEIGHT));
+                ctx.fillText(entry.score.toString(), scoreXPos, this.LEADERBOARD_ENTRY_HEIGHT/2 + ((j + 1) * this.LEADERBOARD_ENTRY_HEIGHT));
+                ctx.fillText(entry.gamesWon.toString(), gamesWonXPos, this.LEADERBOARD_ENTRY_HEIGHT/2 + ((j + 1) * this.LEADERBOARD_ENTRY_HEIGHT));
+            }
+
+            const buf = canvas.toBuffer("image/png");
+            await fs.writeFile(path.join(os.tmpdir(), `2048-leaderboard-${guildId}-${i}.png`), buf);
+
+            const embed = new EmbedBuilder()
+                .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
+                .setColor(settings.embedColors.default)
+                .setFooter({ text: `Page ${i + 1}/${pages} - Leaderboard is limited on Discord, for the full leaderboard check: https://TODO.com/leaderboard` })
+                .setImage(`attachment://2048-leaderboard-${guildId}-${i}.png`);
+
+            embeds.push(embed);
+            files.push({
+                attachment: path.join(os.tmpdir(), `2048-leaderboard-${guildId}-${i}.png`),
+                name: `2048-leaderboard-${guildId}-${i}.png`,
+                description: `2048 (${global ? "global" : `guild: ${guildId}`}) Leaderboard`
+            });
+
+            entries.splice(0, players);
+        }
+
+        const pe = new PageEmbed(embeds, int.user.id, { timeout: 1000 * 60 * 10 }, files);
+
+        return await pe.useInt(int);
     }
 
     ///////////////////////

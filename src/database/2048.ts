@@ -20,7 +20,8 @@ export async function getLeaderboard(guildId: string, global: boolean, sort: str
         },
         orderBy: {
             [sort]: orderBy,
-        }
+        },
+        take: 200,
     });
 
     return entries;
