@@ -266,7 +266,7 @@ export class TwentyFortyEight extends Command {
         const user = int.user;
         const guild = int.guild!;
         if (this.games.has(`${guild.id}_${user.id}`)) {
-            return await this.editReply(int, embedify("You already have a game running! Games are unique by server"));
+            return await this.editReply(int, embedify("You already have a game running! Games are unique by server", settings.embedColors.error));
         }
 
         const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
@@ -339,12 +339,12 @@ export class TwentyFortyEight extends Command {
         const guild = int.guild;
         const game = this.games.get(`${guild?.id}_${user.id}`);
         if (!game) {
-            return await this.editReply(int, embedify("You don't have a game running. Start one with `/2048 start`"));
+            return await this.editReply(int, embedify("You don't have a game running. Start one with `/2048 start`", settings.embedColors.error));
         }
 
         game.bm?.emit("timeout");
         game.bm?.destroy();
-        return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/2048 start`"));
+        return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/2048 start`", settings.embedColors.success));
     }
 
     ////////////////////////////

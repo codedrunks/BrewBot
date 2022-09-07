@@ -309,7 +309,7 @@ export class PageEmbed extends EmitterBase
                 time: 1000 * 30,
             });
 
-            const autoDel = (m?: Message) => setTimeout(async () => m?.deletable && await m.delete(), 1000 * 5);
+            const autoDel = (m?: Message) => setTimeout(() => m?.deletable && m.delete(), 1000 * 5);
 
             coll.on("collect", async (msg) => {
                 const raw = msg.content.trim();
@@ -330,7 +330,7 @@ export class PageEmbed extends EmitterBase
                         return;
                     }
 
-                    await msg.delete();
+                    msg.delete();
 
                     this.setPageIdx(num - 1);
                     coll.stop();
@@ -339,9 +339,9 @@ export class PageEmbed extends EmitterBase
 
             this.once("destroy", coll.stop);
 
-            coll.on("end", async () => {
+            coll.on("end", () => {
                 this.collectorRunning = false;
-                await hintMsg?.delete();
+                hintMsg?.delete();
             });
         }
     }
