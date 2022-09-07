@@ -1,6 +1,7 @@
-import { ClientEvents, ApplicationCommandOptionType } from "discord.js";
+import { ClientEvents, ApplicationCommandOptionType, BufferResolvable, JSONEncodable, APIAttachment, Attachment, AttachmentBuilder, AttachmentPayload } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ContextMenuCommandType } from "@discordjs/builders";
+import { Stream } from "node:stream";
 
 //#MARKER commands
 
@@ -125,3 +126,7 @@ export interface CtxMeta {
     /** Default member permissions needed to use this context menu */
     memberPerms?: PermissionFlagsBits[];
 }
+
+//#MARKER discord types
+
+export type DiscordAPIFile = BufferResolvable | Stream | JSONEncodable<APIAttachment> | Attachment | AttachmentBuilder | AttachmentPayload;
