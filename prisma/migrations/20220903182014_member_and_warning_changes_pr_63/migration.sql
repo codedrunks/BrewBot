@@ -9,26 +9,26 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "Bonus" DROP CONSTRAINT "Bonus_userId_fkey";
+ALTER TABLE "Bonus" DROP CONSTRAINT IF EXISTS "Bonus_userId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "Coins" DROP CONSTRAINT "Coins_userId_fkey";
+ALTER TABLE "Coins" DROP CONSTRAINT IF EXISTS "Coins_userId_fkey";
 
 -- AlterTable
-ALTER TABLE "Bonus" ADD COLUMN     "memberId" TEXT;
+ALTER TABLE "Bonus" ADD COLUMN IF NOT EXISTS "memberId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Coins" ADD COLUMN     "memberId" TEXT;
+ALTER TABLE "Coins" ADD COLUMN IF NOT EXISTS "memberId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Guild" DROP COLUMN "contestChannelId",
-DROP COLUMN "contestRoleId",
-DROP COLUMN "djOnly",
-DROP COLUMN "djRoleIds",
-ADD COLUMN     "lastLogColor" TEXT;
+ALTER TABLE "Guild" DROP COLUMN IF EXISTS "contestChannelId",
+DROP COLUMN IF EXISTS "contestRoleId",
+DROP COLUMN IF EXISTS "djOnly",
+DROP COLUMN IF EXISTS "djRoleIds",
+ADD COLUMN IF NOT EXISTS "lastLogColor" TEXT;
 
 -- CreateTable
-CREATE TABLE "Member" (
+CREATE TABLE IF NOT EXISTS "Member" (
     "guildId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
 
@@ -36,7 +36,7 @@ CREATE TABLE "Member" (
 );
 
 -- CreateTable
-CREATE TABLE "Warning" (
+CREATE TABLE IF NOT EXISTS "Warning" (
     "warningId" INTEGER NOT NULL,
     "userId" TEXT NOT NULL,
     "guildId" TEXT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE "Warning" (
 );
 
 -- CreateTable
-CREATE TABLE "GuildSettings" (
+CREATE TABLE IF NOT EXISTS "GuildSettings" (
     "guildId" TEXT NOT NULL,
     "contestRoleId" TEXT,
     "contestChannelId" TEXT,
@@ -62,19 +62,23 @@ CREATE TABLE "GuildSettings" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Member_guildId_userId_key" ON "Member"("guildId", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Member_guildId_userId_key" ON "Member"("guildId", "userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_id_key" ON "User"("id");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_id_key" ON "User"("id");
 
 -- AddForeignKey
+ALTER TABLE "Warning" DROP CONSTRAINT IF EXISTS "Warning_userId_guildId_fkey";
 ALTER TABLE "Warning" ADD CONSTRAINT "Warning_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Bonus" DROP CONSTRAINT IF EXISTS "Bonus_userId_guildId_fkey";
 ALTER TABLE "Bonus" ADD CONSTRAINT "Bonus_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Coins" DROP CONSTRAINT IF EXISTS "Coins_userId_guildId_fkey";
 ALTER TABLE "Coins" ADD CONSTRAINT "Coins_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Guild" DROP CONSTRAINT IF EXISTS "Guild_id_fkey";
 ALTER TABLE "Guild" ADD CONSTRAINT "Guild_id_fkey" FOREIGN KEY ("id") REFERENCES "GuildSettings"("guildId") ON DELETE CASCADE ON UPDATE CASCADE;

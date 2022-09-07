@@ -7,7 +7,11 @@ const Intents = GatewayIntentBits;
 
 dotenv.config();
 
-export const settings: Settings = {
+/**
+ * Global miscellaneous settings for the bot
+ * @readonly
+ */
+export const settings: Settings = Object.freeze({
     debug: {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
@@ -45,25 +49,54 @@ export const settings: Settings = {
         error: Colors.DarkRed,
         contestWinner: Colors.Gold,
     },
-    /** TODO: remove - When a user is warned this many times, a message is sent to the botLogs channel */
-    warningsThreshold: 3,
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
-    devs: [
-        "427491040468140043",
-        "407351772575694879",
-        "194507254249160704",
-        "415597358752071693"
-    ],
+    devs: getEnvVar("DEV_IDS", "stringArray"),
     commands: {
         execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
     },
-};
+}) as Settings;
 
-/** Tests if the environment variable `varName` equals `value` - value is case insensitive */
+/** Tests if the environment variable `varName` equals `value` casted to string - value is case insensitive */
 function envVarEquals(varName: string, value: Stringifiable)
 {
     return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
+}
+
+/** Grabs an environment variable's value, and casts it to a `string` */
+export function getEnvVar(varName: string, asType?: "string"): undefined | string
+/** Grabs an environment variable's value, and casts it to a `number` */
+export function getEnvVar(varName: string, asType: "number"): undefined | number
+/** Grabs an environment variable's value, and casts it to a `string[]` */
+export function getEnvVar(varName: string, asType: "stringArray"): undefined | string[]
+/** Grabs an environment variable's value, and casts it to a `number[]` */
+export function getEnvVar(varName: string, asType: "numberArray"): undefined | number[]
+/** Grabs an environment variable's value, and casts it to a specific type (default string) */
+export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numberArray")>(varName: string, asType: T = "string" as T): undefined | (string | number | string[] | number[])
+{
+    const val = process.env[varName];
+
+    if(!val)
+        return undefined;
+
+    let transform: (value: string) => unknown = v => v.trim();
+
+    const commasRegex = /[.,،，٫٬]/g;
+
+    switch(asType)
+    {
+    case "number":
+        transform = v => parseInt(v.trim());
+        break;
+    case "stringArray":
+        transform = v => v.trim().split(commasRegex);
+        break;
+    case "numberArray":
+        transform = v => v.trim().split(commasRegex).map(n => parseInt(n));
+        break;
+    }
+
+    return transform(val) as string; // I'm lazy and ts is happy, so we can all be happy and pretend this doesn't exist
 }
 
 
@@ -86,7 +119,6 @@ interface Settings {
         error: ColorResolvable;
         contestWinner: ColorResolvable;
     }
-    warningsThreshold: number;
     emojiList: string[];
     devs: string[];
     commands: {

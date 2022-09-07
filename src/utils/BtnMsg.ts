@@ -34,6 +34,7 @@ export class BtnMsg extends EmitterBase
     readonly btnId: string;
 
     private timedOut = false;
+    private timeoutId: NodeJS.Timeout | null = null;
 
     /**
      * Wrapper for discord.js' `ButtonBuilder`  
@@ -70,11 +71,18 @@ export class BtnMsg extends EmitterBase
         btnListener.on("press", onPress);
         this.once("destroy", () => btnListener.removeListener("press", onPress));
 
-        this.opts.timeout > 0 && setTimeout(() => {
-            this.timedOut = true;
-            this.emit("timeout");
-            this.destroy();
-        }, this.opts.timeout);
+        // prevents the bot from crashing on unknown interacations
+        this.on("error", (err) => {
+            console.error(err);
+        });
+
+        if (this.opts.timeout > 0) {
+            this.timeoutId = setTimeout(() => {
+                this.timedOut = true;
+                this.emit("timeout");
+                this.destroy();
+            }, this.opts.timeout);
+        }
     }
 
     private onPress(int: ButtonInteraction, btn: ButtonBuilder)
@@ -140,6 +148,18 @@ export class BtnMsg extends EmitterBase
     public sendIn(channel: TextBasedChannel)
     {
         return channel.send(this.getMsgOpts());
+    }
+
+    /** Cancels and reinitiates the timeout */
+    public resetTimeout() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+
+            this.timeoutId = setTimeout(() => {
+                this.emit("timeout");
+                this.destroy();
+            }, this.opts.timeout);
+        }
     }
 
     protected toActionRowBuilder(disableBtns = false): ActionRowBuilder<ButtonBuilder> | undefined

@@ -1,10 +1,10 @@
-import { EmbedBuilder, ButtonBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
+import { EmbedBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
 import { unused } from "svcorelib";
+import { transpile } from "typescript";
 
-import { BtnMsg } from "@utils/BtnMsg";
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
-import { truncField } from "@src/utils";
+import { truncField,  } from "@src/utils";
 
 export class ExecModal extends Modal
 {
@@ -18,9 +18,9 @@ export class ExecModal extends Modal
                 new TextInputBuilder()
                     .setCustomId("code")
                     .setLabel("Code")
-                    .setPlaceholder("Any CommonJS code\n(Vars: channel, user, guild, client, EmbedBuilder, ButtonBuilder, BtnMsg)")
+                    .setPlaceholder("Any TS or CJS code\n(Vars: channel, user, guild, client, and important stuff from D.JS and utils)")
                     .setStyle(TextInputStyle.Paragraph)
-                    .setRequired(true)
+                    .setRequired(true),
             ]
         });
 
@@ -30,10 +30,7 @@ export class ExecModal extends Modal
     async submit(int: ModalSubmitInteraction<"cached">): Promise<void> {
         const { channel, user, guild, client } = int;
 
-        unused(
-            channel, user, guild, client,
-            EmbedBuilder, ButtonBuilder, BtnMsg
-        );
+        unused(channel, user, guild, client);
 
         const code = int.fields.getTextInputValue("code").trim();
 
@@ -43,13 +40,25 @@ export class ExecModal extends Modal
         try
         {
             const lines = [
-                "const { EmbedBuilder, ButtonBuilder } = require(\"discord.js\");",
-                "const { BtnMsg } = require(\"../utils/BtnMsg\");",
-                "const { embedify, useEmbedify } = require(\"../utils/embedify\");",
-                "const { PageEmbed } = require(\"../utils/PageEmbed\");",
+                "import { EmbedBuilder, ButtonBuilder, Colors, CommandInteraction, ButtonInteraction, Collection, User, Member, Guild } from \"discord.js\";",
+                "import { BtnMsg, PageEmbed, embedify, useEmbedify, toUnix10, truncStr, truncField } from \"../utils/\";",
+                "(async () => {",
                 code,
+                "})();",
             ];
-            result = eval(lines.join("\n"));
+
+            const jsCode = transpile(lines.join("\n"), {
+                allowJs: true,
+                allowSyntheticDefaultImports: true,
+                allowUnreachableCode: true,
+                esModuleInterop: true,
+                experimentalDecorators: true,
+                importHelpers: true,
+                resolveJsonModule: true,
+                strict: false,
+            });
+
+            result = eval(jsCode);
 
             if(result instanceof Promise)
                 result = await result;

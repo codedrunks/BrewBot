@@ -8,7 +8,7 @@ import { Command } from "@src/Command";
 import { btnListener } from "@src/registry";
 import { useEmbedify } from "./embedify";
 import { settings } from "@src/settings";
-import { AnyCmdInteraction } from "@src/types";
+import { AnyCmdInteraction, DiscordAPIFile } from "@src/types";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
@@ -63,6 +63,8 @@ export class PageEmbed extends EmitterBase
     private pages: APIEmbed[] = [];
     private pageIdx = -1;
 
+    private files: DiscordAPIFile[] = [];
+
     private readonly authorId;
     private allowAllUsers = false;
 
@@ -76,14 +78,16 @@ export class PageEmbed extends EmitterBase
      * @param pages The pages to scroll through with buttons
      * @param authorId The ID of the user that sent the command
      * @param settings Additional settings (all have their defaults)
+     * @param files Attachments you want uploaded for the embeds
      */
-    constructor(pages: EbdPage[], authorId: string, settings?: Partial<PageEmbedSettings>)
+    constructor(pages: EbdPage[], authorId: string, settings?: Partial<PageEmbedSettings>, files?: DiscordAPIFile[])
     {
         super();
 
         this.btnId = randomUUID();
 
         this.pages = pages.map(p => p instanceof EmbedBuilder ? p.toJSON() : p);
+        this.files = files?.length ? files : [];
 
         const defSett: PageEmbedSettings = {
             firstLastBtns: true,
@@ -132,7 +136,7 @@ export class PageEmbed extends EmitterBase
             if(!int.channel)
                 return;
 
-            if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp)
+            if(!this.pressAllowed(int.user.id) && this.msg?.createdTimestamp && this.settings.allowAllUsersTimeout > 0)
             {
                 const useIn = this.msg.createdTimestamp + this.settings.allowAllUsersTimeout;
 
@@ -313,8 +317,6 @@ export class PageEmbed extends EmitterBase
 
                 if(raw.match(/[\d]+/) && !isNaN(num))
                 {
-                    autoDel(msg);
-
                     if(num < 1)
                     {
                         const m = await msg.reply(useEmbedify("This number is too low (min. possible page is 1)", settings.embedColors.error));
@@ -391,6 +393,7 @@ export class PageEmbed extends EmitterBase
             return { embeds: [], components: [] };
 
         const page = this.pages?.[this.getPageIdx()];
+        const file = this.files?.[this.getPageIdx()];
 
         if(!page)
             throw new Error(`PageEmbed index out of range: ${this.pageIdx} (allowed range: 0-${this.pages.length - 1})`);
@@ -400,6 +403,7 @@ export class PageEmbed extends EmitterBase
         return {
             embeds: [ page ],
             ...(this.pages.length === 1 ? { components: [] } : Command.useButtons(btns)),
+            ...(file ? { files: [file] } : {})
         };
     }
 
@@ -492,12 +496,12 @@ export class PageEmbed extends EmitterBase
         if(this.getPageIdx() < 0)
             this.setPageIdx(0);
 
-        const updatePageEbd = () =>
+        const updatePageEbd = async () => {
             int.replied || int.deferred
-                ? int.editReply(this.getMsgProps())
-                : int.reply({ ...this.getMsgProps(), ephemeral });
+                ? await int.editReply(this.getMsgProps())
+                : await int.reply({ ...this.getMsgProps(), ephemeral });
+        };
 
-        this.on("press", updatePageEbd);
         await updatePageEbd();
     }
 }

@@ -19,11 +19,12 @@ model User {
 
 // guild member
 model Member {
-  guildId  String
-  userId   String
-  coins    Coins[]
-  bonus    Bonus[]
-  warnings Warning[]
+  guildId                            String
+  userId                             String
+  coins                              Coins[]
+  bonus                              Bonus[]
+  warnings                           Warning[]
+  twentyFortyEightLeaderboardEntries TwentyFortyEightLeaderboardEntry[]
 
   @@id([guildId, userId])
   @@unique([guildId, userId])
@@ -82,7 +83,7 @@ model Guild {
   lastLogColor  String?
   contests      Contest[]
   polls         Poll[]
-  GuildSettings GuildSettings? @relation(fields: [id], references: [guildId], onDelete: Cascade)
+  GuildSettings GuildSettings?
 }
 
 model GuildSettings {
@@ -94,7 +95,7 @@ model GuildSettings {
   botLogChannel    String?
   warningThreshold Int      @default(3)
   banVoteAmt       Int      @default(2)
-  Guild            Guild[]
+  Guild            Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
 }
 
 model Poll {
@@ -146,4 +147,15 @@ model SubmissionVote {
   submission   ContestSubmission @relation(fields: [guildId, contestId, contestantId], references: [guildId, contestId, userId], onDelete: Cascade)
 
   @@id([guildId, contestId, contestantId, voterId])
+}
+
+//#MARKER 2048 leaderboard
+model TwentyFortyEightLeaderboardEntry {
+  guildId  String
+  userId   String
+  score    Int    @default(0)
+  gamesWon Int    @default(0)
+  member   Member @relation(fields: [guildId, userId], references: [guildId, userId])
+
+  @@id([guildId, userId])
 }
