@@ -763,7 +763,8 @@ export class TwentyFortyEight extends Command {
             const embed = new EmbedBuilder()
                 .setTitle(`2048 ${global ? "Global" : "Server"} Leaderboard`)
                 .setColor(settings.embedColors.default)
-                .setFooter({ text: `Page ${i + 1}/${pages} - Leaderboard is limited on Discord, for the full leaderboard check: https://TODO.com/leaderboard` })
+                .setFooter({ text: `Page ${i + 1}/${pages} - Leaderboard is limited on Discord, for the full leaderboard open the title link` })
+                .setURL("https://TODO.com/leaderboard")
                 .setImage(`attachment://2048-leaderboard-${guildId}-${i}.png`);
 
             embeds.push(embed);
@@ -776,7 +777,7 @@ export class TwentyFortyEight extends Command {
             entries.splice(0, players);
         }
 
-        const pe = new PageEmbed(embeds, int.user.id, { timeout: 1000 * 60 * 10 }, files);
+        const pe = new PageEmbed(embeds, int.user.id, { timeout: 1000 * 60 * 10, goToPageBtn: pages > 4 }, files);
 
         return await pe.useInt(int);
     }
