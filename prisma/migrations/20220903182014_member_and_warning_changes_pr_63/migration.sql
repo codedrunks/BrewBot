@@ -68,13 +68,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Member_guildId_userId_key" ON "Member"("guild
 CREATE UNIQUE INDEX IF NOT EXISTS "User_id_key" ON "User"("id");
 
 -- AddForeignKey
-ALTER TABLE "Warning" ADD CONSTRAINT IF NOT EXISTS "Warning_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Warning" DROP CONSTRAINT IF EXISTS "Warning_userId_guildId_fkey";
+ALTER TABLE "Warning" ADD CONSTRAINT "Warning_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Bonus" ADD CONSTRAINT IF NOT EXISTS "Bonus_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Bonus" DROP CONSTRAINT IF EXISTS "Bonus_userId_guildId_fkey";
+ALTER TABLE "Bonus" ADD CONSTRAINT "Bonus_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Coins" ADD CONSTRAINT IF NOT EXISTS "Coins_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Coins" DROP CONSTRAINT IF EXISTS "Coins_userId_guildId_fkey";
+ALTER TABLE "Coins" ADD CONSTRAINT "Coins_userId_guildId_fkey" FOREIGN KEY ("userId", "guildId") REFERENCES "Member"("userId", "guildId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Guild" ADD CONSTRAINT IF NOT EXISTS "Guild_id_fkey" FOREIGN KEY ("id") REFERENCES "GuildSettings"("guildId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Guild" DROP CONSTRAINT IF EXISTS "Guild_id_fkey";
+ALTER TABLE "Guild" ADD CONSTRAINT "Guild_id_fkey" FOREIGN KEY ("id") REFERENCES "GuildSettings"("guildId") ON DELETE CASCADE ON UPDATE CASCADE;
