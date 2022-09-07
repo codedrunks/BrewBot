@@ -15,17 +15,17 @@ ALTER TABLE "Bonus" DROP CONSTRAINT IF EXISTS "Bonus_userId_fkey";
 ALTER TABLE "Coins" DROP CONSTRAINT IF EXISTS "Coins_userId_fkey";
 
 -- AlterTable
-ALTER TABLE "Bonus" ADD COLUMN     "memberId" TEXT IF NOT EXISTS;
+ALTER TABLE "Bonus" ADD COLUMN IF NOT EXISTS "memberId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Coins" ADD COLUMN     "memberId" TEXT IF NOT EXISTS;
+ALTER TABLE "Coins" ADD COLUMN IF NOT EXISTS "memberId" TEXT;
 
 -- AlterTable
 ALTER TABLE "Guild" DROP COLUMN IF EXISTS "contestChannelId",
 DROP COLUMN IF EXISTS "contestRoleId",
 DROP COLUMN IF EXISTS "djOnly",
 DROP COLUMN IF EXISTS "djRoleIds",
-ADD COLUMN     "lastLogColor" TEXT IF NOT EXISTS;
+ADD COLUMN IF NOT EXISTS "lastLogColor" TEXT;
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "Member" (
