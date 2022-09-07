@@ -7,7 +7,7 @@ import { Ferret } from "@commands/fun/Ferret";
 import { HigherLower } from "@commands/games/HigherLower";
 import { Joke } from "@commands/fun/Joke";
 import { Mock } from "@commands/fun/Mock";
-import { Steam } from "@src/commands/fun/Steam";
+import { Steam } from "@commands/fun/Steam";
 import { Sudoku } from "@commands/games/Sudoku";
 
 // import { ReactionRoles } from "@commands/mod/ReactionRoles";
@@ -26,6 +26,7 @@ import { Ping } from "@commands/util/Ping";
 import { Reminder } from "@commands/util/Reminder";
 import { Server } from "@commands/util/Server";
 import { Translate } from "@commands/util/Translate";
+import { Whois } from "@commands/util/Whois";
 
 import { Account } from "@src/commands/economy/Account";
 import { Daily } from "@commands/economy/Daily";
@@ -85,6 +86,7 @@ export const commands = [
     Reminder,
     Server,
     Translate,
+    Whois,
 
     // Economy
     Account,
