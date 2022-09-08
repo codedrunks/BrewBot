@@ -1,8 +1,9 @@
-import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ApplicationCommandOptionType, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import { Canvas, CanvasRenderingContext2D } from "canvas";
 import { Command } from "@src/Command";
 import { embedify } from "@src/utils";
 import { settings } from "@src/settings";
+import { randRange } from "svcorelib";
 
 //#SECTION types
 
@@ -10,16 +11,31 @@ import { settings } from "@src/settings";
 type CellCoords = [string, number];
 
 type CellObj = {
-    type: "blank";
     revealed: boolean;
+} & ({
+    type: "blank";
 } | {
     type: "number";
     value: number;
-    revealed: boolean;
 } | {
     type: "mine";
-    revealed: boolean;
-};
+} | {
+    type: "flag";
+    /** The previous type of this flag cell */
+    prev: "blank" | "number" | "mine";
+});
+
+type BoardSize = "15x25" | "20x40" | "25x55" | "25x70";
+
+
+interface BoardOptions {
+    size: BoardSize;
+    canvasSize: [width: number, height: number];
+    cellSize: [width: number, height: number];
+    paddingTop: number;
+    paddingLeft: number;
+    mines: number;
+}
 
 interface GameObj {
     canvas: Canvas;
@@ -28,14 +44,56 @@ interface GameObj {
     userId: string;
     guildId: string;
     channelId: string;
-    size: "20x25" | "25x40" | "45x55" | "55x70";
     board: CellObj[][];
+    boardOpts: BoardOptions;
 }
 
 export class Minesweeper extends Command
 {
+    /** Mapping of column letters and their index */
+    readonly COLUMN_INDEX_MAP = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y"];
+
+    readonly BOARD_OPTIONS: BoardOptions[] = [
+        {
+            size: "15x25",
+            canvasSize: [775, 1125],
+            cellSize: [45, 45],
+            paddingTop: 100,
+            paddingLeft: 100,
+            mines: 10,
+        },
+        {
+            size: "20x40",
+            canvasSize: [600, 1200],
+            cellSize: [30, 30],
+            paddingTop: 100,
+            paddingLeft: 100,
+            mines: 10,
+        },
+        {
+            size: "25x55",
+            canvasSize: [625, 1375],
+            cellSize: [25, 25],
+            paddingTop: 100,
+            paddingLeft: 100,
+            mines: 10,
+        },
+        {
+            size: "20x40",
+            canvasSize: [600, 1200],
+            cellSize: [30, 30],
+            paddingTop: 100,
+            paddingLeft: 100,
+            mines: 10,
+        },
+    ];
+
+    readonly client;
+
+    private games = new Collection<string, GameObj>();
+
     //#SECTION constructor
-    constructor()
+    constructor(client: Client)
     {
         super({
             name: "minesweeper",
@@ -51,19 +109,12 @@ export class Minesweeper extends Command
                             desc: "How big the playing field should be (width x height)",
                             type: ApplicationCommandOptionType.String,
                             choices: [
-                                { name: "20 x 25 (tiny)", value: "20x25" },
-                                { name: "25 x 40 (small)", value: "25x40" },
-                                { name: "45 x 55 (normal)", value: "45x55" },
-                                { name: "55 x 70 (large)", value: "55x70" },
+                                { name: "15 x 25 (tiny)", value: "15x25" },
+                                { name: "20 x 40 (small)", value: "20x40" },
+                                { name: "25 x 55 (normal)", value: "25x55" },
+                                { name: "25 x 70 (large)", value: "25x70" },
                             ],
                             required: true,
-                        },
-                        {
-                            name: "bombs",
-                            desc: "How many bombs to place on the board",
-                            type: ApplicationCommandOptionType.Number,
-                            min: 5,
-                            max: 100,
                         },
                     ],
                 },
@@ -97,6 +148,8 @@ export class Minesweeper extends Command
                 },
             ],
         });
+
+        this.client = client;
     }
 
     //#SECTION entry point
@@ -162,6 +215,40 @@ export class Minesweeper extends Command
         }
     }
 
+    //#MARKER discord message stuff
+
+    /**
+     * Starts the game
+     * @param int Already deferred interaction
+     */
+    startGame(int: CommandInteraction, game: GameObj)
+    {
+        void [int, game];
+    }
+
+    /**
+     * Returns the default embed of the game
+     * @param img TODO: the rendered image
+     */
+    getGameEmbed(game: GameObj, img?: string)
+    {
+        const guild = this.client.guilds.cache.find(g => g.id === game.guildId);
+        const member = guild?.members.cache.find(m => m.id === game.userId);
+
+        const ebd = new EmbedBuilder()
+            .setTitle("Minesweeper")
+            .setColor(settings.embedColors.default);
+
+        member && ebd.setAuthor({
+            name: member.nickname ?? member.user.username,
+            iconURL: member.avatarURL() ?? member.displayAvatarURL(),
+        });
+
+        img && ebd.setImage(img);
+
+        return ebd;
+    }
+
     //#MARKER game
 
     //#SECTION game management
@@ -172,12 +259,11 @@ export class Minesweeper extends Command
         const guildId = int.guild!.id;
         const channelId = int.channel!.id;
 
-        const width = 500,
-            height = 800;
+        const size = int.options.get("size", true).value as BoardSize;
 
-        const canvas = new Canvas(width, height, "image");
+        const boardSettings = this.BOARD_OPTIONS.find(bs => bs.size === size)!;
 
-        const size = int.options.get("size", true).value as GameObj["size"];
+        const canvas = new Canvas(boardSettings.canvasSize[0], boardSettings.canvasSize[1], "image");
 
         const game: GameObj = {
             canvas,
@@ -186,29 +272,74 @@ export class Minesweeper extends Command
             userId,
             guildId,
             channelId,
-            size,
+            boardOpts: boardSettings,
             board: this.createNewBoard(size),
         };
 
-        void game;
+        this.games.set(`${guildId}-${userId}`, game);
+
+        this.startGame(int, game);
     }
 
     /** Creates a new randomized minesweeper board */
-    createNewBoard(size: GameObj["size"]): CellObj[][]
+    createNewBoard(size: BoardSize): CellObj[][]
     {
         const [w, h] = size.split("x").map(v => parseInt(v));
 
-        const newBoard: CellObj[][] = [];
+        const board: CellObj[][] = [];
 
         for(let y = 0; y < h; y++)
         {
-            newBoard.push([]);
+            board.push([]);
 
             for(let x = 0; x < w; x++)
-                newBoard[y].push({ type: "blank", revealed: false });
+                board[y].push({ type: "blank", revealed: false });
         }
 
-        return newBoard;
+        let maxTries = 10000;
+        let minesToPlace = 10;
+
+        while(minesToPlace > 0)
+        {
+            if(maxTries === 0) // prevent infinite loop should some mine calculation or something mess up
+                break;
+
+            const randX = randRange(0, w);
+            const randY = randRange(0, h);
+
+            if(board[randY][randX].type !== "mine")
+            {
+                board[randY][randX].type = "mine";
+                minesToPlace--;
+            }
+            maxTries--;
+        }
+
+        for(let y = 0; y < h; y++)
+        {
+            for(let x = 0; x < w; x++)
+            {
+                const cell = board[y][x];
+
+                if(cell.type === "blank")
+                {
+                    // TODO: check how many neighbors are mines, then convert to type: "number"
+                    const neighborMines = 4;
+
+                    // leave cell "blank" if it has no mine neighbors
+                    if(neighborMines > 0)
+                    {
+                        board[y][x] = {
+                            type: "number",
+                            value: neighborMines,
+                            revealed: cell.revealed,
+                        };
+                    }
+                }
+            }
+        }
+
+        return board;
     }
     
     /** Discards an active game */
@@ -236,10 +367,12 @@ export class Minesweeper extends Command
     //#MARKER canvas
 
     //#SECTION board
-    /** Clears the board */
-    clearBoard(game: GameObj)
+    /** Clears the entire canvas so it can be redrawn */
+    clearCanvas(game: GameObj)
     {
-        void game;
+        const { ctx, canvas } = game;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
     /** Draws the base board of the game */
@@ -266,4 +399,56 @@ export class Minesweeper extends Command
     {
         void game;
     }
+
+    drawCell(game: GameObj, cell: CellObj, coords: CellCoords)
+    {
+        const { ctx, boardOpts: boardSettings } = game;
+        const [x, y] = this.cellCoordsToPxPos(game, coords);
+
+
+
+        if(!cell.revealed)
+        {
+            ctx.fillRect(x, y, boardSettings.cellSize[0], boardSettings.cellSize[1]);
+            return;
+        }
+
+        switch(cell.type)
+        {
+        case "blank":
+            break;
+        case "number":
+            break;
+        case "mine":
+            // TODO: maybe move somewhere else
+            game.state = "exploded";
+            break;
+        }
+    }
+
+    cellCoordsToPxPos(game: GameObj, coords: CellCoords): [x: number, y: number]
+    {
+        const [w, h] = game.boardOpts.size.split("x").map(v => parseInt(v));
+
+        // TODO:
+
+        void [coords, w, h];
+
+        return [0, 0];
+    }
+
+    // #MARKER Algo:
+    // 
+    // Cell is marked as flagged:
+    // - if type "blank":  
+    // - if type "number": 
+    // - if type "mine":   convert cell to flag
+    // - if type "flag":   
+    // - if type "b"
+    //
+    // Cell is revealed:
+    // - if type "blank":  
+    // - if type "number": 
+    // - if type "mine":   game over
+    // - if type "flag":   do nothing
 }
