@@ -6,6 +6,7 @@ import { Fact } from "@commands/fun/Fact";
 import { Ferret } from "@commands/fun/Ferret";
 import { HigherLower } from "@commands/games/HigherLower";
 import { Joke } from "@commands/fun/Joke";
+import { Minesweeper } from "@commands/games/Minesweeper";
 import { Mock } from "@commands/fun/Mock";
 import { Steam } from "@commands/fun/Steam";
 import { Sudoku } from "@commands/games/Sudoku";
@@ -65,6 +66,7 @@ export const commands = [
     Ferret,
     HigherLower,
     Joke,
+    Minesweeper,
     Mock,
     Slots,
     Steam,
