@@ -83,10 +83,14 @@ export class BtnMsg extends EmitterBase
                 this.destroy();
             }, this.opts.timeout);
         }
+
+        this.on("press", (btn, int) => console.log(">> BtnMsg emit press", int.user.username, btn.data.label));
     }
 
     private onPress(int: ButtonInteraction, btn: ButtonBuilder)
     {
+        console.log(">> BtnMsg.onPress()", int.user.username, btn.data.label);
+
         if(this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id))
             this.emit("press", btn, int);
     }

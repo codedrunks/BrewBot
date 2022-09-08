@@ -304,8 +304,7 @@ export class PageEmbed extends EmitterBase
             this.collectorRunning = true;
 
             const coll = channel.createMessageCollector({
-                filter: (m => m.author.id === user.id && this.pressAllowed(user.id)),
-                dispose: true,
+                filter: (m) => m.author.id === user.id && this.pressAllowed(user.id),
                 time: 1000 * 30,
             });
 
@@ -319,25 +318,25 @@ export class PageEmbed extends EmitterBase
                 {
                     if(num < 1)
                     {
-                        const m = await msg.reply(useEmbedify("This number is too low (min. possible page is 1)", settings.embedColors.error));
-                        autoDel(m);
+                        autoDel(await msg.reply(useEmbedify("This number is too low (min. possible page is 1)", settings.embedColors.error)));
                         return;
                     }
                     if(num > this.pages.length)
                     {
-                        const m = await msg.reply(useEmbedify(`This number is too high (max. possible page is ${this.pages.length})`, settings.embedColors.error));
-                        autoDel(m);
+                        autoDel(await msg.reply(useEmbedify(`This number is too high (max. possible page is ${this.pages.length})`, settings.embedColors.error)));
                         return;
                     }
 
                     msg.delete();
 
                     this.setPageIdx(num - 1);
+                    this.updateMsg();
+
                     coll.stop();
                 }
             });
 
-            this.once("destroy", coll.stop);
+            this.once("destroy", () => !coll.ended && coll.stop());
 
             coll.on("end", () => {
                 this.collectorRunning = false;

@@ -210,6 +210,7 @@ export class Define extends Command
         case "dictionary":
         {
             const termNotFound = () => this.editReply(int, embedify(`Couldn't find the term \`${term}\``, settings.embedColors.error));
+            const couldntReach = () => this.editReply(int, embedify("Couldn't reach the dictionary API. Please try again later.", settings.embedColors.error));
             let res;
 
             try
@@ -218,16 +219,16 @@ export class Define extends Command
             }
             catch(err)
             {
-                return await termNotFound();
+                return couldntReach();
             }
 
             const { data, status } = res;
 
             if(status === 404 || !Array.isArray(data) || data.length === 0)
-                return await termNotFound();
+                return termNotFound();
 
             if(status < 200 || status >= 300)
-                return await this.editReply(int, embedify("Couldn't reach the dictionary API. Please try again later.", settings.embedColors.error));
+                return couldntReach();
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const parseEntry = (data: any): DictEntry => {
