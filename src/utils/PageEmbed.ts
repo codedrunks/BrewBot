@@ -92,7 +92,7 @@ export class PageEmbed extends EmitterBase
         const defSett: PageEmbedSettings = {
             firstLastBtns: true,
             goToPageBtn: true,
-            timeout: 30 * 60 * 1000,
+            timeout: 14 * 60 * 1000,
             overflow: true,
             allowAllUsersTimeout: -1,
         };
