@@ -35,8 +35,10 @@ https://discord.com/oauth2/authorize?client_id=962824817038471178&permissions=8&
 4. Set up a psql user and DB schema for the bot
 5. Run `npm i` to install dependencies
 6. Run `npx prisma migrate reset` to initialize the DB schema
-7. Copy `.env.template` to `.env` and enter all values
-8. See [CLI](#cli) for further commands
+7. Create an application in the [developer portal](https://discord.com/developers/applications), convert it to a bot and copy the application ID and bot token
+8. Go to `Bot > Privileged Gateway Intents` and turn them all on
+9. Copy `.env.template` to `.env` and enter all values
+10. See [CLI](#cli) for further commands
 
 <br>
 
@@ -151,7 +153,7 @@ Select the "test.ts" profile to debug the script at `src/test.ts`
 
 ## Discord API quirks
 - (Sub)Command names and command option names need to be lowercase only with no spaces (underscores are fine).
-- If you get **ANY** discord api related error then any changes that have been made to commands won't be registered until the error is fixed.
+- If you get **ANY** discord api related error while the commands are being registered then any changes that have been made to commands won't be made until the error is fixed.
 
 <br>
 
