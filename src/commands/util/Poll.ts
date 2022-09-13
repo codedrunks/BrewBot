@@ -6,6 +6,13 @@ import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import k from "kleur";
 
+interface PollVote<M = Message, O = string> {
+    msg: M;
+    emoji: string;
+    option: O;
+    votes: string[]
+}
+
 export class Poll extends Command
 {
     private interval?: NodeJS.Timer;
@@ -24,7 +31,7 @@ export class Poll extends Command
                     args: [
                         {
                             name: "headline",
-                            desc: "Enter pings (be mindful of who you ping) and extra explanatory text to notify users of this poll.",
+                            desc: "Enter pings (be mindful of who you ping) or extra explanatory text to notify users of this poll",
                             type: ApplicationCommandOptionType.String,
                         },
                         {
@@ -32,7 +39,12 @@ export class Poll extends Command
                             desc: "How many times a user is allowed to vote",
                             type: ApplicationCommandOptionType.Number,
                             min: 1,
-                        }
+                        },
+                        {
+                            name: "title",
+                            desc: "The title of the poll message",
+                            type: ApplicationCommandOptionType.String,
+                        },
                         // TODO:
                         // {
                         //     name: "allow_rethinking",
@@ -79,13 +91,16 @@ export class Poll extends Command
         {
             const headline = int.options.get("headline")?.value as string | undefined;
             const votes_per_user = int.options.get("votes_per_user")?.value as number | undefined;
+            const title = int.options.get("title")?.value as string | undefined;
 
-            const modal = new CreatePollModal(headline, votes_per_user);
+            const modal = new CreatePollModal(headline, votes_per_user, title);
 
             return await int.showModal(modal.getInternalModal());
         }
         case "list":
         {
+            // TODO:FIXME: Couldn't run the command due to an error: Received one or more errors
+
             await this.deferReply(int);
 
             const polls = await getPolls(guild.id);
@@ -145,60 +160,116 @@ export class Poll extends Command
     {
         const expPolls = await getExpiredPolls();
 
-        for await(const { guildId, pollId, channel, messages, voteOptions } of expPolls)
+        for await(const { guildId, pollId, channel, messages, voteOptions, dueTimestamp: endTime } of expPolls)
         {
-            const gui = this.client.guilds.cache.find(g => g.id === guildId);
-            const chan = gui?.channels.cache.find(c => c.id === channel);
-            const msgs = (chan as TextChannel | undefined)?.messages.cache
-                .filter(m => messages.includes(m.id))
-                .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 1 : -1);
-
-            if(msgs)
+            try
             {
-                const firstMsg = msgs.at(0)!;
+                const gui = this.client.guilds.cache.find(g => g.id === guildId);
+                const chan = gui?.channels.cache.find(c => c.id === channel);
+                const msgs = (chan as TextChannel | undefined)?.messages.cache
+                    .filter(m => messages.includes(m.id))
+                    .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 1 : -1);
 
-                const finalVotes = await this.accumulateVotes(msgs.reduce((a, c) => { a.push(c as never); return a; }, []), voteOptions);
+                if(msgs && msgs.size > 0)
+                {
+                    const firstMsg = msgs.at(0)!;
 
-                const finalVotesFields = CreatePollModal.reduceOptionFields(finalVotes.map(v => `${v.option} - **${v.votes.length}**`));
+                    const finalVotes = await this.accumulateVotes(msgs.reduce((a, c) => { a.push(c as never); return a; }, []), voteOptions);
 
-                const scoreColl = new Collection<string, number>();
-                finalVotes.forEach(({ votes }) => {
-                    votes.forEach(user => {
-                        if(!scoreColl.has(user))
-                            scoreColl.set(user, 1);
-                        else
-                            scoreColl.set(user, scoreColl.get(user)! + 1);
-                    });
-                });
+                    const startTime = firstMsg.createdAt;
 
-                let peopleVoted = 0, totalVotes = 0;
+                    // can't Promise.all() else the api could rate limit us
+                    await firstMsg.edit({ embeds: [ this.getConclusionEmbed(finalVotes, startTime, endTime, guildId, channel, firstMsg.id) ] });
 
-                scoreColl.forEach((score) => {
-                    peopleVoted++;
-                    totalVotes += score;
-                });
+                    this.sendConclusion(firstMsg, finalVotes, startTime, endTime);
+                }
 
-                const sortedVotes = finalVotes.sort((a, b) => a.votes.length < b.votes.length ? 1 : -1);
-                const winningOptions = sortedVotes.filter(v => v.votes === sortedVotes[0].votes);
-
-                // can't Promise.all() else the api could rate limit us
-                await firstMsg.edit({
-                    embeds: [
-                        new EmbedBuilder()
-                            .setTitle("Poll (closed)")
-                            .setColor(settings.embedColors.default)
-                            .setDescription(`The poll has ended!\n${peopleVoted} people have voted ${totalVotes} times and this is what they selected:\n\n${winningOptions.reduce((a, c) => `${a}\n\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} votes**` : ""}`, "")}`)
-                            .addFields(finalVotesFields)
-                    ],
-                });
+                deletePoll(guildId, pollId);
             }
-
-            // TODO: display conclusion message & final vote numbers
-            deletePoll(guildId, pollId);
+            catch(err)
+            {
+                // TODO: add logging lib
+                console.error(`Error while checking poll with guildId=${guildId}, pollId=${pollId} and channel=${channel}:\n`, err);
+            }
         }
     }
 
-    async accumulateVotes<M = Message, O = string>(msgs: M[], _voteOpts: O[]): Promise<{ msg: M, emoji: string, option: O, votes: string[] }[]>
+    getConclusionEmbed(finalVotes: PollVote[], startTime: Date, endTime: Date, guildId: string, channelId: string, firstMsgId: string)
+    {
+        const {
+            finalVotesFields, peopleVoted, totalVotes, winningOptions, getReducedWinningOpts
+        } = this.parseFinalVotes(finalVotes);
+
+        return new EmbedBuilder()
+            .setTitle("Poll (closed)")
+            .setColor(settings.embedColors.default)
+            .setDescription([
+                `The poll has ended!\nIt ran from <t:${toUnix10(startTime)}:f> to <t:${toUnix10(endTime)}:f>`,
+                `${peopleVoted} people have voted ${totalVotes} times and this is what they selected:\n`,
+                `${getReducedWinningOpts(3)}${winningOptions.length > 3 ? `\n\nAnd ${winningOptions.length - 3} more.` : ""}\n`,
+                `[Click here](https://discord.com/channels/${guildId}/${channelId}/${firstMsgId}) to view the full poll.`,
+            ].join("\n"))
+            .addFields(finalVotesFields);
+    }
+
+    parseFinalVotes(finalVotes: PollVote[])
+    {
+        const finalVotesFields = CreatePollModal.reduceOptionFields(finalVotes.map(v => `${v.option} - **${v.votes.length}**`, true));
+
+        const scoreColl = new Collection<string, number>();
+        finalVotes.forEach(({ votes }) => {
+            votes.forEach(user => {
+                if(!scoreColl.has(user))
+                    scoreColl.set(user, 1);
+                else
+                    scoreColl.set(user, scoreColl.get(user)! + 1);
+            });
+        });
+
+        let peopleVoted = 0, totalVotes = 0;
+
+        scoreColl.forEach((score) => {
+            peopleVoted++;
+            totalVotes += score;
+        });
+
+        const sortedVotes = finalVotes.sort((a, b) => a.votes.length < b.votes.length ? 1 : -1);
+        const winningOptions = sortedVotes.filter(v => v.votes === sortedVotes[0].votes);
+
+        const getReducedWinningOpts = (limit?: number) =>
+            winningOptions.reduce((a, c, i) => `${a}${
+                !limit || i < limit
+                    ? `\n\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} votes**` : ""}`
+                    : ""
+            }`, "");
+
+        return {
+            finalVotesFields,
+            scoreColl,
+            peopleVoted,
+            totalVotes,
+            sortedVotes,
+            winningOptions,
+            /** Call to get a markdown string of the winning options. Default limit (undefined) = list all */
+            getReducedWinningOpts,
+        };
+    }
+
+    async sendConclusion(msg: Message, finalVotes: PollVote[], startTime: Date, endTime: Date)
+    {
+        // TODO:
+
+        const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
+
+        await msg.reply({ embeds: [
+            new EmbedBuilder()
+                .setColor(settings.embedColors.default)
+                .setTitle("This poll has closed.")
+                .setDescription(`It ran from <t:${toUnix10(startTime)}:f> to <t:${toUnix10(endTime)}:f>\n${peopleVoted} people have voted and these are the results:\n\n${getReducedWinningOpts()}`)
+        ]});
+    }
+
+    async accumulateVotes(msgs: Message[], _voteOpts: string[]): Promise<PollVote[]>
     {
         for(const msg of msgs as unknown as Message[])
         {

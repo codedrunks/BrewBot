@@ -10,8 +10,9 @@ export class CreatePollModal extends Modal
 {
     private headline;
     private votesPerUser;
+    private title;
 
-    constructor(headline?: string, votesPerUser = 1)
+    constructor(headline?: string, votesPerUser = 1, title: string | undefined = undefined)
     {
         // TODO: persist initial value of modal inputs with redis so the data is kept when a user fucks up the time
         super({
@@ -44,21 +45,26 @@ export class CreatePollModal extends Modal
 
         this.headline = headline;
         this.votesPerUser = votesPerUser;
+        this.title = title;
     }
 
-    public static reduceOptionFields(opts: string[], twoFields = true): EmbedField[]
+    public static reduceOptionFields(opts: string[]): EmbedField[]
     {
-        // TODO: Fix
-        return (twoFields ? halves(opts) : [opts])
-            .reduce((a, o, i) => {
-                a.push(o.map(opt => ({ opt, emoji: settings.emojiList[i] })) as never);
-                return a;
-            }, [])
-            .map(() => ({
-                name: "\u200B",
-                value: opts.reduce((a, c, i) => `${a}\n${c.emoji} \u200B ${c.opt}`, ""),
-                inline: true,
-            }));
+        const optHalves = opts.length > settings.emojiList.length / 3 ? halves(opts) : [opts];
+
+        const redOpts: { opt: string, emoji: string }[][] = [];
+
+        optHalves.forEach((half, i) =>
+            redOpts.push(half.map((opt, j) =>
+                ({ opt, emoji: settings.emojiList[j + (i === 1 ? optHalves[0].length : 0)] })
+            ))
+        );
+
+        return redOpts.map((red, i) => ({
+            name: i === 0 ? "**Options:**" : "\u200B",
+            value: red.reduce((a, c) => `${a}\n${c.emoji} \u200B ${c.opt}`, ""),
+            inline: true,
+        }));
     }
 
     async submit(int: ModalSubmitInteraction<"cached">): Promise<void> {
@@ -100,12 +106,12 @@ export class CreatePollModal extends Modal
             return this.reply(int, embedify("Please enter a date and time that is at least one minute from now.", settings.embedColors.error), true);
 
         const ebd = new EmbedBuilder()
-            .setTitle("Poll")
+            .setTitle(this.title ?? "Poll")
             .addFields(optionFields)
-            .setFooter({ text: "Click the reaction emojis under this message to cast a vote." })
+            .setFooter({ text: `Click the reaction emojis below to cast ${this.votesPerUser === 1 ? "a vote" : "votes"}.` })
             .setColor(settings.embedColors.default);
 
-        topic.length > 0 && ebd.setDescription(`**Topic of the vote:**\n> ${topic}\n\n**Your options are:**\n`);
+        topic.length > 0 && ebd.setDescription(`> **Topic:**${topic.length > 64 ? "\n>" : ""} ${topic}\n`);
 
         await this.deferReply(int, true);
 
