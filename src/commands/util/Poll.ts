@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, TextChannel } from "discord.js";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
-import { embedify, PageEmbed, toUnix10 } from "@src/utils";
+import { embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import k from "kleur";
@@ -80,79 +80,100 @@ export class Poll extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
     {
-        const { guild, channel } = int;
+        let action = "";
 
-        if(!guild || !channel)
-            return this.reply(int, embedify("Please use this command in a server.", settings.embedColors.error), true);
-
-        switch(opt.name)
+        try
         {
-        case "create":
-        {
-            const headline = int.options.get("headline")?.value as string | undefined;
-            const votes_per_user = int.options.get("votes_per_user")?.value as number | undefined;
-            const title = int.options.get("title")?.value as string | undefined;
+            const { guild, channel } = int;
 
-            const modal = new CreatePollModal(headline, votes_per_user, title);
+            if(!guild || !channel)
+                return this.reply(int, embedify("Please use this command in a server.", settings.embedColors.error), true);
 
-            return await int.showModal(modal.getInternalModal());
-        }
-        case "list":
-        {
-            // TODO:FIXME: Couldn't run the command due to an error: Received one or more errors
-
-            await this.deferReply(int);
-
-            const polls = await getPolls(guild.id);
-
-            if(!polls || polls.length === 0)
-                return this.editReply(int, embedify("Currently no polls are active on this server.\nYou can create a new one with `/poll create`", settings.embedColors.error));
-
-            const pollList = [...polls];
-            const pages: EmbedBuilder[] = [];
-            const pollsPerPage = 8;
-            const totalPages = Math.ceil(polls.length / pollsPerPage);
-
-            while(pollList.length > 0)
+            switch(opt.name)
             {
-                const pollSlice = pollList.splice(0, pollsPerPage);
+            case "create":
+            {
+                action = "creating a new poll";
 
-                const ebd = new EmbedBuilder()
-                    .setTitle("Active polls")
-                    .setDescription(polls.length != 1 ? `Currently there's ${polls.length} active polls.` : "Currently there's only 1 active poll.")
-                    .setColor(settings.embedColors.default)
-                    .addFields({
-                        name: "\u200B",
-                        value: pollSlice.reduce((a, c) => ([
-                            `${a}\n`,
-                            `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show poll <:open_in_browser:994648843331309589>](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
-                            `> Ends <t:${toUnix10(c.dueTimestamp)}:R>`,
-                            ...(c.topic ? [`> **Topic:**${c.topic.length > 64 ? "\n> " : " "}${c.topic.replace(/[`]{3}\w*/gm, "").replace(/\n+/gm, " ")}`] : []),
-                        ].join("\n")), ""),
+                const headline = int.options.get("headline")?.value as string | undefined;
+                const votes_per_user = int.options.get("votes_per_user")?.value as number | undefined;
+                const title = int.options.get("title")?.value as string | undefined;
+
+                const modal = new CreatePollModal(headline, votes_per_user, title);
+
+                return await int.showModal(modal.getInternalModal());
+            }
+            case "list":
+            {
+                action = "listing polls";
+                // TODO:FIXME: Couldn't run the command due to an error: Received one or more errors
+
+                await this.deferReply(int);
+
+                const polls = await getPolls(guild.id);
+
+                if(!polls || polls.length === 0)
+                    return this.editReply(int, embedify("Currently no polls are active on this server.\nYou can create a new one with `/poll create`", settings.embedColors.error));
+
+                const pollList = [...polls];
+                const pages: EmbedBuilder[] = [];
+                const pollsPerPage = 8;
+                const totalPages = Math.ceil(polls.length / pollsPerPage);
+
+                while(pollList.length > 0)
+                {
+                    const pollSlice = pollList.splice(0, pollsPerPage);
+
+                    const ebd = new EmbedBuilder()
+                        .setTitle("Active polls")
+                        .setDescription(polls.length != 1 ? `Currently there's ${polls.length} active polls.` : "Currently there's only 1 active poll.")
+                        .setColor(settings.embedColors.default)
+                        .addFields({
+                            name: "\u200B",
+                            value: pollSlice.reduce((a, c) => ([
+                                `${a}\n`,
+                                `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show poll <:open_in_browser:994648843331309589>](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
+                                `> Ends <t:${toUnix10(c.dueTimestamp)}:R>`,
+                                ...(c.topic ? [`> **Topic:**${c.topic.length > 64 ? "\n> " : " "}${c.topic.replace(/[`]{3}\w*/gm, "").replace(/\n+/gm, " ")}`] : []),
+                            ].join("\n")), ""),
+                        });
+
+                    totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages}) - showing ${pollsPerPage}` });
+
+                    pages.push(ebd);
+                }
+
+                if(pages.length > 1)
+                {
+                    const pe = new PageEmbed(pages, int.user.id, {
+                        allowAllUsersTimeout: 60 * 1000,
+                        goToPageBtn: pages.length > 5,
                     });
 
-                totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages}) - showing ${pollsPerPage}` });
-
-                pages.push(ebd);
+                    return pe.useInt(int);
+                }
+                else
+                    return this.editReply(int, pages[0]);
             }
-
-            if(pages.length > 1)
+            case "cancel":
             {
-                const pe = new PageEmbed(pages, int.user.id, {
-                    allowAllUsersTimeout: 60 * 1000,
-                    goToPageBtn: pages.length > 5,
-                });
+                action = "canceling a poll";
 
-                return pe.useInt(int);
+                // TODO:
+                return;
             }
-            else
-                return this.editReply(int, pages[0]);
+            }
         }
-        case "cancel":
+        catch(err)
         {
-            // TODO:
-            return;
-        }
+            console.log(`Error while ${action}:\n`, err);
+
+            const errReply = useEmbedify(`Error while ${action}: ${err}`, settings.embedColors.error);
+
+            if(int.deferred || int.replied)
+                int.editReply(errReply);
+            else
+                int.reply(errReply);
         }
     }
 
