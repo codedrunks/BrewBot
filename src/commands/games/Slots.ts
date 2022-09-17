@@ -3,19 +3,142 @@ import { Command } from "@src/Command";
 import { getCoins, subCoins, addCoins } from "@database/economy";
 import { embedify } from "@utils/embedify";
 import { createNewMember } from "@src/database/users";
+import { randomItem, randRange, reserialize } from "svcorelib";
+
+interface Slot {
+    emoji: string;
+    multiplier: Map<number, number>;
+    chance: Map<number, number>;
+}
+
+type Pattern = "row" | "column" | "diagonal" | "diagonal-reverse";
 
 export class Slots extends Command
 {
-    private readonly SLOTS = new Map([
-        ["🍋", .3], // Lemon
-        ["🍒", .5], // Cherries
-        ["🍌", .7], // Banana
-        ["🍓", .9], // Strawberry
-        ["🍇", 1], // Grapes
-        ["🍉", 2], // Melon
-        ["💎", 3], // Diamond
-        ["🍆", 4], // Eggplant
-    ]);
+    // private readonly SLOTS = new Map([
+    //     ["🍋", .3], // Lemon
+    //     ["🍒", .5], // Cherries
+    //     ["🍌", .7], // Banana
+    //     ["🍓", .9], // Strawberry
+    //     ["🍇", 1], // Grapes
+    //     ["🍉", 2], // Melon
+    //     ["💎", 3], // Diamond
+    //     ["🍆", 10], // Eggplant
+    // ]);
+
+    private readonly SLOTS: Slot[] = [
+        {
+            emoji: "🍆", // Eggplant
+            multiplier: new Map([
+                [3, 10],
+                [4, 100],
+                [5, 1000],
+            ]),
+            chance: new Map([
+                [3, 0.01],
+                [4, 0.005],
+                [5, 0.001],
+            ]),
+        },
+        {
+            emoji: "💎", // Diamond
+            multiplier: new Map([
+                [3, 3],
+                [4, 6],
+                [5, 9],
+            ]),
+            chance: new Map([
+                [3, 0.05],
+                [4, 0.03],
+                [5, 0.02],
+            ]),
+        },
+        {
+            emoji: "🍉", // Melon
+            multiplier: new Map([
+                [3, 2],
+                [4, 3],
+                [5, 5]
+            ]),
+            chance: new Map([
+                [3, 0.1],
+                [4, 0.08],
+                [5, 0.06]
+            ]),
+        },
+        {
+            emoji: "🍇", // Grapes
+            multiplier: new Map([
+                [3, 1],
+                [4, 1.3],
+                [5, 1.5],
+            ]),
+            chance: new Map([
+                [3, 0.15],
+                [4, 0.13],
+                [5, 0.11],
+            ]),
+        },
+        {
+            emoji: "🍓", // Strawberry
+            multiplier: new Map([
+                [3, 0.9],
+                [4, 1.1],
+                [5, 1.3],
+            ]),
+            chance: new Map([
+                [3, 0.2],
+                [4, 0.17],
+                [5, 0.15],
+            ]),
+        },
+        {
+            emoji: "🍌", // Banana
+            multiplier: new Map([
+                [3, 0.7],
+                [4, 0.9],
+                [5, 1.2],
+            ]),
+            chance: new Map([
+                [3, 0.25],
+                [4, 0.22],
+                [5, 0.2]
+            ]),
+        },
+        {
+            emoji: "🍒", // Cherries
+            multiplier: new Map([
+                [3, 0.5],
+                [4, 0.8],
+                [5, 1],
+            ]),
+            chance: new Map([
+                [3, 0.3],
+                [4, 0.28],
+                [5, 0.25],
+            ]),
+        },
+        {
+            emoji: "🍋", // Lemon
+            multiplier: new Map([
+                [3, 0.3],
+                [4, 0.5],
+                [5, 0.8],
+            ]),
+            chance: new Map([
+                [3, 0.4],
+                [4, 0.38],
+                [5, 0.35]
+            ]),
+        }
+    ];
+
+    private readonly PATTERNS: Pattern[] = [
+        "row",
+        "column",
+        "diagonal",
+        "diagonal-reverse"
+    ];
 
     constructor()
     {
@@ -106,7 +229,9 @@ export class Slots extends Command
 
     async run(int: CommandInteraction): Promise<void>
     {
-        if (!int.guild?.id) return await this.reply(int, "This channel cannot be used in DMs");
+        await this.deferReply(int);
+
+        if (!int.guild?.id) return await this.editReply(int, "This channel cannot be used in DMs");
 
         const coins = await getCoins(int.user.id, int.guild.id);
 
@@ -119,33 +244,126 @@ export class Slots extends Command
         const grid = parseInt(int.options.get("slots_grid")?.value?.toString() ?? "3");
 
         if (coins < bet) {
-            return await this.reply(int, embedify(`Insufficient coins\nYour balance is: ${coins}`));
+            return await this.editReply(int, embedify(`Insufficient coins\nYour balance is: ${coins}`));
         }
 
-        await this.reply(int, "Shuffling slots...");
+        await this.editReply(int, "Shuffling slots...");
+
+        const chance = Math.random();
+        let win: Slot | null = null;
+
+        // TODO: a chance of getting your money back (maybe 5%?)
+
+        for (let i = 0; i < this.SLOTS.length; i++) {
+            if (chance < this.SLOTS[i].chance.get(grid)!) {
+                win = this.SLOTS[i];
+                break;
+            }
+        }
 
         let resultStr = "";
-        const result = [];
-        const emojis = Array.from(this.SLOTS.keys());
-
-        for (let i = 0; i < grid * grid; i++) {
-            if (i % grid == 0) {
-                resultStr += "\n";
-            }
-            const rand = emojis[Math.floor(Math.random() * emojis.length)];
-            resultStr += rand;
-            result.push(rand);
-        }
-
-        await this.editReply(int, resultStr);
-
-        const win = this.checkWin(result, grid);
+        const emojis = this.SLOTS.map((slot) => {
+            return slot.emoji;
+        });
 
         if (win) {
-            const coinsWon = Math.round(bet * this.SLOTS.get(win)!);
+            const pattern = randomItem(this.PATTERNS);
+            const randomNum = randRange(grid - 1);
+
+            switch (pattern) {
+            case "row":
+                for (let i = 0; i < grid; i++) {
+                    for (let j = 0; j < grid; j++) {
+                        const rand = emojis[Math.floor(Math.random() * emojis.length)];
+
+                        if (i === randomNum) {
+                            resultStr += win.emoji;
+                            continue;
+                        }
+
+                        resultStr += rand;
+                    }
+                    resultStr += "\n";
+                }
+                break;
+            case "column":
+                for (let i = 0; i < grid; i++) {
+                    for (let j = 0; j < grid; j++) {
+                        const rand = emojis[Math.floor(Math.random() * emojis.length)];
+
+                        if (j === randomNum) {
+                            resultStr += win.emoji;
+                            continue;
+                        }
+
+                        resultStr += rand;
+                    }
+                    resultStr += "\n";
+                }
+                break;
+            case "diagonal":
+                for (let i = 0; i < grid; i++) {
+                    for (let j = 0; j < grid; j++) {
+                        const rand = emojis[Math.floor(Math.random() * emojis.length)];
+
+                        if (i == j) {
+                            resultStr += win.emoji;
+                            continue;
+                        }
+
+                        resultStr += rand;
+                    }
+                    resultStr += "\n";
+                }
+                break;
+            case "diagonal-reverse":
+                for (let i = 0; i < grid; i++) {
+                    for (let j = 0; j < grid; j++) {
+                        const rand = emojis[Math.floor(Math.random() * emojis.length)];
+
+                        if ((i + j) === (grid - 1)) {
+                            resultStr += win.emoji;
+                            continue;
+                        }
+
+                        resultStr += rand;
+                    }
+                    resultStr += "\n";
+                }
+                break;
+            default:
+                throw new Error("Unrecognized slots pattern");
+            }
+
+            await this.editReply(int, resultStr);
+
+            const coinsWon = Math.round(bet * win.multiplier.get(grid)!);
             await addCoins(int.user.id, int.guild.id, coinsWon);
             return await this.followUpReply(int, embedify(`Congratulations!\nYou win ${coinsWon + bet} coins`));
         } else {
+            const board: string[] = [];
+
+            for (let i = 0; i < grid*grid; i++) {
+                board.push(`${i}`);
+            }
+
+            for (let i = 0; i < grid; i++) {
+                for (let j = 0; j < grid; j++) {
+                    let rand = emojis[Math.floor(Math.random() * emojis.length)];
+
+                    board[grid * i + j] = rand;
+
+                    while (this.checkWin(board, grid)) {
+                        rand = emojis[Math.floor(Math.random() * emojis.length)];
+                        board[grid * i + j] = rand;
+                    }
+
+                    resultStr += rand;
+                }
+                resultStr += "\n";
+            }
+
+            await this.editReply(int, resultStr);
             await subCoins(int.user.id, int.guild.id, bet);
             return await this.followUpReply(int, embedify(`You lost ${bet} coins. Better luck next time`));
         }
