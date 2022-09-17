@@ -12,6 +12,12 @@ const reminderLimit = 10;
 
 export class Reminder extends Command
 {
+    /**
+     * Contains all reminders that are currently being checked.  
+     * Format: `userId-reminderId`
+     */
+    private reminderCheckBuffer = new Set<string>();
+
     constructor(client: Client)
     {
         super({
@@ -336,6 +342,11 @@ export class Reminder extends Command
         if(!expRems || expRems.length === 0)
             return;
 
+        this.reminderCheckBuffer = new Set<string>([
+            ...this.reminderCheckBuffer,
+            ...expRems.map(r => `${r.userId}-${r.reminderId}`),
+        ]);
+
         const promises: Promise<void>[] = [];
 
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
@@ -368,11 +379,15 @@ export class Reminder extends Command
             finally
             {
                 deleteReminder(rem.reminderId, rem.userId);
+                this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
             }
         };
 
         for(const rem of expRems)
         {
+            if(this.reminderCheckBuffer.has(`${rem.userId}-${rem.reminderId}`))
+                return;
+
             const usr = client.users.cache.find(u => u.id === rem.userId);
 
             promises.push((async () => {
@@ -389,6 +404,7 @@ export class Reminder extends Command
                         return guildFallback(rem);
 
                     await deleteReminder(rem.reminderId, rem.userId);
+                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
                 }
                 catch(err)
                 {
