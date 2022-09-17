@@ -256,6 +256,12 @@ export class Slots extends Command
         });
 
         if (win) {
+            const board: string[] = [];
+
+            for (let i = 0; i < grid*grid; i++) {
+                board.push(`${i}`);
+            }
+
             const pattern = randomItem(this.PATTERNS);
             const randomNum = randRange(grid - 1);
 
@@ -267,9 +273,11 @@ export class Slots extends Command
 
                         if (i === randomNum) {
                             resultStr += win.emoji;
+                            board[grid * i + j] = win.emoji;
                             continue;
                         }
 
+                        board[grid * i + j] = rand;
                         resultStr += rand;
                     }
                     resultStr += "\n";
@@ -282,9 +290,11 @@ export class Slots extends Command
 
                         if (j === randomNum) {
                             resultStr += win.emoji;
+                            board[grid * i + j] = win.emoji;
                             continue;
                         }
 
+                        board[grid * i + j] = rand;
                         resultStr += rand;
                     }
                     resultStr += "\n";
@@ -295,11 +305,13 @@ export class Slots extends Command
                     for (let j = 0; j < grid; j++) {
                         const rand = emojis[Math.floor(Math.random() * emojis.length)];
 
-                        if (i == j) {
+                        if (i === j) {
                             resultStr += win.emoji;
+                            board[grid * i + j] = win.emoji;
                             continue;
                         }
 
+                        board[grid * i + j] = rand;
                         resultStr += rand;
                     }
                     resultStr += "\n";
@@ -312,9 +324,11 @@ export class Slots extends Command
 
                         if ((i + j) === (grid - 1)) {
                             resultStr += win.emoji;
+                            board[grid * i + j] = win.emoji;
                             continue;
                         }
 
+                        board[grid * i + j] = rand;
                         resultStr += rand;
                     }
                     resultStr += "\n";
@@ -324,9 +338,16 @@ export class Slots extends Command
                 throw new Error("Unrecognized slots pattern");
             }
 
+            const winningEmoji = this.checkWin(board, grid);
+
+            let coinsWon = Math.round(bet * win.multiplier.get(grid)!);
+
+            if (winningEmoji && winningEmoji !== win.emoji) {
+                coinsWon += bet * this.SLOTS.find((slot) => slot.emoji === winningEmoji)!.multiplier.get(grid)!;
+            }
+
             await this.editReply(int, resultStr);
 
-            const coinsWon = Math.round(bet * win.multiplier.get(grid)!);
             await addCoins(int.user.id, int.guild.id, coinsWon);
             return await this.followUpReply(int, embedify(`Congratulations!\nYou win ${coinsWon + bet} coins`));
         } else {
