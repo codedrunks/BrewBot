@@ -220,7 +220,7 @@ export class Slots extends Command
     {
         await this.deferReply(int);
 
-        if (!int.guild?.id) return await this.editReply(int, "This channel cannot be used in DMs");
+        if (!int.guild?.id) return await this.editReply(int, "This command cannot be used in DMs");
 
         const coins = await getCoins(int.user.id, int.guild.id);
 
