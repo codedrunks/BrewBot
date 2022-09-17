@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { getCoins, subCoins, addCoins } from "@database/economy";
 import { embedify } from "@utils/embedify";
 import { createNewMember } from "@src/database/users";
-import { randomItem, randRange, reserialize } from "svcorelib";
+import { randomItem, randRange } from "svcorelib";
 
 interface Slot {
     emoji: string;
@@ -15,17 +15,6 @@ type Pattern = "row" | "column" | "diagonal" | "diagonal-reverse";
 
 export class Slots extends Command
 {
-    // private readonly SLOTS = new Map([
-    //     ["🍋", .3], // Lemon
-    //     ["🍒", .5], // Cherries
-    //     ["🍌", .7], // Banana
-    //     ["🍓", .9], // Strawberry
-    //     ["🍇", 1], // Grapes
-    //     ["🍉", 2], // Melon
-    //     ["💎", 3], // Diamond
-    //     ["🍆", 10], // Eggplant
-    // ]);
-
     private readonly SLOTS: Slot[] = [
         {
             emoji: "🍆", // Eggplant
