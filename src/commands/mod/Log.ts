@@ -63,8 +63,8 @@ export class Log extends Command {
         }
 
         try {
-            if (channel?.type === ChannelType.GuildText && typeof(logChannel?.send) === "function") {
-
+            const chanTypes = [ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice];
+            if (chanTypes.includes(channel?.type)) {
                 if(!start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {
                         const lastMessage = messages?.first();
@@ -170,14 +170,19 @@ export class Log extends Command {
                             }
                         });
                     }).then(async () => {
-                        for await(const embed of messageSet) {
-                            gld.lastLogColor = String(newEmbedColor);
+                        if(logChannel)
+                        {
+                            for await(const embed of messageSet) {
+                                gld.lastLogColor = String(newEmbedColor);
 
-                            await setGuild(gld);
-                            logChannel.send({ embeds: [embed] });
+                                await setGuild(gld);
+                                logChannel.send({ embeds: [embed] });
+                            }
+
+                            return this.editReply(int, embedify(`Successfully logged **${amount}** message${amount === 1 ? "" : "s"} to **#${logChannel.name}**`, settings.embedColors.default));
                         }
-
-                        return await this.editReply(int, embedify(`Successfully logged **${amount}** message${amount === 1 ? "" : "s"} to **#${logChannel.name}**`, settings.embedColors.default));
+                        // TODO: ". or edit your guild settings in the [control panel.](https://brewbot.co/guild/123/settings)"
+                        return this.editReply(int, embedify("Couldn't find the log channel. Please specify one with the argument `channel`.", settings.embedColors.error));
                     });
             }
             else

@@ -28,8 +28,9 @@ export class Emoji extends Command
     {
         const emoji = int.options.get("emoji", true).value as string;
 
+        // TODO: make this URL auto download the image somehow
         const getEmUrl = (id: string, fmt: string) => `https://cdn.discordapp.com/emojis/${id}.${fmt}?size=4096&quality=lossless`;
-        const trimmed = (str: string) => str.length > 16 ? str.substring(0, 16) + "+" : str;
+        const trimmed = (str: string) => str.length > 24 ? str.substring(0, 24) + "+" : str;
 
         const embeds: EmbedBuilder[] = [];
         const btns: ButtonBuilder[] = [];

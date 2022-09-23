@@ -27,7 +27,7 @@ export function toUnix10(time: Date | number)
 
 export type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
 
-/** Converts a time object into */
+/** Converts a time object into its amount of milliseconds */
 export function timeToMs(timeObj: Partial<TimeObj>)
 {
     return Math.floor(
