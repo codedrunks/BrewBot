@@ -36,6 +36,11 @@ export class Reminder extends Command
                             required: true,
                         },
                         {
+                            name: "private",
+                            desc: "Set to True to hide this reminder from other people",
+                            type: ApplicationCommandOptionType.Boolean,
+                        },
+                        {
                             name: "seconds",
                             desc: "In how many seconds",
                             type: ApplicationCommandOptionType.Number,
@@ -133,6 +138,7 @@ export class Reminder extends Command
 
                 const args = {
                     name: int.options.get("name", true).value as string,
+                    ephemeral: int.options.get("private")?.value as boolean ?? false,
                     seconds: int.options.get("seconds")?.value as number ?? 0,
                     minutes: int.options.get("minutes")?.value as number ?? 0,
                     hours: int.options.get("hours")?.value as number ?? 0,
@@ -141,14 +147,14 @@ export class Reminder extends Command
                     years: int.options.get("years")?.value as number ?? 0,
                 };
 
-                const { name, ...timeObj } = args;
+                const { name, ephemeral, ...timeObj } = args;
 
                 const dueInMs = timeToMs(timeObj);
 
                 if(dueInMs < 1000 * 5)
                     return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);
 
-                await this.deferReply(int, false);
+                await this.deferReply(int, ephemeral);
 
                 const reminders = await getReminders(user.id);
 
@@ -171,9 +177,10 @@ export class Reminder extends Command
                     channel: channel?.id ?? null,
                     reminderId,
                     dueTimestamp,
+                    private: ephemeral,
                 });
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\`\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
             }
             case "list":
             {
@@ -357,10 +364,13 @@ export class Reminder extends Command
         const guildFallback = (rem: ReminderObj) => {
             try
             {
+                if(rem.private)
+                    return;
+
                 const guild = client.guilds.cache.find(g => g.id === rem.guild);
                 const chan = guild?.channels.cache.find(c => c.id === rem.channel);
 
-                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread].includes(chan.type))
+                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
                 {
                     const c = chan as TextBasedChannel;
                     c.send({ embeds: [ getExpiredEbd(rem) ] });
