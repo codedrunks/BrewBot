@@ -365,7 +365,7 @@ export class Reminder extends Command
             try
             {
                 if(rem.private)
-                    return;
+                    throw new Error("Can't send message in guild as reminder is private.");
 
                 const guild = client.guilds.cache.find(g => g.id === rem.guild);
                 const chan = guild?.channels.cache.find(c => c.id === rem.channel);
@@ -380,9 +380,9 @@ export class Reminder extends Command
             {
                 // TODO: track reminder "loss rate"
                 //
-                //  I  │ I I
-                // ────┼────
-                // I I │ I ⌐¬
+                //   I  │ I I
+                // ─────┼─────
+                //  I I │ I ⌐¬
 
                 void err;
             }
@@ -406,7 +406,7 @@ export class Reminder extends Command
 
                 try
                 {
-                    const dm = await usr.createDM(true);
+                    const dm = await usr.createDM(rem.private);
 
                     const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
 
