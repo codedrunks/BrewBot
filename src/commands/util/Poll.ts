@@ -1,9 +1,10 @@
-import { ApplicationCommandOptionType, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, TextChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, PermissionFlagsBits, TextChannel } from "discord.js";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
-import { embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { autoPlural, BtnMsg, embedify, PageEmbed, toUnix10, truncStr, useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
+import { Poll as PollObj } from "@prisma/client";
 import k from "kleur";
 
 interface PollVote<M = Message, O = string> {
@@ -30,20 +31,20 @@ export class Poll extends Command
                     desc: "Creates a poll in this channel",
                     args: [
                         {
+                            name: "title",
+                            desc: "The title of the poll message. This is different from the topic of the poll.",
+                            type: ApplicationCommandOptionType.String,
+                        },
+                        {
                             name: "headline",
-                            desc: "Enter pings (be mindful of who you ping) or extra explanatory text to notify users of this poll",
+                            desc: "Enter pings (be mindful of who you ping) or extra explanatory text to notify users of this poll.",
                             type: ApplicationCommandOptionType.String,
                         },
                         {
                             name: "votes_per_user",
-                            desc: "How many times a user is allowed to vote",
+                            desc: "How many times a user is allowed to vote (1 time by default).",
                             type: ApplicationCommandOptionType.Number,
                             min: 1,
-                        },
-                        {
-                            name: "title",
-                            desc: "The title of the poll message",
-                            type: ApplicationCommandOptionType.String,
                         },
                         // TODO:
                         // {
@@ -57,11 +58,18 @@ export class Poll extends Command
                     name: "list",
                     desc: "Lists all polls that are active on this server",
                 },
-                // {
-                //     name: "cancel",
-                //     desc: "Cancels a poll",
-                //     perms: [PermissionFlagsBits.ManageChannels],
-                // },
+                {
+                    name: "delete",
+                    desc: "Deletes an active poll",
+                    args: [
+                        {
+                            name: "poll_id",
+                            desc: "The numerical ID of the poll to delete. View IDs with /poll list",
+                            type: ApplicationCommandOptionType.Number,
+                            required: true,
+                        },
+                    ],
+                },
             ],
         });
 
@@ -106,7 +114,6 @@ export class Poll extends Command
             case "list":
             {
                 action = "listing polls";
-                // TODO:FIXME: Couldn't run the command due to an error: Received one or more errors
 
                 await this.deferReply(int);
 
@@ -117,7 +124,7 @@ export class Poll extends Command
 
                 const pollList = [...polls];
                 const pages: EmbedBuilder[] = [];
-                const pollsPerPage = 8;
+                const pollsPerPage = 4;
                 const totalPages = Math.ceil(polls.length / pollsPerPage);
 
                 while(pollList.length > 0)
@@ -126,19 +133,19 @@ export class Poll extends Command
 
                     const ebd = new EmbedBuilder()
                         .setTitle("Active polls")
-                        .setDescription(polls.length != 1 ? `Currently there's ${polls.length} active polls.` : "Currently there's only 1 active poll.")
+                        .setDescription(polls.length != 1 ? `Currently there's ${polls.length} active ${autoPlural("poll", polls)}.` : "Currently there's only 1 active poll.")
                         .setColor(settings.embedColors.default)
                         .addFields({
                             name: "\u200B",
                             value: pollSlice.reduce((a, c) => ([
                                 `${a}\n`,
-                                `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show poll <:open_in_browser:994648843331309589>](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
+                                `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show <:open_in_browser:994648843331309589>](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
+                                ...(c.topic ? [`> **Topic:** ${truncStr(c.topic.replace(/[`]{3}\w*/gm, "").replace(/\n+/gm, " "), 80)}`] : ["> (no topic)"]),
                                 `> Ends <t:${toUnix10(c.dueTimestamp)}:R>`,
-                                ...(c.topic ? [`> **Topic:**${c.topic.length > 64 ? "\n> " : " "}${c.topic.replace(/[`]{3}\w*/gm, "").replace(/\n+/gm, " ")}`] : []),
                             ].join("\n")), ""),
                         });
 
-                    totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages}) - showing ${pollsPerPage}` });
+                    totalPages > 1 && ebd.setFooter({ text: `(${pages.length + 1}/${totalPages}) - showing ${pollsPerPage} of ${polls.length} total ${autoPlural("poll", polls)}` });
 
                     pages.push(ebd);
                 }
@@ -155,11 +162,81 @@ export class Poll extends Command
                 else
                     return this.editReply(int, pages[0]);
             }
-            case "cancel":
+            case "delete":
             {
-                action = "canceling a poll";
+                action = "deleting a poll";
+                // TODO: display current results to deleter, maybe in the poll itself?
 
-                // TODO:
+                await this.deferReply(int, true);
+
+                const pollId = int.options.get("poll_id", true).value as number;
+
+                const polls = await getPolls(guild.id);
+
+                const poll = polls.find(p => p.pollId === pollId);
+
+                if(!poll)
+                    return this.editReply(int, embedify("Couldn't find a poll with this ID.\nUse `/poll list` to list all active polls with their IDs.", settings.embedColors.error));
+
+                const { user, memberPermissions } = int;
+
+                if(!memberPermissions?.has(PermissionFlagsBits.ManageChannels) && user.id !== poll.createdBy)
+                    return this.editReply(int, embedify("You are not the author of this poll so you can't delete it.", settings.embedColors.error));
+
+                const pollMsgs = (await this.getPollMsgs(poll))!; //#DBG
+
+                const finalVotes = await this.accumulateVotes(pollMsgs.reduce((a, c) => { a.push(c as never); return a; }, []), poll.voteOptions);
+
+                const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
+
+                const btns = [
+                    new ButtonBuilder()
+                        .setStyle(ButtonStyle.Danger)
+                        .setLabel("Delete")
+                        .setEmoji("🗑️"),
+                    new ButtonBuilder()
+                        .setStyle(ButtonStyle.Secondary)
+                        .setLabel("Cancel")
+                        .setEmoji("❌"),
+                ];
+
+                const bm = new BtnMsg(embedify(`You are about to delete a poll that ${peopleVoted} ${peopleVoted === 1 ? "person" : "people"} have voted on.\nAre you sure you want to delete the poll? This cannot be undone.`, settings.embedColors.warning), btns, { timeout: 30_000 });
+
+                bm.on("press", async (btn, btInt) => {
+                    btInt.deferUpdate();
+
+                    let embed: EmbedBuilder | undefined;
+
+                    if(btInt.user.id !== int.user.id)
+                        return;
+
+                    if(btn.data.label === "Delete")
+                    {
+                        try
+                        {
+                            await Promise.all(pollMsgs.map(m => m.delete()));
+
+                            await deletePoll(poll.guildId, poll.pollId);
+
+                            embed = embedify(`The poll was successfully deleted.\nThe results were:\n${getReducedWinningOpts()}`);
+                        }
+                        catch(err)
+                        {
+                            embed = embedify("Couldn't delete the poll due to an error.");
+                        }
+                    }
+                    else if(btn.data.label === "Cancel")
+                        embed = embedify("Canceled deletion of the poll.");
+
+                    bm.destroy();
+
+                    embed && int.editReply({
+                        ...bm.getReplyOpts(),
+                        embeds: [embed],
+                    });
+                });
+
+                int.editReply(bm.getReplyOpts());
                 return;
             }
             }
@@ -181,15 +258,12 @@ export class Poll extends Command
     {
         const expPolls = await getExpiredPolls();
 
-        for await(const { guildId, pollId, channel, messages, voteOptions, dueTimestamp: endTime } of expPolls)
+        for await(const poll of expPolls)
         {
+            const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
             try
             {
-                const gui = this.client.guilds.cache.find(g => g.id === guildId);
-                const chan = gui?.channels.cache.find(c => c.id === channel);
-                const msgs = (chan as TextChannel | undefined)?.messages.cache
-                    .filter(m => messages.includes(m.id))
-                    .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 1 : -1);
+                const msgs = await this.getPollMsgs(poll);
 
                 if(msgs && msgs.size > 0)
                 {
@@ -210,9 +284,20 @@ export class Poll extends Command
             catch(err)
             {
                 // TODO: add logging lib
-                console.error(`Error while checking poll with guildId=${guildId}, pollId=${pollId} and channel=${channel}:\n`, err);
+                console.error(`Error while checking poll with guildId=${guildId} and pollId=${pollId}:\n`, err);
             }
         }
+    }
+
+    async getPollMsgs({ guildId, channel, messages }: PollObj)
+    {
+        const gui = this.client.guilds.cache.find(g => g.id === guildId);
+        if(!gui) return;
+        const chan = (await gui.channels.fetch()).find(c => c.id === channel);
+
+        return (chan as TextChannel | undefined)?.messages.cache
+            .filter(m => messages.includes(m.id))
+            .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 1 : -1);
     }
 
     getConclusionEmbed(finalVotes: PollVote[], startTime: Date, endTime: Date, guildId: string, channelId: string, firstMsgId: string)
@@ -259,8 +344,8 @@ export class Poll extends Command
 
         const getReducedWinningOpts = (limit?: number) =>
             winningOptions.reduce((a, c, i) => `${a}${
-                !limit || i < limit
-                    ? `\n\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} votes**` : ""}`
+                limit === undefined || i < limit
+                    ? `\n\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} ${autoPlural("vote", c.votes)}**` : ""}`
                     : ""
             }`, "");
 
