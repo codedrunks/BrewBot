@@ -5,6 +5,7 @@ import { Command } from "@src/Command";
 import { axios, embedify } from "@src/utils";
 import { settings } from "@src/settings";
 import languages from "@assets/languages.json";
+import { isArrayEmpty } from "svcorelib";
 
 export class Translate extends Command
 {
@@ -90,6 +91,9 @@ export class Translate extends Command
                 trParts = trParts.map((p: string[]) => p?.[0]);
             else
                 trParts = [trParts?.[0]?.[0]];
+
+            if(isArrayEmpty(trParts) === true)
+                return null;
 
             const translation = trParts
                 .filter((p: unknown) => typeof p === "string")

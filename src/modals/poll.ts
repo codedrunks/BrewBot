@@ -2,7 +2,7 @@ import { EmbedBuilder, EmbedField, Message, MessageOptions, ModalSubmitInteracti
 
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
-import { embedify } from "@src/utils";
+import { embedify, padStart } from "@src/utils";
 import { createNewGuild, createNewPoll, getGuild, getPolls } from "@src/database/guild";
 import { halves } from "svcorelib";
 
@@ -14,6 +14,9 @@ export class CreatePollModal extends Modal
 
     constructor(headline?: string, votesPerUser = 1, title: string | undefined = undefined)
     {
+        const p = padStart, d = new Date();
+        const defaultExpiry = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+
         // TODO: persist initial value of modal inputs with redis so the data is kept when a user fucks up the time
         super({
             title: "Create a poll",
@@ -29,13 +32,15 @@ export class CreatePollModal extends Modal
                     .setCustomId("expiry_date_time")
                     .setLabel("Poll end date and time")
                     .setPlaceholder("YYYY-MM-DD hh:mm  (24h, UTC, for today remove date)")
-                    .setMinLength(3)
+                    .setMinLength(5)
                     .setMaxLength(16)
                     .setStyle(TextInputStyle.Short)
+                    .setValue(defaultExpiry)
                     .setRequired(true),
                 new TextInputBuilder()
                     .setCustomId("vote_options")
                     .setLabel("Vote options")
+                    // TODO: support custom emojis
                     .setPlaceholder(`The options the users can choose.\nOne option per line, ${settings.emojiList.length} max.\nSupports Discord's Markdown.`)
                     .setMaxLength(Math.min(settings.emojiList.length * 50, 5000))
                     .setStyle(TextInputStyle.Paragraph)
@@ -79,7 +84,7 @@ export class CreatePollModal extends Modal
         const headline = this.headline;
 
         const longFmtRe = /^\d{4}[/-]\d{1,2}[/-]\d{1,2}[\s.,_T]\d{1,2}:\d{1,2}(:\d{1,2})?$/,
-            shortFmtRe = /^\d{1,2}:\d{1,2}(:\d{1,2})?$/;
+            shortFmtRe = /^\d{1,2}:\d{1,2}$/;
 
         if(!expiry.match(longFmtRe) && !expiry.match(shortFmtRe))
             return this.reply(int, embedify("Please make sure the poll end date and time are formatted in one of these formats (24 hours, in UTC / GMT+0 time):\n- `YYYY/MM/DD hh:mm`\n- `hh:mm` (today)", settings.embedColors.error), true);
@@ -91,18 +96,22 @@ export class CreatePollModal extends Modal
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, ...rest] = (expiry.match(longFmtRe)
             ? /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})[\s.,_T](\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
-            : /^(\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
+            : /^(\d{1,2}):(\d{1,2})$/.exec(expiry)
         )?.filter(v => v) as string[];
 
+        // TODO:FIXME: this shit is utterly broken
         const d = new Date(),
-            today = rest.length > 4 ? [] : [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+            today = rest.length > 2 ? [] : [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
 
         const timeParts = [...today, ...rest.map((v, i) => i != 0 ? parseInt(v) : parseInt(v) - new Date().getTimezoneOffset() / 60)] as [number];
 
         const dueTimestamp = new Date(...timeParts);
         const optionFields = CreatePollModal.reduceOptionFields(voteOptions);
 
-        if(dueTimestamp.getTime() < Date.now() + 1000 * 30)
+        const dueTs = dueTimestamp.getTime();
+        const nowTs = new Date().getTime() + 30_000;
+
+        if(dueTs < nowTs)
             return this.reply(int, embedify("Please enter a date and time that is at least one minute from now.", settings.embedColors.error), true);
 
         const ebd = new EmbedBuilder()
