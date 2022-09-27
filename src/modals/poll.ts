@@ -2,7 +2,7 @@ import { EmbedBuilder, EmbedField, Message, MessageOptions, ModalSubmitInteracti
 
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
-import { embedify, padStart } from "@src/utils";
+import { embedify, zeroPad } from "@src/utils";
 import { createNewGuild, createNewPoll, getGuild, getPolls } from "@src/database/guild";
 import { halves } from "svcorelib";
 
@@ -14,7 +14,7 @@ export class CreatePollModal extends Modal
 
     constructor(headline?: string, votesPerUser = 1, title: string | undefined = undefined)
     {
-        const p = padStart, d = new Date();
+        const p = zeroPad, d = new Date();
         const defaultExpiry = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
 
         // TODO: persist initial value of modal inputs with redis so the data is kept when a user fucks up the time
