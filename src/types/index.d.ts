@@ -1,11 +1,9 @@
-import { ClientEvents, ApplicationCommandOptionType, BufferResolvable, JSONEncodable, APIAttachment, Attachment, AttachmentBuilder, AttachmentPayload } from "discord.js";
+import { ClientEvents, ApplicationCommandOptionType, BufferResolvable, JSONEncodable, APIAttachment, Attachment, AttachmentBuilder, AttachmentPayload, CommandInteraction, ButtonInteraction, ModalSubmitInteraction, ContextMenuCommandInteraction } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ContextMenuCommandType } from "@discordjs/builders";
 import { Stream } from "node:stream";
 
 //#MARKER commands
-
-export type AnyCmdInteraction = CommandInteraction | ButtonInteraction | ModalSubmitInteraction | ContextMenuInteraction;
 
 /** A single argument of a slash command */
 type CommandArg = BaseCommandArg & (StringCommandArg | NumberCommandArg | IntegerCommandArg | BooleanCommandArg | UserCommandArg | ChannelCommandArg | RoleCommandArg | AttachmentCommandArg);
@@ -70,8 +68,12 @@ interface CmdMetaBase {
     name: string;
     /** Description that's displayed when typing the command in chat */
     desc: string;
+    // TODO:
+    // /** Whether this is a global or guild command */
+    // type: "guild" | "global";
+    /** If this is used, the command is still displayed but errors on use. Only use this in subcommands. */
     perms?: PermissionFlagsBits[];
-    /** Default member permissions needed to view and use this command */
+    /** (for guild commands) member permissions needed to view and use this command */
     memberPerms?: PermissionFlagsBits[];
     /** Category of the command */
     category: CommandCategory;
@@ -130,3 +132,5 @@ export interface CtxMeta {
 //#MARKER discord types
 
 export type DiscordAPIFile = BufferResolvable | Stream | JSONEncodable<APIAttachment> | Attachment | AttachmentBuilder | AttachmentPayload;
+
+export type AnyInteraction = CommandInteraction | ButtonInteraction | ModalSubmitInteraction | ContextMenuCommandInteraction;

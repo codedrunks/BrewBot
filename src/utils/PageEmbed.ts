@@ -8,7 +8,7 @@ import { Command } from "@src/Command";
 import { btnListener } from "@src/registry";
 import { useEmbedify } from "./embedify";
 import { settings } from "@src/settings";
-import { AnyCmdInteraction, DiscordAPIFile } from "@src/types";
+import { AnyInteraction, DiscordAPIFile } from "@src/types";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
@@ -57,7 +57,7 @@ export class PageEmbed extends EmitterBase
     private readonly settings: PageEmbedSettings;
 
     private msg?: Message;
-    private int?: AnyCmdInteraction;
+    private int?: AnyInteraction;
     private btns: ButtonBuilder[];
 
     private pages: APIEmbed[] = [];
@@ -481,7 +481,7 @@ export class PageEmbed extends EmitterBase
     }
 
     /** Call this function once to reply to or edit an interaction with this PageEmbed. This is the interactions' equivalent of `sendIn()` */
-    public async useInt(int: AnyCmdInteraction, ephemeral = false)
+    public async useInt(int: AnyInteraction, ephemeral = false)
     {
         if(!int.deferred)
             await int.deferReply();
