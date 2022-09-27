@@ -16,18 +16,18 @@ export class Translate extends Command
             category: "util",
             args: [
                 {
+                    name: "language",
+                    desc: "English name of the language to translate to",
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                },
+                {
                     name: "text",
                     desc: "The text to translate",
                     type: ApplicationCommandOptionType.String,
                     required: true,
                 },
-                {
-                    name: "language",
-                    desc: "English name of the language to translate to",
-                    type: ApplicationCommandOptionType.String,
-                    required: true,
-                }
-            ]
+            ],
         });
     }
 
@@ -89,7 +89,7 @@ export class Translate extends Command
             if(trParts.length > 1)
                 trParts = trParts.map((p: string[]) => p?.[0]);
             else
-                trParts = [trParts?.[0]];
+                trParts = [trParts?.[0]?.[0]];
 
             const translation = trParts
                 .filter((p: unknown) => typeof p === "string")
