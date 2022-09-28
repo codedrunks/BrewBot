@@ -11,7 +11,13 @@ interface Slot {
     chance: Map<number, number>;
 }
 
-type Pattern = "row" | "column" | "diagonal" | "diagonal-reverse";
+interface DoubleWin {
+    emoji: string;
+    pattern: Pattern;
+    rowColNum: number;
+}
+
+type Pattern = "row" | "column" | "diagonal" | "diagonal-reverse" | "none";
 
 export class Slots extends Command
 {
@@ -168,7 +174,7 @@ export class Slots extends Command
         });
     }
 
-    checkWin(result: string[], grid: number): (string | null) {
+    checkWin(result: string[], grid: number, firstWinPattern: Pattern, firstWinRowColNum: number): (DoubleWin | null) {
         // check rows
         rows:
         for (let i = 0; i < grid; i++) {
@@ -178,7 +184,8 @@ export class Slots extends Command
                 }
             }
 
-            return result[i];
+            if (firstWinRowColNum === i) continue rows;
+            return { rowColNum: i, pattern: "row", emoji: result[i * grid] };
         }
 
         // check columns
@@ -190,7 +197,8 @@ export class Slots extends Command
                 }
             }
 
-            return result[i];
+            if (firstWinRowColNum === i) continue cols;
+            return { rowColNum: i, pattern: "column", emoji: result[i] };
         }
 
         //check diagonals
@@ -207,10 +215,10 @@ export class Slots extends Command
             }
         }
 
-        if (diagWin === grid) {
-            return result[0];
-        } else if (reverseDiagWin === grid) {
-            return result[grid - 1];
+        if (diagWin === grid && firstWinPattern !== "diagonal") {
+            return { rowColNum: -1, pattern: "diagonal", emoji: result[0] };
+        } else if (reverseDiagWin === grid && firstWinPattern !== "diagonal-reverse") {
+            return { rowColNum: -1, pattern: "diagonal-reverse", emoji: result[grid - 1] };
         }
 
         return null;
@@ -263,7 +271,7 @@ export class Slots extends Command
             }
 
             const pattern = randomItem(this.PATTERNS);
-            const randomNum = randRange(grid - 1);
+            let winningRowColNum = randRange(grid - 1);
 
             switch (pattern) {
             case "row":
@@ -271,7 +279,7 @@ export class Slots extends Command
                     for (let j = 0; j < grid; j++) {
                         const rand = emojis[Math.floor(Math.random() * emojis.length)];
 
-                        if (i === randomNum) {
+                        if (i === winningRowColNum) {
                             resultStr += win.emoji;
                             board[grid * i + j] = win.emoji;
                             continue;
@@ -288,7 +296,7 @@ export class Slots extends Command
                     for (let j = 0; j < grid; j++) {
                         const rand = emojis[Math.floor(Math.random() * emojis.length)];
 
-                        if (j === randomNum) {
+                        if (j === winningRowColNum) {
                             resultStr += win.emoji;
                             board[grid * i + j] = win.emoji;
                             continue;
@@ -301,6 +309,7 @@ export class Slots extends Command
                 }
                 break;
             case "diagonal":
+                winningRowColNum = -1;
                 for (let i = 0; i < grid; i++) {
                     for (let j = 0; j < grid; j++) {
                         const rand = emojis[Math.floor(Math.random() * emojis.length)];
@@ -318,6 +327,7 @@ export class Slots extends Command
                 }
                 break;
             case "diagonal-reverse":
+                winningRowColNum = -1;
                 for (let i = 0; i < grid; i++) {
                     for (let j = 0; j < grid; j++) {
                         const rand = emojis[Math.floor(Math.random() * emojis.length)];
@@ -338,18 +348,20 @@ export class Slots extends Command
                 throw new Error("Unrecognized slots pattern");
             }
 
-            const winningEmoji = this.checkWin(board, grid);
+            const doubleWin = this.checkWin(board, grid, pattern, winningRowColNum);
 
             let coinsWon = Math.round(bet * win.multiplier.get(grid)!);
+            let isDoubleWin = false;
 
-            if (winningEmoji && winningEmoji !== win.emoji) {
-                coinsWon += bet * this.SLOTS.find((slot) => slot.emoji === winningEmoji)!.multiplier.get(grid)!;
+            if (doubleWin && (doubleWin.pattern !== pattern || (doubleWin.pattern === pattern && doubleWin.rowColNum >= 0 && doubleWin.rowColNum !== winningRowColNum))) {
+                coinsWon += Math.round(bet * this.SLOTS.find((slot) => slot.emoji === doubleWin.emoji)!.multiplier.get(grid)!);
+                isDoubleWin = true;
             }
 
             await this.editReply(int, resultStr);
 
             await addCoins(int.user.id, int.guild.id, coinsWon);
-            return await this.followUpReply(int, embedify(`Congratulations!\nYou win ${coinsWon + bet} coins`));
+            return await this.followUpReply(int, embedify(`Congratulations!${isDoubleWin ? " It's a double Win!!!" : ""}\nYou win ${coinsWon + bet} coins`));
         } else {
             const board: string[] = [];
 
@@ -363,7 +375,7 @@ export class Slots extends Command
 
                     board[grid * i + j] = rand;
 
-                    while (this.checkWin(board, grid)) {
+                    while (this.checkWin(board, grid, "none", -1)) {
                         rand = emojis[Math.floor(Math.random() * emojis.length)];
                         board[grid * i + j] = rand;
                     }
