@@ -24,10 +24,11 @@ interface IBlackJackGame {
     lastMessage?: Message<boolean> | undefined;
     currentPlayer?: number;
     guildId: string;
+    winner?: [string, number];
 }
 
 interface IBlackJack {
-    games: Record<string, IBlackJackGame>;
+    games: Record<string, IBlackJackGame | undefined>;
 }
 
 const BlackJackCollection: Record<string, IBlackJack> = {};
@@ -97,7 +98,15 @@ export class BlackJack extends Command {
         }
 
         for(const key in BlackJackCollection[guild.id].games) {
-            const game = BlackJackCollection[guild.id].games[key];
+            const game = BlackJackCollection[guild.id].games[key]!;
+
+            console.log(game);
+
+            if(!game) {
+                delete BlackJackCollection[guild.id].games[key];
+                console.log(BlackJackCollection[guild.id].games[key]);
+                continue;
+            }
 
             if(game.players.length < 6 && !game.started) games.push([key, game.players.length]);
         }
@@ -107,7 +116,7 @@ export class BlackJack extends Command {
         if(games.length > 0) {
             games = games.sort((a, b) => (a[1] as number) - (b[1] as number));
 
-            const bestGame = BlackJackCollection[guild.id].games[games[0][0] as string];
+            const bestGame = BlackJackCollection[guild.id].games[games[0][0] as string]!;
 
             bestGame.players.push(int.user.id);
             bestGame.playerData[int.user.id] = {
@@ -118,7 +127,7 @@ export class BlackJack extends Command {
             };
             UsersMap[int.user.id] = games[0][0] as string;
 
-            return await this.followUpReply(int, embedify(`You have been added to <@${(games[0][0] as string).split(guild.id)[0]}>'s game, wait for it to start`), true);
+            return await this.followUpReply(int, embedify(`You have been added to <@${bestGame.players[0]}>'s game, wait for it to start`), true);
         } else {
             UsersMap[int.user.id] = `${guild.id}${int.user.id}`;
 
@@ -132,7 +141,7 @@ export class BlackJack extends Command {
             };
 
             const message = await int.channel?.send({ embeds: [ embedify(`<@${int.user.id}>\`(${bet} bet)\` has started a game of Blackjack, join in the next 20 seconds to play`) ]});
-            const newGame = BlackJackCollection[guild.id].games[`${guild.id}${int.user.id}`];
+            const newGame = BlackJackCollection[guild.id].games[`${guild.id}${int.user.id}`]!;
             newGame.players.push(int.user.id);
             newGame.playerData[int.user.id] = {
                 name: int.user.username,
@@ -162,7 +171,7 @@ export class BlackJack extends Command {
     async gameLoop(player: User, guild: Guild, bet: number, startedMsg: Message<boolean> | undefined) { //eslint-disable-line
         setTimeout(async () => {
 
-            const game = BlackJackCollection[guild.id].games[`${guild.id}${player.id}`];
+            const game = BlackJackCollection[guild.id].games[`${guild.id}${player.id}`]!;
             game.deck = game.deck.concat([...Deck]);
 
             game.dealer.push(takeItemMutArray<ICard>(game.deck), takeItemMutArray<ICard>(game.deck));
@@ -195,10 +204,10 @@ export class BlackJack extends Command {
 
             collector?.on("collect", async (m) => {
                 if(m.author.id === game.players[game.currentPlayer!]) {
+                    if(!["hit", "stand"].includes(m.content)) return;
 
                     game.lastMessage?.delete();
 
-                    if(!["hit", "stand"].includes(m.content)) return;
 
                     let over = false;
                     const player = game.playerData[game.players[game.currentPlayer!]];
@@ -209,15 +218,11 @@ export class BlackJack extends Command {
                         const card = takeItemMutArray<ICard>(game.deck);
                         game.playerData[game.players[game.currentPlayer!]].hand.push(card);
 
-                        console.log("handValueOnHit", (this.calculateHand(player.hand)));
-
-                        if((this.calculateHand(player.hand)) > 21) over = true;
+                        if((this.reduceHand(player.hand)) >= 21) over = true;
 
                     } else if(m.content === "stand") {
                         over = true;
                     }
-
-                    console.log("over", over);
 
                     // if player is over 21 or stood, increment current player and then send new embed with new current player
 
@@ -228,13 +233,12 @@ export class BlackJack extends Command {
                         // all players with score: > dealer win, == dealer draw, < dealer lose
                         // distribute coins accordingly, loss 0x, draw 1x, win 1.5x
 
-                        console.log(game.currentPlayer, game.players.length);
-
                         if(game.currentPlayer! + 1 > game.players.length) {
 
-                            collector;
+                            collector.stop();
 
-                            let dealerValue = this.calculateHand(game.dealer);
+                            let dealerValue = this.reduceHand(game.dealer);
+
                             while(dealerValue < 18) {
                                 const card = takeItemMutArray<ICard>(game.deck);
 
@@ -242,24 +246,31 @@ export class BlackJack extends Command {
                                 game.dealer.push(card);
                             }
 
-                            collector.stop();
+                            for(let i = 0; i < game.players.length; i++) {
+                                const j = this.reduceHand(game.playerData[game.players[i]].hand);
+                                if(j <= 21 && j > dealerValue) game.winner = [game.playerData[game.players[i]].id, j];
+                            }
+
+                            if(!game.winner) game.winner = ["dealer", dealerValue];
 
                             const finalEmbed = embedify(":clubs:**BlackJack**:diamonds:")
-                                .addField("**Dealer**:checkered_flag:", `${game.dealer.map(c => `${c.emote}`).join("")}${this.calculateHand(game.dealer) > 21 ? ":x:" : ":white_check_mark:"} | value: ${this.calculateHand(game.dealer)}`, false);
+                                .addField("**Dealer**:checkered_flag:", `${game.dealer.map(c => `${c.emote}`).join("")}${dealerValue < game.winner[1] || dealerValue > 21 ? ":x:" : ":white_check_mark:"} | value: ${this.reduceHand(game.dealer)}`, false);
 
                             for(let i = 0; i < game.players.length; i++) {
                                 const player = game.playerData[game.players[i]];
-                                const playerValue = this.calculateHand(player.hand);
+                                const playerValue = this.reduceHand(player.hand);
 
-                                finalEmbed.addField(`**${player.name}**`, `${player.hand.map(c => `${c.emote}`).join("")}${playerValue > 21 || playerValue > this.calculateHand(game.dealer) ? ":x:" : ":white_check_mark:"} | value: ${playerValue} | bet: ${player.bet}`);
+                                finalEmbed.addField(`**${player.name}**`, `${player.hand.map(c => `${c.emote}`).join("")}${playerValue > 21 || playerValue < game.winner[1] ? ":x:" : ":white_check_mark:"} | value: ${playerValue} | bet: ${player.bet}`);
 
-                                if(playerValue == dealerValue) await addCoins(player.id, game.guildId, player.bet);
-                                else if(playerValue > dealerValue && playerValue <= 21) await addCoins(player.id, game.guildId, player.bet * 1.5);
+                                if(playerValue === game.winner[1] && game.winner[0] !== "dealer" || player.id === game.winner[0]) await addCoins(player.id, game.guildId, player.bet + player.bet * 1.5);
+                                else if(playerValue === game.winner[1] && game.winner[0] === "dealer") await addCoins(player.id, game.guildId, player.bet);
+
+                                delete UsersMap[player.id];
                             }
 
-                            game.lastMessage?.channel.send({ embeds: [ finalEmbed ]});
+                            game.lastMessage = await game.lastMessage?.channel.send({ embeds: [ finalEmbed ]});
 
-                            delete BlackJackCollection[guild.id].games[`${guild.id}${player.id}`];
+                            BlackJackCollection[guild.id].games[`${guild.id}${player.id}`] = undefined;
                         } else {
                             const embed1 = embedify(":clubs:**BlackJack**:diamonds:\n\nPlease respond with `hit` or `stand`");
 
@@ -281,7 +292,7 @@ export class BlackJack extends Command {
 
                         newFields.splice(game.currentPlayer! + 1, 1, {
                             name: `**${player.name}**`,
-                            value: `${player.hand.map(c => `${c.emote}`).join("")} | value: ${this.calculateHand(player.hand)} | bet: ${player.bet}`,
+                            value: `${player.hand.map(c => `${c.emote}`).join("")} | value: ${this.reduceHand(player.hand)} | bet: ${player.bet}`,
                             inline: false
                         });
 
@@ -297,11 +308,12 @@ export class BlackJack extends Command {
         }, 1000 * 10);
     }
 
-    calculateHand(hand: ICard[]): number {
+    reduceHand(hand: ICard[]): number {
         return hand.reduce<number>((p, c) => p + c.value, 0);
     }
 }
 
+// update to use svcorelib functions
 function takeItemMutArray<T>(list: T[]) {
     const [item, idx] = randomItemIndex<T>(list);
 
