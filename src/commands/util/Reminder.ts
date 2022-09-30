@@ -255,7 +255,7 @@ export class Reminder extends Command
                     return await int.editReply(useEmbedify(`Successfully deleted the reminder \`${name}\``, settings.embedColors.default));
                 };
 
-                if(remIdent.match(/d+/))
+                if(remIdent.match(/\d+/))
                 {
                     const remId = parseInt(remIdent);
                     const rem = await getReminder(remId, user.id);
