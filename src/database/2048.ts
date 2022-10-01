@@ -30,6 +30,15 @@ export async function getLeaderboard(guildId: string, global: boolean, sort: str
 export async function addOrUpdateLeaderboardEntry(guildId: string, userId: string, score: number, isGameWin: boolean): Promise<DatabaseError> {
     const gamesWon = isGameWin ? 1 : 0;
 
+    const entry = await prisma.twentyFortyEightLeaderboardEntry.findUnique({
+        where: {
+            guildId_userId: {
+                guildId,
+                userId
+            }
+        }
+    });
+
     await prisma.twentyFortyEightLeaderboardEntry.upsert({
         where: {
             guildId_userId: {
@@ -38,7 +47,7 @@ export async function addOrUpdateLeaderboardEntry(guildId: string, userId: strin
             },
         },
         update: {
-            score,
+            score: Math.max(entry?.score ?? 0, score),
             gamesWon: {
                 increment: gamesWon,
             }
