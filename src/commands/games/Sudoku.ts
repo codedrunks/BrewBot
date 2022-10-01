@@ -446,19 +446,14 @@ export class Sudoku extends Command
         }
     }
 
-    drawNumber(game: Game, box: number, cell: number, choice: number) {
+    drawNumber(game: Game, xPos: number, yPos: number, choice: number) {
         game.ctx.font = "bold 46pt Roboto";
         game.ctx.textAlign = "center";
         game.ctx.textBaseline = "middle";
 
-        const boxCol = (box - 1) % 3;
-        const boxRow = Math.floor((box - 1) / 3);
+        xPos = xPos + this.CELL_WIDTH / 2;
+        yPos = yPos + this.CELL_HEIGHT / 2;
 
-        const cellCol = (cell - 1) % 3;
-        const cellRow = Math.floor((cell - 1) / 3);
-
-        const xPos = (boxCol * 300) + (cellCol * 100) + this.CELL_WIDTH / 2;
-        const yPos = (boxRow * 300) + (cellRow * 100) + this.CELL_HEIGHT / 2;
         game.ctx.fillText(choice.toString(), xPos, yPos);
     }
 
@@ -467,18 +462,23 @@ export class Sudoku extends Command
             for (let col = 0; col < this.BOARD_LENGTH; col++) {
                 const boxRow = Math.floor(row / 3);
                 const boxCol = Math.floor(col / 3);
-                const box = (boxRow * 3 + boxCol) + 1;
                 const cellRow = row - (boxRow * 3);
                 const cellCol = col - (boxCol * 3);
-                const cell = (cellRow * 3 + cellCol) + 1;
+
+                const xPos = (boxCol * 300) + (cellCol * 100);
+                const yPos = (boxRow * 300) + (cellRow * 100);
+
                 if (game.board[row][col] != 0) {
                     game.ctx.fillStyle = "#2C3639";
-                    this.drawNumber(game, box, cell, game.board[row][col]);
+                    this.drawNumber(game, xPos, yPos, game.board[row][col]);
                 }
 
                 if (game.userInput[row][col] != 0) {
+                    game.ctx.fillStyle = "#F0EBE3";
+                    // we don't fully fill the rect because that wipes away some pixels of the dividing lines
+                    game.ctx.fillRect(xPos + 5, yPos + 5, this.CELL_WIDTH - 10, this.CELL_HEIGHT - 10);
                     game.ctx.fillStyle = "#6E85B7";
-                    this.drawNumber(game, box, cell, game.userInput[row][col]);
+                    this.drawNumber(game, xPos, yPos, game.userInput[row][col]);
                 }
             }
         }
