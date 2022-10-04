@@ -359,7 +359,7 @@ export class Reminder extends Command
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
             .setTitle("Reminder")
             .setColor(settings.embedColors.default)
-            .setDescription(`Your reminder with the name \`${name}\` has expired!`);
+            .setDescription(`The following reminder has expired:\n>>> ${name}`);
 
         const guildFallback = (rem: ReminderObj) => {
             try
