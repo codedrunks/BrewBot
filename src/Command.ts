@@ -233,6 +233,9 @@ export abstract class Command
         {
             const noPerm = () => int.reply({ embeds: [ embedify("You don't have permission to run this command.", settings.embedColors.error) ], ephemeral: true });
 
+            if(this.meta.devOnly === true && !Array.isArray(settings.devs))
+                throw new Error("Environment variables not set up correctly");
+
             if(this.meta.devOnly === true && !settings.devs.includes(int.user.id))
                 return await noPerm();
 
