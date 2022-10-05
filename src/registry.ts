@@ -14,6 +14,8 @@ import { initHelp } from "@commands/util/Help";
 import EventEmitter from "events";
 import { embedify } from "./utils";
 import { settings } from "./settings";
+import { unused } from "svcorelib";
+// import { PutGuildCommandResult } from "./types";
 
 
 const rest = new REST({ version: "10" })
@@ -113,11 +115,20 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     {
         // console.log(`Registering guild commands in ${client.guilds.cache.find(g => g.id === guild)?.name}`);
 
-        await rest.put(
+        const restRes = await rest.put(
             Routes.applicationGuildCommands(process.env.CLIENT_ID ?? "ERR_NO_ENV", guild), {
                 body: slashCmds
             },
         );
+
+        unused(restRes);
+
+        // #DEBUG use this to get a command's ID
+        // if(guild === "693878197107949572")
+        // {
+        //     const cmd = (restRes as Record<string, string>[]).find(cmd => cmd.name === "ferret") as undefined | PutGuildCommandResult;
+        //     console.log(cmd);
+        // }
     }
 }
 

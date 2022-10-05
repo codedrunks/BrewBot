@@ -16,6 +16,7 @@ export const settings: Settings = Object.freeze({
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
     },
+    // TODO: this will be removed once these settings can be changed per guild
     moderation: {
         /** How many reaction votes are needed to ban someone */
         votesToBan: 2,
@@ -42,12 +43,12 @@ export const settings: Settings = Object.freeze({
         ],
     },
     embedColors: {
-        default: "#faba05",
-        success: Colors.Green,
-        gameLost: Colors.Grey,
-        warning: Colors.Orange,
-        error: Colors.DarkRed,
-        contestWinner: Colors.Gold,
+        default: getEnvVar("EMBED_COLOR_DEFAULT") ?? "#faba05",
+        success: getEnvVar("EMBED_COLOR_SUCCESS") ?? Colors.Green,
+        gameLost: getEnvVar("EMBED_COLOR_GAME_LOST") ?? Colors.Grey,
+        warning: getEnvVar("EMBED_COLOR_WARNING") ?? Colors.Orange,
+        error: getEnvVar("EMBED_COLOR_ERROR") ?? Colors.DarkRed,
+        contestWinner: getEnvVar("EMBED_COLOR_CONTEST_WINNER") ?? Colors.Gold,
     },
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
@@ -57,7 +58,7 @@ export const settings: Settings = Object.freeze({
     },
 }) as Settings;
 
-/** Tests if the environment variable `varName` equals `value` casted to string - value is case insensitive */
+/** Tests if the environment variable `varName` equals `value` casted to string - both params are case insensitive */
 function envVarEquals(varName: string, value: Stringifiable)
 {
     return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
@@ -92,7 +93,7 @@ export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numb
         transform = v => v.trim().split(commasRegex);
         break;
     case "numberArray":
-        transform = v => v.trim().split(commasRegex).map(n => parseInt(n));
+        transform = v => v.split(commasRegex).map(n => parseInt(n.trim()));
         break;
     }
 
