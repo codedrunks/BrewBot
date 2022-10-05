@@ -142,7 +142,7 @@ export class Ping extends Command {
             const res = /.*max-age=(\d+).*/i.exec(hstsHeader);
             const [, hstsValRaw] = res ?? [undefined, undefined];
             const hstsVal = parseInt(String(hstsValRaw));
-            const hstsLabel = (!isNaN(hstsVal) && hstsVal >= 63072000) ? "🔒 Enhanced (preloaded)" : (hstsEnabled ? "🔒 Yes" : "🔓 No");
+            const hstsLabel = (!isNaN(hstsVal) && hstsVal >= 31536000) ? "🔒 Enhanced (preloaded)" : (hstsEnabled ? "🔒 Yes" : "🔓 No");
 
             const fields: EmbedField[] = [
                 {
