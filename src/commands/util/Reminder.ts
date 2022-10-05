@@ -9,11 +9,12 @@ import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedif
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
+const reminderCheckInterval = 2000;
 
 export class Reminder extends Command
 {
     /**
-     * Contains all reminders that are currently being checked.  
+     * Contains all compound keys of reminders that are currently being checked.  
      * Format: `userId-reminderId`
      */
     private reminderCheckBuffer = new Set<string>();
@@ -109,14 +110,12 @@ export class Reminder extends Command
 
         if(client instanceof Client)
         {
-            try
-            {
+            try {
                 // since the constructor is called exactly once at startup, this should work just fine
                 this.checkReminders(client);
-                setInterval(() => this.checkReminders(client), 2000);
+                setInterval(() => this.checkReminders(client), reminderCheckInterval);
             }
-            catch(err)
-            {
+            catch(err) {
                 console.error(k.red("Error while checking reminders:"), err);
             }
         }
@@ -159,7 +158,7 @@ export class Reminder extends Command
                 const reminders = await getReminders(user.id);
 
                 if(reminders && reminders.length >= reminderLimit)
-                    return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease free up some space with `/reminder delete`", settings.embedColors.error));
+                    return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease wait until a reminder expires or free up some space with `/reminder delete`", settings.embedColors.error));
 
                 const reminderId = reminders && reminders.length > 0 && reminders.at(-1)
                     ? reminders.at(-1)!.reminderId + 1
@@ -177,7 +176,7 @@ export class Reminder extends Command
                     channel: channel?.id ?? null,
                     reminderId,
                     dueTimestamp,
-                    private: ephemeral,
+                    private: guild?.id ? ephemeral : true,
                 });
 
                 return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
@@ -349,11 +348,6 @@ export class Reminder extends Command
         if(!expRems || expRems.length === 0)
             return;
 
-        this.reminderCheckBuffer = new Set<string>([
-            ...this.reminderCheckBuffer,
-            ...expRems.map(r => `${r.userId}-${r.reminderId}`),
-        ]);
-
         const promises: Promise<void>[] = [];
 
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
@@ -361,9 +355,8 @@ export class Reminder extends Command
             .setColor(settings.embedColors.default)
             .setDescription(`The following reminder has expired:\n>>> ${name}`);
 
-        const guildFallback = (rem: ReminderObj) => {
-            try
-            {
+        const guildFallback = async (rem: ReminderObj) => {
+            try {
                 if(rem.private)
                     throw new Error("Can't send message in guild as reminder is private.");
 
@@ -376,8 +369,7 @@ export class Reminder extends Command
                     c.send({ embeds: [ getExpiredEbd(rem) ] });
                 }
             }
-            catch(err)
-            {
+            catch(err) {
                 // TODO: track reminder "loss rate"
                 //
                 //   I  │ I I
@@ -386,17 +378,25 @@ export class Reminder extends Command
 
                 void err;
             }
-            finally
-            {
-                deleteReminder(rem.reminderId, rem.userId);
-                this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
+            finally {
+                try {
+                    await deleteReminder(rem.reminderId, rem.userId);
+                }
+                catch(err) {
+                    // TODO: see above
+                }
+                finally {
+                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
+                }
             }
         };
 
         for(const rem of expRems)
         {
             if(this.reminderCheckBuffer.has(`${rem.userId}-${rem.reminderId}`))
-                return;
+                continue;
+
+            this.reminderCheckBuffer.add(`${rem.userId}-${rem.reminderId}`);
 
             const usr = client.users.cache.find(u => u.id === rem.userId);
 
