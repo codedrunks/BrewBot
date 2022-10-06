@@ -126,7 +126,7 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
         // #DEBUG use this to get a command's ID
         // if(guild === "693878197107949572")
         // {
-        //     const cmd = (restRes as Record<string, string>[]).find(cmd => cmd.name === "ferret") as undefined | PutGuildCommandResult;
+        //     const cmd = (restRes as PutGuildCommandResult[])?.find(cmd => cmd.name === "ferret");
         //     console.log(cmd);
         // }
     }
