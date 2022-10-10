@@ -556,7 +556,7 @@ export class Sudoku extends Command
                     image: {
                         url: `attachment://${userId}-sudoku.png`
                     },
-                    color: Number(settings.embedColors.default.toString()),
+                    color: Number(settings.embedColors.default),
                 }
             ],
             files: [{
