@@ -1,4 +1,4 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, ApplicationCommandOptionType } from "discord.js";
 import { Command } from "@src/Command";
 
 export class TEMPLATE extends Command
@@ -9,7 +9,14 @@ export class TEMPLATE extends Command
             name: "template_name",
             desc: "Template_desc",
             category: "util",
-            perms: [],
+            args: [
+                {
+                    name: "example_arg",
+                    desc: "Example argument",
+                    type: ApplicationCommandOptionType.String,
+                },
+            ],
+            memberPerms: [],
         });
     }
 
