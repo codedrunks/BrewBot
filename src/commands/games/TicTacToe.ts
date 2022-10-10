@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ActionRowData, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, CommandInteraction, CommandInteractionOption } from "discord.js";
 import { Command } from "@src/Command";
 import { Canvas, CanvasRenderingContext2D, createCanvas } from "canvas";
 import { embedify } from "@src/utils";
@@ -7,16 +7,26 @@ import os from "os";
 import path from "path";
 import { settings } from "@src/settings";
 
-interface Game {
-    board: Player[][];
-    canvas: Canvas;
-    ctx: CanvasRenderingContext2D;
+interface Player {
+    id: string;
+    name: string;
+    icon: string | undefined;
+    sign: Sign;
 }
 
-const enum Player {
-    None = 0,
-    X = 1,
-    O = 2
+interface Game {
+    currentPlayer: Omit<Player, "id">;
+    opponent: Player;
+    board: Array<Array<Player|null>>;
+    canvas: Canvas;
+    ctx: CanvasRenderingContext2D;
+    int: CommandInteraction;
+}
+
+const enum Sign {
+    None = "None",
+    X = "X",
+    O = "O"
 }
 
 export class TicTacToe extends Command {
@@ -72,36 +82,54 @@ export class TicTacToe extends Command {
 
     async start(int: CommandInteraction) {
         const user = int.user;
-        if (this.games.has(user.id)) {
-            return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
-        }
+        this.games.forEach(async (game, key) => {
+            if (key.includes(user.id)) {
+                return await this.editReply(int, embedify("You already have a game running! Games are unique globally and not by server"));
+            } else if (game.opponent.id === user.id) {
+                return await this.editReply(int, embedify("You already have a game running that's initiated by someone else! Games are unique globally and not by server"));
+            }
+        });
 
         const humanOpponent = int.options.getUser("opponent");
 
         const opponentGoesFirst = Boolean(Math.round(Math.random()));
+        const playerSign = Math.random() >= 0.5 ? Sign.X : Sign.O;
 
         const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         const ctx = canvas.getContext("2d");
 
         const game: Game = {
             board: [
-                [Player.None, Player.None, Player.None],
-                [Player.None, Player.None, Player.None],
-                [Player.None, Player.None, Player.None],
+                [null, null, null],
+                [null, null, null],
+                [null, null, null],
             ],
+            currentPlayer: {
+                name: opponentGoesFirst ? humanOpponent ? humanOpponent.username : "CPU" : int.user.username,
+                icon: opponentGoesFirst ? humanOpponent ? humanOpponent.avatarURL() ?? undefined : undefined : int.user.avatarURL() ?? undefined,
+                sign: opponentGoesFirst ? playerSign == Sign.X ? Sign.O : Sign.X : playerSign,
+            },
+            opponent: {
+                id: humanOpponent ? humanOpponent.id : "CPU",
+                name: humanOpponent ? humanOpponent.username : "CPU",
+                icon: humanOpponent ? humanOpponent.avatarURL() ?? undefined : undefined,
+                sign: playerSign == Sign.X ? Sign.O : Sign.X,
+            },
             canvas: canvas,
             ctx: ctx,
+            int: int,
         };
 
-        if (humanOpponent) {
-            // TODO:
-        } else { // Le smart CPU
+        console.log(game);
 
+        if (humanOpponent) { // le dumb human
+            // TODO:
+        } else { // le smart CPU
             this.games.set(user.id, game);
 
             this.drawBoard(game);
             await this.renderBoard(game, user.id);
-            await this.sendBoard(int, user.id);
+            await this.sendBoard(int, game, user.id);
         }
     }
 
@@ -109,13 +137,19 @@ export class TicTacToe extends Command {
         const user = int.user;
         const game = this.games.get(user.id);
         if (!game) {
-            return await this.editReply(int, embedify("You don't have a game running. Start one with `/tictactoe start`"));
+            return await this.editReply(int, embedify("You don't have a game running (you can't discard games that aren't initiated by you). Start one with `/tictactoe start`"));
         }
 
         this.games.delete(user.id);
         await fs.rm(path.join(os.tmpdir(), `${user.id}-tictactoe.png`));
         return await this.editReply(int, embedify("Game discarded successfully. Start a new one with `/tictactoe start`"));
     }
+
+    /////////////////////////////
+    /// Game Logic Functions ////
+    /////////////////////////////
+
+    // TODO:
 
     /////////////////////////
     /// Canvas Functions ////
@@ -151,15 +185,15 @@ export class TicTacToe extends Command {
         game.ctx.stroke();
     }
 
-    drawCell(game: Game, xPos: number, yPos: number, player: Player) {
-        switch (player) {
-        case Player.X:
+    drawCell(game: Game, xPos: number, yPos: number, player: Player | null) {
+        switch (player?.sign) {
+        case Sign.X:
             this.drawX(game, xPos, yPos);
             break;
-        case Player.O:
+        case Sign.O:
             this.drawO(game, xPos, yPos);
             break;
-        case Player.None:
+        case Sign.None:
         default:
             break;
         }
@@ -201,10 +235,37 @@ export class TicTacToe extends Command {
     }
 
     // TODO: show whose turn it is as the embed title
-    async sendBoard(int: CommandInteraction, userId: string) {
+    async sendBoard(int: CommandInteraction, game: Game, userId: string) {
         await int.editReply({
+            components: [
+                {
+                    components: [
+                        new ButtonBuilder().setCustomId("1").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("2").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("3").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    ],
+                },
+                {
+                    components: [
+                        new ButtonBuilder().setCustomId("4").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("5").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("6").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    ],
+                },
+                {
+                    components: [
+                        new ButtonBuilder().setCustomId("7").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("8").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId("9").setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    ],
+                },
+            ] as ActionRowData<ButtonBuilder>[],
             embeds: [
                 {
+                    author: {
+                        name: `${game.currentPlayer.name}'s (${game.currentPlayer.sign}) turn`,
+                        icon_url: game.currentPlayer.icon,
+                    },
                     image: {
                         url: `attachment://${userId}-tictactoe.png`
                     },
