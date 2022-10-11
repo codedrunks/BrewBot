@@ -58,7 +58,7 @@
     "redis": "^4.2.0",
     "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
-    "svcorelib": "^1.18.0",
+    "svcorelib": "^1.18.1",
     "yargs": "^17.5.1"
   },
   "bin": {
