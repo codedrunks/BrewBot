@@ -7,10 +7,10 @@ import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { Poll as PollObj } from "@prisma/client";
 import k from "kleur";
 
-interface PollVote<M = Message, O = string> {
-    msg: M;
+interface PollVote {
+    msg: Message;
     emoji: string;
-    option: O;
+    option: string;
     votes: string[]
 }
 
@@ -18,6 +18,8 @@ export class Poll extends Command
 {
     private interval?: NodeJS.Timer;
     private client: Client;
+    /** Format: `guildId-pollId` */
+    private checkPollsBuffer = new Set<string>();
 
     constructor(client: Client)
     {
@@ -183,7 +185,10 @@ export class Poll extends Command
                 if(!memberPermissions?.has(PermissionFlagsBits.ManageChannels) && user.id !== poll.createdBy)
                     return this.editReply(int, embedify("You are not the author of this poll so you can't delete it.", settings.embedColors.error));
 
-                const pollMsgs = (await this.getPollMsgs(poll))!; //#DBG
+                const pollMsgs = await this.getPollMsgs(poll);
+
+                if(!pollMsgs)
+                    return this.editReply(int, embedify("You can only use this command in a server.", settings.embedColors.error));
 
                 const finalVotes = await this.accumulateVotes(pollMsgs.reduce((a, c) => { a.push(c as never); return a; }, []), poll.voteOptions);
 
@@ -258,15 +263,19 @@ export class Poll extends Command
     {
         const expPolls = await getExpiredPolls();
 
-        for await(const poll of expPolls)
-        {
+        for await(const poll of expPolls) {
             const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
-            try
-            {
+            const bufferKey = `${guildId}-${pollId}`;
+
+            if(this.checkPollsBuffer.has(bufferKey))
+                continue;
+
+            this.checkPollsBuffer.add(bufferKey);
+ 
+            try {
                 const msgs = await this.getPollMsgs(poll);
 
-                if(msgs && msgs.size > 0)
-                {
+                if(msgs && msgs.size > 0) {
                     const firstMsg = msgs.at(0)!;
 
                     const finalVotes = await this.accumulateVotes(msgs.reduce((a, c) => { a.push(c as never); return a; }, []), voteOptions);
@@ -281,10 +290,12 @@ export class Poll extends Command
 
                 deletePoll(guildId, pollId);
             }
-            catch(err)
-            {
+            catch(err) {
                 // TODO: add logging lib
                 console.error(`Error while checking poll with guildId=${guildId} and pollId=${pollId}:\n`, err);
+            }
+            finally {
+                this.checkPollsBuffer.delete(bufferKey);
             }
         }
     }
@@ -361,13 +372,13 @@ export class Poll extends Command
         };
     }
 
-    async sendConclusion(msg: Message, finalVotes: PollVote[], startTime: Date, endTime: Date)
+    sendConclusion(msg: Message, finalVotes: PollVote[], startTime: Date, endTime: Date)
     {
         // TODO:
 
         const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
 
-        await msg.reply({ embeds: [
+        return msg.reply({ embeds: [
             new EmbedBuilder()
                 .setColor(settings.embedColors.default)
                 .setTitle("This poll has closed.")
@@ -377,7 +388,7 @@ export class Poll extends Command
 
     async accumulateVotes(msgs: Message[], _voteOpts: string[]): Promise<PollVote[]>
     {
-        for(const msg of msgs as unknown as Message[])
+        for await(const msg of msgs)
         {
             const reacts = msg.reactions.cache.entries();
 
