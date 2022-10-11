@@ -1,11 +1,14 @@
 import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, PermissionFlagsBits, TextChannel } from "discord.js";
+import k from "kleur";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
 import { autoPlural, BtnMsg, embedify, PageEmbed, toUnix10, truncStr, useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { Poll as PollObj } from "@prisma/client";
-import k from "kleur";
+import { getRedis } from "@src/redis";
+
+const redis = getRedis();
 
 interface PollVote {
     msg: Message;
@@ -16,10 +19,7 @@ interface PollVote {
 
 export class Poll extends Command
 {
-    private interval?: NodeJS.Timer;
     private client: Client;
-    /** Format: `guildId-pollId` */
-    private checkPollsBuffer = new Set<string>();
 
     constructor(client: Client)
     {
@@ -79,13 +79,11 @@ export class Poll extends Command
     
         try {
             this.checkPolls();
-            this.interval = setInterval(this.checkPolls, 2000);
+            setInterval(this.checkPolls, 2000);
         }
         catch(err) {
             console.error(k.red("Error while checking polls:"), err);
         }
-
-        ["SIGINT", "SIGTERM"].forEach(sig => process.on(sig, () => clearInterval(this.interval)));
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
@@ -265,12 +263,12 @@ export class Poll extends Command
 
         for await(const poll of expPolls) {
             const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
-            const bufferKey = `${guildId}-${pollId}`;
+            const redisKey = `check_poll_${guildId}-${pollId}`;
 
-            if(this.checkPollsBuffer.has(bufferKey))
+            if(!(await redis.get(redisKey)))
                 continue;
 
-            this.checkPollsBuffer.add(bufferKey);
+            await redis.set(redisKey, 1);
  
             try {
                 const msgs = await this.getPollMsgs(poll);
@@ -295,7 +293,7 @@ export class Poll extends Command
                 console.error(`Error while checking poll with guildId=${guildId} and pollId=${pollId}:\n`, err);
             }
             finally {
-                this.checkPollsBuffer.delete(bufferKey);
+                await redis.del(redisKey);
             }
         }
     }
