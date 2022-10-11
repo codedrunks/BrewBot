@@ -642,6 +642,9 @@ export class TwentyFortyEight extends Command {
     }
 
     drawWinOverlay(game: Game) {
+        game.ctx.shadowColor = "transparent";
+        game.ctx.shadowBlur = 0;
+
         game.ctx.fillStyle = "#00000099";
         game.ctx.fillRect(0, 0, this.BOARD_WIDTH, this.BOARD_HEIGHT);
 
@@ -661,6 +664,9 @@ export class TwentyFortyEight extends Command {
     }
 
     drawGameoverOverlay(game: Game) {
+        game.ctx.shadowColor = "transparent";
+        game.ctx.shadowBlur = 0;
+
         game.ctx.fillStyle = "#00000099";
         game.ctx.fillRect(0, 0, this.BOARD_WIDTH, this.BOARD_HEIGHT);
 

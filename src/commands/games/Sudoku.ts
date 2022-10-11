@@ -47,8 +47,8 @@ export class Sudoku extends Command
                     args: [
                         {
                             name: "box",
-                            desc: "Which box you want to fill",
-                            type: ApplicationCommandOptionType.Number,
+                            desc: "Box of cell you want to fill",
+                            type: ApplicationCommandOptionType.Integer,
                             min: 1,
                             max: 9,
                             required: true,
@@ -56,7 +56,7 @@ export class Sudoku extends Command
                         {
                             name: "cell",
                             desc: "Which cell you want to fill",
-                            type: ApplicationCommandOptionType.Number,
+                            type: ApplicationCommandOptionType.Integer,
                             min: 1,
                             max: 9,
                             required: true,
@@ -64,7 +64,7 @@ export class Sudoku extends Command
                         {
                             name: "number",
                             desc: "Number you want to fill in",
-                            type: ApplicationCommandOptionType.Number,
+                            type: ApplicationCommandOptionType.Integer,
                             min: 1,
                             max: 9,
                             required: true,
@@ -74,6 +74,28 @@ export class Sudoku extends Command
                 {
                     name: "show",
                     desc: "Shows you the current game's board",
+                },
+                {
+                    name: "clear",
+                    desc: "Clears the specified cell",
+                    args: [
+                        {
+                            name: "box",
+                            desc: "Box of cell you want to clear",
+                            type: ApplicationCommandOptionType.Integer,
+                            min: 1,
+                            max: 9,
+                            required: true,
+                        },
+                        {
+                            name: "cell",
+                            desc: "Cell you want to clear",
+                            type: ApplicationCommandOptionType.Integer,
+                            min: 1,
+                            max: 9,
+                            required: true,
+                        }
+                    ],
                 },
                 {
                     name: "discard",
@@ -94,6 +116,8 @@ export class Sudoku extends Command
             return await this.place(int);
         case "show":
             return await this.show(int);
+        case "clear":
+            return await this.clearCell(int);
         case "discard":
             return await this.discard(int);
         }
@@ -194,6 +218,38 @@ export class Sudoku extends Command
             return await this.editReply(int, embedify("You don't have a game running. Start one with `/sudoku start`"));
         }
 
+        this.drawBoard(game);
+        await this.renderBoard(game, user.id);
+        return await this.sendBoard(int, user.id);
+    }
+
+    async clearCell(int: CommandInteraction) {
+        const user = int.user;
+        const game = this.games.get(user.id);
+        if (!game) {
+            return await this.editReply(int, embedify("You don't have a game running. Start one with `/sudoku start`"));
+        }
+
+        const box = int.options.get("box", true).value as number;
+        const cell = int.options.get("cell", true).value as number;
+
+        const boxRow = Math.floor((box - 1) / 3);
+        const boxCol = (box - 1) % 3;
+        const cellCol = (cell - 1) % 3;
+        const cellRow = Math.floor((cell - 1) / 3);
+        const row = boxRow * 3 + cellRow;
+        const col = boxCol * 3 + cellCol;
+
+        const xPos = (boxCol * 300) + (cellCol * 100);
+        const yPos = (boxRow * 300) + (cellRow * 100);
+
+        if (game.board[row][col] !== 0) {
+            return await this.editReply(int, embedify("You cannot clear this cell"));
+        }
+
+        game.userInput[row][col] = 0;
+
+        this.emptyCellAt(game, xPos, yPos);
         this.drawBoard(game);
         await this.renderBoard(game, user.id);
         return await this.sendBoard(int, user.id);
@@ -446,19 +502,14 @@ export class Sudoku extends Command
         }
     }
 
-    drawNumber(game: Game, box: number, cell: number, choice: number) {
+    drawNumber(game: Game, xPos: number, yPos: number, choice: number) {
         game.ctx.font = "bold 46pt Roboto";
         game.ctx.textAlign = "center";
         game.ctx.textBaseline = "middle";
 
-        const boxCol = (box - 1) % 3;
-        const boxRow = Math.floor((box - 1) / 3);
+        xPos = xPos + this.CELL_WIDTH / 2;
+        yPos = yPos + this.CELL_HEIGHT / 2;
 
-        const cellCol = (cell - 1) % 3;
-        const cellRow = Math.floor((cell - 1) / 3);
-
-        const xPos = (boxCol * 300) + (cellCol * 100) + this.CELL_WIDTH / 2;
-        const yPos = (boxRow * 300) + (cellRow * 100) + this.CELL_HEIGHT / 2;
         game.ctx.fillText(choice.toString(), xPos, yPos);
     }
 
@@ -467,21 +518,30 @@ export class Sudoku extends Command
             for (let col = 0; col < this.BOARD_LENGTH; col++) {
                 const boxRow = Math.floor(row / 3);
                 const boxCol = Math.floor(col / 3);
-                const box = (boxRow * 3 + boxCol) + 1;
                 const cellRow = row - (boxRow * 3);
                 const cellCol = col - (boxCol * 3);
-                const cell = (cellRow * 3 + cellCol) + 1;
-                if (game.board[row][col] != 0) {
+
+                const xPos = (boxCol * 300) + (cellCol * 100);
+                const yPos = (boxRow * 300) + (cellRow * 100);
+
+                if (game.board[row][col] !== 0) {
                     game.ctx.fillStyle = "#2C3639";
-                    this.drawNumber(game, box, cell, game.board[row][col]);
+                    this.drawNumber(game, xPos, yPos, game.board[row][col]);
                 }
 
-                if (game.userInput[row][col] != 0) {
+                if (game.userInput[row][col] !== 0) {
+                    this.emptyCellAt(game, xPos, yPos);
                     game.ctx.fillStyle = "#6E85B7";
-                    this.drawNumber(game, box, cell, game.userInput[row][col]);
+                    this.drawNumber(game, xPos, yPos, game.userInput[row][col]);
                 }
             }
         }
+    }
+
+    emptyCellAt(game: Game, xPos: number, yPos: number) {
+        game.ctx.fillStyle = "#F0EBE3";
+        // we don't fully fill the rect because that wipes away some pixels of the dividing lines
+        game.ctx.fillRect(xPos + 5, yPos + 5, this.CELL_WIDTH - 10, this.CELL_HEIGHT - 10);
     }
 
     async renderBoard(game: Game, userId: string) {

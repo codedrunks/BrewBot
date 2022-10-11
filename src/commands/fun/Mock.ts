@@ -41,10 +41,8 @@ export class Mock extends Command
         if(ephemeral)
             return await this.reply(int, mockified, ephemeral);
 
-        await this.reply(int, "Sending message...", true);
-
         await channel.send(`<:mock:506303207400669204> ${mockified}`);
 
-        return await int.deleteReply();
+        await this.reply(int, "Sent the message.", true);
     }
 }

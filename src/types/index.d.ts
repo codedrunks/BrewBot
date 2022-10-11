@@ -95,6 +95,22 @@ export interface SubcommandMeta extends CmdMetaBase {
     subcommands: Omit<CommandMeta, "memberPerms" | "category">[];
 }
 
+/** Result of PUTing a guild command to the Discord API */
+export interface PutGuildCommandResult {
+    application_id: string;
+    default_member_permissions: null | string;
+    default_permission: boolean;
+    description_localizations: null;
+    description: string;
+    guild_id: string;
+    id: string;
+    name_localizations: null;
+    name: string;
+    options?: Record<string, unknown>[];
+    type: ApplicationCommandOptionType;
+    version: string;
+}
+
 //#SECTION reactionroles
 
 export interface ReactionRole {
