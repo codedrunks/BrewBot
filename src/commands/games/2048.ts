@@ -275,10 +275,12 @@ export class TwentyFortyEight extends Command {
         const bm = new BtnMsg(
             new EmbedBuilder().setTitle("Placeholder"),
             [
-                new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.LEFT),
-                new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.RIGHT),
-                new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.UP),
-                new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.DOWN),
+                [
+                    new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.LEFT),
+                    new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.RIGHT),
+                    new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.UP),
+                    new ButtonBuilder().setStyle(ButtonStyle.Primary).setEmoji(Buttons.DOWN),
+                ],
             ],
             { timeout: 1000 * 60 * 5 }
         );
@@ -305,7 +307,7 @@ export class TwentyFortyEight extends Command {
         });
 
         bm.on("timeout", async () => {
-            bm.btns.map((btn) => btn.setDisabled(true));
+            bm.btns.flat().map((btn) => btn.setDisabled(true));
             game.latestInt.editReply({ ...bm.getReplyOpts() });
             await this.cleanUpGame(guild.id, user.id);
         });
@@ -359,7 +361,7 @@ export class TwentyFortyEight extends Command {
         }
 
         const validMoves = this.getAvailableMoves(game);
-        game.bm?.btns.map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
+        game.bm?.btns.flat().map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
     }
 
     getAvailableMoves(game: Game): number[] {
@@ -828,7 +830,7 @@ export class TwentyFortyEight extends Command {
 
         const validMoves = this.getAvailableMoves(game);
 
-        game.bm?.btns.map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
+        game.bm?.btns.flat().map((b, i) => validMoves.includes(i) ? b.setDisabled(false) : b.setDisabled(true));
         this.drawBoard(game);
 
         if (this.checkWin(game)) {

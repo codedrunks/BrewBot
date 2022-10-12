@@ -7,3 +7,6 @@ data.json
 application.yml
 logs/
 dump.rdb
+
+# directory to store git patches
+.patches

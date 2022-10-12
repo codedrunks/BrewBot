@@ -3,6 +3,7 @@ import { ButtonInteraction, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextB
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
+import { Tuple } from "@src/types";
 
 interface BtnMsgOpts {
     /** In milliseconds - defaults to 30 minutes, set to -1 to disable */
@@ -26,7 +27,7 @@ export interface BtnMsg {
  */
 export class BtnMsg extends EmitterBase
 {
-    readonly btns: ButtonBuilder[];
+    readonly btns: ButtonBuilder[][];
     readonly msg: string | EmbedBuilder[];
 
     readonly opts: BtnMsgOpts;
@@ -41,9 +42,9 @@ export class BtnMsg extends EmitterBase
      * Contains convenience methods for easier creation of messages with attached buttons  
      * Use `.on("press")` to listen for button presses
      * @param message The message or reply content
-     * @param buttons Up to 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
+     * @param buttons Up to 5 rows of 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
      */
-    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonBuilder[], options?: Partial<BtnMsgOpts>)
+    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>, options?: Partial<BtnMsgOpts>)
     {
         super();
 
@@ -51,11 +52,13 @@ export class BtnMsg extends EmitterBase
 
         this.msg = message instanceof EmbedBuilder ? [message] : message;
 
-        this.btns = (Array.isArray(buttons) ? buttons : [buttons])
-            .map((b, i) => {
-                if(b.data.style !== ButtonStyle.Link)
-                    b.setCustomId(`${this.btnId}@${i}`);
-                return b;
+        this.btns = (Array.isArray(buttons) ? buttons : [[buttons]])
+            .map((row, i) => {
+                return row.map((b, j) => {
+                    if(b.data.style !== ButtonStyle.Link)
+                        b.setCustomId(`${this.btnId}@${i}_${j}`);
+                    return b;
+                });
             });
 
         const defaultOpts: BtnMsgOpts = {
@@ -64,7 +67,7 @@ export class BtnMsg extends EmitterBase
 
         this.opts = { ...defaultOpts, ...options };
 
-        btnListener.addBtns(this.btns);
+        btnListener.addBtns(this.btns.flat());
 
         const onPress = (int: ButtonInteraction, btn: ButtonBuilder) => this.onPress(int, btn);
 
@@ -87,7 +90,7 @@ export class BtnMsg extends EmitterBase
 
     private onPress(int: ButtonInteraction, btn: ButtonBuilder)
     {
-        if(this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id))
+        if(this.btns.flat().find(b => (b.data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id))
             this.emit("press", btn, int);
     }
 
@@ -99,17 +102,17 @@ export class BtnMsg extends EmitterBase
 
         this.destroyed = true;
 
-        this.emit("destroy", this.btns.map(b => (b.data as APIButtonComponentWithCustomId).custom_id));
+        this.emit("destroy", this.btns.flat().map(b => (b.data as APIButtonComponentWithCustomId).custom_id));
 
         this.eventNames()
             .forEach(e => this.removeAllListeners(e));
 
-        btnListener.delBtns(this.btns.map(b => (b.data as Partial<APIButtonComponentWithCustomId>).custom_id ?? "_"));
+        btnListener.delBtns(this.btns.flat().map(b => (b.data as Partial<APIButtonComponentWithCustomId>).custom_id ?? "_"));
     }
 
     public getBtn(customId: string)
     {
-        return this.btns.find(b => (b.data as APIButtonComponentWithCustomId).custom_id === customId);
+        return this.btns.flat().find(b => (b.data as APIButtonComponentWithCustomId).custom_id === customId);
     }
 
     /**
@@ -131,9 +134,9 @@ export class BtnMsg extends EmitterBase
      */
     public getMsgOpts()
     {
-        const actRow = this.toActionRowBuilder(this.destroyed || this.timedOut);
+        const actRows = this.toActionRowsBuilder(this.destroyed || this.timedOut);
 
-        const btns = { components: actRow ? [ actRow ] : [] };
+        const btns = { components: actRows ?? [] };
 
         return Array.isArray(this.msg) ? {
             embeds: this.msg,
@@ -162,10 +165,16 @@ export class BtnMsg extends EmitterBase
         }
     }
 
-    protected toActionRowBuilder(disableBtns = false): ActionRowBuilder<ButtonBuilder> | undefined
+    protected toActionRowsBuilder(disableBtns = false): ActionRowBuilder<ButtonBuilder>[] | undefined
     {
-        if(this.btns.length > 0)
-            return new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns);
+        const rows: ActionRowBuilder<ButtonBuilder>[] = [];
+
+        if(this.btns.length > 0) {
+            this.btns.map(row => {
+                rows.push(new ActionRowBuilder<ButtonBuilder>().setComponents(disableBtns ? row.map(b => b.setDisabled(true)) : row));
+                return row;
+            });
+            return rows;
+        }
     }
 }

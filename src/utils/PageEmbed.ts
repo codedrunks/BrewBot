@@ -8,7 +8,7 @@ import { Command } from "@src/Command";
 import { btnListener } from "@src/registry";
 import { useEmbedify } from "./embedify";
 import { settings } from "@src/settings";
-import { AnyCmdInteraction, DiscordAPIFile } from "@src/types";
+import { AnyCmdInteraction, DiscordAPIFile, Tuple } from "@src/types";
 
 
 type BtnType = "first" | "prev" | "next" | "last";
@@ -40,7 +40,7 @@ interface PageEmbedSettings {
 
 export interface PageEmbed extends EmitterBase
 {
-    /** Emitted whenever a button was pressed - the passed interaction is automatically `.deferUpdate()`'d */
+    /** Emitted whenever an extra button is pressed */
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
     /** Emitted whenever this PageEmbed times out and is going to deregister and destroy itself */
     on(event: "timeout", listener: () => void): this;
@@ -58,7 +58,7 @@ export class PageEmbed extends EmitterBase
 
     private msg?: Message;
     private int?: AnyCmdInteraction;
-    private btns: ButtonBuilder[];
+    private btns: ButtonBuilder[][];
 
     private pages: APIEmbed[] = [];
     private pageIdx = -1;
@@ -79,8 +79,10 @@ export class PageEmbed extends EmitterBase
      * @param authorId The ID of the user that sent the command
      * @param settings Additional settings (all have their defaults)
      * @param files Attachments you want uploaded for the embeds
+     * @param extraButtons Up to 4 rows of 5 extra buttons per row (IDs are handled by the class)
+     * You can access button IDs by first splitting on @ and removing the uuid and then splitting on _ to get a row and index (ID format is: uuid@row_index)
      */
-    constructor(pages: EbdPage[], authorId: string, settings?: Partial<PageEmbedSettings>, files?: DiscordAPIFile[])
+    constructor(pages: EbdPage[], authorId: string, settings?: Partial<PageEmbedSettings>, files?: DiscordAPIFile[], extraButtons?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4>)
     {
         super();
 
@@ -99,9 +101,20 @@ export class PageEmbed extends EmitterBase
 
         this.settings = { ...defSett, ...(settings ?? {}) };
 
-        this.btns = this.createBtns();
+        const extraBtns = extraButtons ? (Array.isArray(extraButtons) ? extraButtons : [[extraButtons]])
+            .map((row, i) => {
+                return row.map((b, j) => {
+                    if(b.data.style !== ButtonStyle.Link)
+                        // we start from row 1 for the extra buttons if we have more than one page
+                        // (meaning we the first row is occupied by the page controls)
+                        b.setCustomId(`${this.btnId}@${this.pages.length > 1 ? i+1 : i}_${j}`);
+                    return b;
+                });
+            }) : [];
 
-        btnListener.addBtns(this.btns);
+        this.btns = this.pages.length > 1 ? [this.createBtns(), ...extraBtns] : extraBtns;
+
+        btnListener.addBtns(this.btns.flat());
 
         const onPress = (int: ButtonInteraction, btn: ButtonBuilder) => this.onPress(int, btn);
 
@@ -126,12 +139,18 @@ export class PageEmbed extends EmitterBase
     private async onPress(int: ButtonInteraction, btn: ButtonBuilder)
     {
         let btIdx;
-        this.btns.forEach(({ data }, i) => {
-            if((data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id)
-                btIdx = i;
+        let btRow;
+        this.btns.forEach((btnRow, row) => {
+            btnRow.forEach(({ data }, i) => {
+                if((data as APIButtonComponentWithCustomId).custom_id === (btn.data as APIButtonComponentWithCustomId).custom_id) {
+                    btIdx = i;
+                    btRow = row;
+                }
+            });
         });
 
-        if(btIdx !== undefined)
+        // if the page controls are shown and the button that was pressed is in the first row
+        if(this.pages.length > 1 && btRow === 0 && btIdx !== undefined)
         {
             if(!int.channel)
                 return;
@@ -183,10 +202,14 @@ export class PageEmbed extends EmitterBase
                 return;
             }
 
-            this.emit("press", int, type);
-
             if(!int.deferred || !int.replied)
                 this.once("update", () => int.deferUpdate());
+        // if one of the extra buttons is pressed
+        } else if (btRow !== undefined && btIdx !== undefined) {
+            this.emit("press", btn, int);
+        } else {
+            // NOTE: maybe log here ???
+            throw new Error("The button that was pressed doesn't exist");
         }
     }
 
@@ -198,7 +221,7 @@ export class PageEmbed extends EmitterBase
     /** Destroys this instance, emits the "destroy" event and removes all event listeners */
     public async destroy()
     {
-        const ids = this.btns.map(b => (b.data as APIButtonComponentWithCustomId).custom_id);
+        const ids = this.btns.flat().map(b => (b.data as APIButtonComponentWithCustomId).custom_id);
 
         this.timedOut = true;
 
@@ -348,6 +371,7 @@ export class PageEmbed extends EmitterBase
 
     //#SECTION props
 
+    // Creates the first row of buttons that contains the controls for the PageEmbed
     private createBtns()
     {
         const btns: ButtonBuilder[] = [
@@ -383,7 +407,8 @@ export class PageEmbed extends EmitterBase
             );
         }
 
-        return btns.map((b, i) => b.setCustomId(`${this.btnId}@${i}`));
+        // since this will always be the first row when there's more than 1 page, we set the row id to 0
+        return btns.map((b, i) => b.setCustomId(`${this.btnId}@0_${i}`));
     }
 
     /** Returns properties that can be used to send or edit messages */
@@ -398,11 +423,11 @@ export class PageEmbed extends EmitterBase
         if(!page)
             throw new Error(`PageEmbed index out of range: ${this.pageIdx} (allowed range: 0-${this.pages.length - 1})`);
 
-        const btns = disableBtns ? this.btns.map(b => b.setDisabled(true)) : this.btns;
+        const btns = disableBtns ? this.btns.map(row => row.map(b => b.setDisabled(true))) : this.btns;
 
         return {
             embeds: [ page ],
-            ...(this.pages.length === 1 ? { components: [] } : Command.useButtons(btns)),
+            ...(this.pages.length === 1 && !btns.length ? { components: [] } : Command.useButtons(<Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>btns)),
             ...(file ? { files: [file] } : {})
         };
     }
