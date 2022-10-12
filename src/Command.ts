@@ -366,9 +366,8 @@ export abstract class Command
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [[buttons]] : []);
         const rows: ActionRowBuilder<ButtonBuilder>[] = [];
 
-        actRows.map(row => {
+        actRows.forEach(row => {
             rows.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
-            return row;
         });
 
         return { components: rows };
