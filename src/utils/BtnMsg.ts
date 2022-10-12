@@ -59,7 +59,7 @@ export class BtnMsg extends EmitterBase
             });
 
         const defaultOpts: BtnMsgOpts = {
-            timeout: 1000 * 60 * 30,
+            timeout: 14 * 60 * 1000,
         };
 
         this.opts = { ...defaultOpts, ...options };
