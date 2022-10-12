@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
+import { APIButtonComponentWithCustomId, ApplicationCommandOptionType, ButtonBuilder, ButtonInteraction, ButtonStyle, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
 import { Canvas, CanvasRenderingContext2D, createCanvas } from "canvas";
 import { BtnMsg, embedify } from "@src/utils";
@@ -15,7 +15,7 @@ interface Player {
 }
 
 interface Game {
-    currentPlayer: Omit<Player, "id">;
+    currentPlayer: Player;
     opponent: Player;
     board: Array<Array<Player|null>>;
     canvas: Canvas;
@@ -121,6 +121,11 @@ export class TicTacToe extends Command {
             { timeout: 1000 * 60 * 2 },
         );
 
+        bm.on("press", async (b, i) => {
+            await i.deferUpdate();
+            this.onPress(i, b, game, user.id);
+        });
+
         const game: Game = {
             board: [
                 [null, null, null],
@@ -128,6 +133,7 @@ export class TicTacToe extends Command {
                 [null, null, null],
             ],
             currentPlayer: {
+                id: opponentGoesFirst ? humanOpponent ? humanOpponent.id : "CPU" : int.user.id,
                 name: opponentGoesFirst ? humanOpponent ? humanOpponent.username : "CPU" : int.user.username,
                 icon: opponentGoesFirst ? humanOpponent ? humanOpponent.avatarURL() ?? undefined : undefined : int.user.avatarURL() ?? undefined,
                 sign: opponentGoesFirst ? playerSign == Sign.X ? Sign.O : Sign.X : playerSign,
@@ -143,8 +149,6 @@ export class TicTacToe extends Command {
             latestInt: int,
             bm: bm,
         };
-
-        console.log(game);
 
         if (humanOpponent) { // le dumb human
             // TODO:
@@ -173,7 +177,13 @@ export class TicTacToe extends Command {
     /// Game Logic Functions ////
     /////////////////////////////
 
-    // TODO:
+    checkWin() {
+        // TODO:
+    }
+
+    cpuPlay() {
+        // TODO: make a move and set the currentPlayer back to the initiator (maybe a sleep(2000) so the user can have time to digest)
+    }
 
     /////////////////////////
     /// Canvas Functions ////
@@ -258,7 +268,6 @@ export class TicTacToe extends Command {
         await fs.writeFile(path.join(os.tmpdir(), `${userId}-tictactoe.png`), buf);
     }
 
-    // TODO: show whose turn it is as the embed title
     async sendBoard(int: CommandInteraction, game: Game, userId: string) {
         (game.bm?.msg as EmbedBuilder[])[0]
             .setAuthor({
@@ -276,5 +285,53 @@ export class TicTacToe extends Command {
                 description: `TicTacToe Game for user ${userId}`
             }]
         });
+    }
+
+    ////////////////////////
+    /// Other Functions ////
+    ////////////////////////
+
+    async onPress(int: ButtonInteraction, btn: ButtonBuilder, game: Game, userId: string) {
+        if (game.currentPlayer.id !== int.user.id) {
+            return;
+        }
+
+        const btnId = (btn.data as APIButtonComponentWithCustomId).custom_id.split("@")[1].split("_");
+        const row = Number(btnId[0]);
+        const idx = Number(btnId[1]);
+
+        game.bm.btns.flat().map((btn, i) => i === (row * 3 + idx) ? btn.setDisabled(true).setLabel(game.currentPlayer.sign) : btn);
+        game.board[row][idx] = game.currentPlayer;
+
+        game.currentPlayer = game.currentPlayer.id === game.opponent.id ? {
+            id: int.user.id,
+            name: int.user.username,
+            icon: int.user.avatarURL() ?? undefined,
+            sign: game.opponent.sign == Sign.X ? Sign.O : Sign.X,
+        } : game.opponent;
+
+        this.drawBoard(game);
+        await this.renderBoard(game, userId);
+
+        // TODO: this.checkWin();
+
+        (game.bm?.msg as EmbedBuilder[])[0]
+            .setAuthor({
+                name: `${game.currentPlayer.name}'s (${game.currentPlayer.sign}) turn`,
+                iconURL: game.currentPlayer.icon,
+            });
+        await int.editReply({
+            ...game.bm?.getReplyOpts(),
+            files: [
+                {
+                    attachment: path.join(os.tmpdir(), `${userId}-tictactoe.png`),
+                    name: `${userId}-tictactoe.png`,
+                    description: `TicTacToe Game for user ${userId}`,
+                },
+            ],
+        });
+
+        // TODO: check if the opponent is CPU
+        // TODO: this.cpuPlay();
     }
 }
