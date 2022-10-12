@@ -1,7 +1,7 @@
-import { ActionRowData, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, CommandInteraction, CommandInteractionOption } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
 import { Canvas, CanvasRenderingContext2D, createCanvas } from "canvas";
-import { embedify } from "@src/utils";
+import { BtnMsg, embedify } from "@src/utils";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
@@ -20,7 +20,8 @@ interface Game {
     board: Array<Array<Player|null>>;
     canvas: Canvas;
     ctx: CanvasRenderingContext2D;
-    int: CommandInteraction;
+    latestInt: CommandInteraction;
+    bm: BtnMsg;
 }
 
 const enum Sign {
@@ -98,6 +99,28 @@ export class TicTacToe extends Command {
         const canvas = createCanvas(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         const ctx = canvas.getContext("2d");
 
+        const bm = new BtnMsg(
+            new EmbedBuilder(),
+            [
+                [
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                ],
+                [
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                ],
+                [
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setLabel("\u200b").setStyle(ButtonStyle.Primary),
+                ],
+            ],
+            { timeout: 1000 * 60 * 2 },
+        );
+
         const game: Game = {
             board: [
                 [null, null, null],
@@ -117,7 +140,8 @@ export class TicTacToe extends Command {
             },
             canvas: canvas,
             ctx: ctx,
-            int: int,
+            latestInt: int,
+            bm: bm,
         };
 
         console.log(game);
@@ -236,42 +260,16 @@ export class TicTacToe extends Command {
 
     // TODO: show whose turn it is as the embed title
     async sendBoard(int: CommandInteraction, game: Game, userId: string) {
+        (game.bm?.msg as EmbedBuilder[])[0]
+            .setAuthor({
+                name: `${game.currentPlayer.name}'s (${game.currentPlayer.sign}) turn`,
+                iconURL: game.currentPlayer.icon,
+            })
+            .setImage(`attachment://${userId}-tictactoe.png`)
+            .setColor(settings.embedColors.default);
+
         await int.editReply({
-            components: [
-                {
-                    components: [
-                        new ButtonBuilder().setCustomId("1").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("2").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("3").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                    ],
-                },
-                {
-                    components: [
-                        new ButtonBuilder().setCustomId("4").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("5").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("6").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                    ],
-                },
-                {
-                    components: [
-                        new ButtonBuilder().setCustomId("7").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("8").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId("9").setLabel("\u200b").setStyle(ButtonStyle.Primary),
-                    ],
-                },
-            ] as ActionRowData<ButtonBuilder>[],
-            embeds: [
-                {
-                    author: {
-                        name: `${game.currentPlayer.name}'s (${game.currentPlayer.sign}) turn`,
-                        icon_url: game.currentPlayer.icon,
-                    },
-                    image: {
-                        url: `attachment://${userId}-tictactoe.png`
-                    },
-                    color: Number(settings.embedColors.default),
-                }
-            ],
+            ...game.bm?.getReplyOpts(),
             files: [{
                 attachment: path.join(os.tmpdir(), `${userId}-tictactoe.png`),
                 name: `${userId}-tictactoe.png`,
