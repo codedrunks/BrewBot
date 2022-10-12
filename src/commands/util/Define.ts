@@ -3,6 +3,7 @@ import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { followRedirects, rankVotes, axios } from "@src/utils";
+import { Tuple } from "@src/types";
 
 type WikiArticle = {
     title: string;
@@ -67,7 +68,7 @@ export class Define extends Command
         const embed = new EmbedBuilder()
             .setColor(settings.embedColors.default);
 
-        const btns: ButtonBuilder[] = [];
+        const btnsRow: ButtonBuilder[] = [];
 
         switch(engine)
         {
@@ -131,7 +132,7 @@ export class Define extends Command
 
             const redirLink = await followRedirects(permalink);
 
-            btns.push(new ButtonBuilder()
+            btnsRow.push(new ButtonBuilder()
                 .setStyle(ButtonStyle.Link)
                 .setLabel("Open")
                 .setURL(redirLink ?? permalink)
@@ -258,15 +259,16 @@ export class Define extends Command
                 .setFooter({ text: "dictionaryapi.dev", iconURL: icons.dictionary });
 
             if(entry.pronounciation)
-                btns.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Pronounciation").setURL(entry.pronounciation));
+                btnsRow.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Pronounciation").setURL(entry.pronounciation));
 
-            btns.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Source").setURL(entry.source));
+            btnsRow.push(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Source").setURL(entry.source));
 
             break;
         }
         }
 
-        // await this.editReply(int, embed);
+        const btns = <Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>[btnsRow];
+
         await int.editReply({
             embeds: [ embed ],
             ...Command.useButtons(btns),

@@ -5,6 +5,7 @@ import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
 import { fetchSongInfo, resolveTitle } from "./global.music";
+import { Tuple } from "@src/types";
 
 const ten_secs = 10_000;
 
@@ -52,13 +53,13 @@ export class NowPlaying extends Command {
 
         if(current?.uri) embed.setURL(current.uri);
 
-        const btns: ButtonBuilder[] = [
+        const btns: Tuple<Tuple<ButtonBuilder, 5>, 1> = [[
             new ButtonBuilder().setEmoji("⏪").setLabel("- 10s").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setEmoji("⏯️").setLabel("Pause/Resume").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setEmoji("⏩").setLabel("+ 10s").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setEmoji("⏭").setLabel("Skip").setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setEmoji("⏹️").setLabel("Stop").setStyle(ButtonStyle.Secondary)
-        ];
+        ]];
 
         const button = new BtnMsg(embed, btns, { timeout: current.isStream ? -1 : (current.duration as number) - player.position });
 

@@ -2,6 +2,7 @@ import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, Applicati
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { halves } from "svcorelib";
+import { Tuple } from "@src/types";
 
 const maxEmojiAmt = 10;
 
@@ -74,16 +75,16 @@ export class Emoji extends Command
             const [firstEbd, secondEbd] = halves(embeds);
             const [firstBtn, secondBtn] = halves(btns);
 
-            await this.reply(int, firstEbd, false, firstBtn);
+            await this.reply(int, firstEbd, false, <Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>[firstBtn]);
 
             await int.channel?.send({
-                ...Command.useButtons(secondBtn),
+                ...Command.useButtons(<Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>[secondBtn]),
                 embeds: secondEbd,
             });
         }
         else if(embeds.length > 0)
-            await this.reply(int, embeds, false, btns);
+            await this.reply(int, embeds, false, <Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>[btns]);
         else
-            await this.reply(int, "Couldn't find the emoji(s) you provided. Note that I can only find custom emojis.", true, btns);
+            await this.reply(int, "Couldn't find the emoji(s) you provided. Note that I can only find custom emojis.", true, <Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>>[btns]);
     }
 }

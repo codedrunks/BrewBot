@@ -1,6 +1,6 @@
 import { ButtonInteraction, CommandInteraction, CommandInteractionOption, ActionRowBuilder, ButtonBuilder, EmbedBuilder, PermissionsString, ApplicationCommandOptionType } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { CommandMeta, SubcommandMeta } from "@src/types";
+import { CommandMeta, SubcommandMeta, Tuple } from "@src/types";
 import { ChannelType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 import k from "kleur";
 import { embedify } from "@utils/embedify";
@@ -299,7 +299,7 @@ export abstract class Command
      * @param ephemeral Set to true to make the command reply only visible to the author. Defaults to false (publicly visible).
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async reply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
+    protected async reply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
@@ -323,7 +323,7 @@ export abstract class Command
      * @param content Can be a string or a single or multiple MessageEmbed instances
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async editReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], actions?: ButtonBuilder | ButtonBuilder[])
+    protected async editReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
@@ -338,7 +338,7 @@ export abstract class Command
      * @param ephemeral Set to true to make the follow up only visible to the author. Defaults to false (publicly visible)
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async followUpReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
+    protected async followUpReply(int: CommandInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
@@ -361,17 +361,16 @@ export abstract class Command
      * await int.reply({ ...Command.useButtons(btns), content: "foo" });
      * ```
      */
-    public static useButtons(buttons?: ButtonBuilder | ButtonBuilder[]): { components: ActionRowBuilder<ButtonBuilder>[] } | Record<string, never>
+    public static useButtons(buttons?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>): { components: ActionRowBuilder<ButtonBuilder>[] }
     {
-        const actRows = Array.isArray(buttons) ? buttons : (buttons ? [buttons] : undefined);
+        const actRows = Array.isArray(buttons) ? buttons : (buttons ? [[buttons]] : []);
+        const rows: ActionRowBuilder<ButtonBuilder>[] = [];
 
-        if(!actRows || actRows.length === 0)
-            return {};
+        actRows.forEach(row => {
+            rows.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
+        });
 
-        const act = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(actRows);
-
-        return actRows ? { components: [act] } : {};
+        return { components: rows };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
