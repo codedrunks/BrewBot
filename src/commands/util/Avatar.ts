@@ -49,7 +49,7 @@ export class Avatar extends Command
             try
             {
                 if(requestedAvUrl)
-                    status = (await axios.get(requestedAvUrl)).status;
+                    status = (await axios.head(requestedAvUrl)).status;
             }
             catch(err)
             {
