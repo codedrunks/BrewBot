@@ -331,7 +331,7 @@ export class TicTacToe extends Command {
                     .setAuthor({
                         name: "The CPU won",
                         iconURL: undefined,
-                    });
+                    }).setColor(settings.embedColors.success);
                 game.bm.emit("timeout");
                 game.bm.destroy();
                 break;
@@ -340,7 +340,7 @@ export class TicTacToe extends Command {
                     .setAuthor({
                         name: "It's a tie",
                         iconURL: undefined,
-                    });
+                    }).setColor(settings.embedColors.gameLost);
                 game.bm.emit("timeout");
                 game.bm.destroy();
                 break;
