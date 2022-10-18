@@ -114,19 +114,19 @@ export class TicTacToe extends Command {
             new EmbedBuilder(),
             [
                 [
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
                 ],
                 [
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
                 ],
                 [
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setEmoji("1030120536996593681").setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setEmoji(Sign.None).setStyle(ButtonStyle.Primary),
                 ],
             ],
             { timeout: 1000 * 60 * 2 },
