@@ -50,8 +50,8 @@ export class Poll extends Command
                         },
                         // TODO:
                         // {
-                        //     name: "allow_rethinking",
-                        //     desc: "Set this to false to disallow people to change their mind and choose another option.",
+                        //     name: "allow_changing",
+                        //     desc: "Set this to False to disallow people to change their mind and choose another option.",
                         //     type: ApplicationCommandOptionType.Boolean,
                         // },
                     ],
@@ -107,7 +107,14 @@ export class Poll extends Command
                 const votes_per_user = int.options.get("votes_per_user")?.value as number | undefined;
                 const title = int.options.get("title")?.value as string | undefined;
 
-                const modal = new CreatePollModal(headline, votes_per_user, title);
+                const redisKey = `poll-modal-data_${guild.id}_${int.user.id}`;
+
+                const modalData = await redis.get(redisKey);
+                const modal = new CreatePollModal(headline, votes_per_user, title, modalData ? JSON.parse(modalData) : undefined);
+
+                modal.on("invalid", (data) => redis.set(redisKey, JSON.stringify(data)));
+                modal.on("deleteCachedData", () => redis.del(redisKey));
+                setTimeout(() => redis.del(redisKey), 1000 * 60 * 5);
 
                 return await int.showModal(modal.getInternalModal());
             }
@@ -165,9 +172,8 @@ export class Poll extends Command
             case "delete":
             {
                 action = "deleting a poll";
-                // TODO: display current results to deleter, maybe in the poll itself?
 
-                await this.deferReply(int, true);
+                await this.deferReply(int);
 
                 const pollId = int.options.get("poll_id", true).value as number;
 
