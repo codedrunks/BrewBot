@@ -7,6 +7,7 @@ import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { Poll as PollObj } from "@prisma/client";
 import { getRedis } from "@src/redis";
+import { Tuple } from "@src/types";
 
 const redis = getRedis();
 
@@ -198,7 +199,7 @@ export class Poll extends Command
 
                 const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
 
-                const btns = [
+                const btns: Tuple<Tuple<ButtonBuilder, 2>, 1> = [[
                     new ButtonBuilder()
                         .setStyle(ButtonStyle.Danger)
                         .setLabel("Delete")
@@ -207,7 +208,7 @@ export class Poll extends Command
                         .setStyle(ButtonStyle.Secondary)
                         .setLabel("Cancel")
                         .setEmoji("❌"),
-                ];
+                ]];
 
                 const bm = new BtnMsg(embedify(`You are about to delete a poll that ${peopleVoted} ${peopleVoted === 1 ? "person" : "people"} have voted on.\nAre you sure you want to delete the poll? This cannot be undone.`, settings.embedColors.warning), btns, { timeout: 30_000 });
 
