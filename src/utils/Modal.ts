@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { registerModal } from "@src/registry";
 import { Command } from "@src/Command";
 import { EmitterBase } from "./EmitterBase";
+import { Tuple } from "@src/types";
 
 interface ModalConstructor {
     title: string;
@@ -54,7 +55,7 @@ export abstract class Modal extends EmitterBase {
      * @param ephemeral Set to true to make the reply only visible to the author. Defaults to false (publicly visible).
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async reply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
+    protected async reply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
@@ -78,7 +79,7 @@ export abstract class Modal extends EmitterBase {
      * @param content Can be a string or a single or multiple EmbedBuilder instances
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async editReply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], actions?: ButtonBuilder | ButtonBuilder[])
+    protected async editReply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
@@ -93,7 +94,7 @@ export abstract class Modal extends EmitterBase {
      * @param ephemeral Set to true to make the follow up only visible to the author. Defaults to false (publicly visible)
      * @param actions An action or an array of actions to attach to the reply
      */
-    protected async followUpReply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | ButtonBuilder[])
+    protected async followUpReply(int: ModalSubmitInteraction, content: string | EmbedBuilder | EmbedBuilder[], ephemeral = false, actions?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>)
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });

@@ -6,6 +6,7 @@ import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
 import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
+import { Tuple } from "@src/types";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
@@ -300,17 +301,17 @@ export class Reminder extends Command
 
                 const cont = embedify(`Are you sure you want to delete ${rems.length > 1 ? `all ${rems.length} reminders` : "your 1 reminder"}?\nThis action cannot be undone.`, settings.embedColors.warning);
 
-                const btns: ButtonBuilder[] = [
+                const btns: Tuple<Tuple<ButtonBuilder, 2>, 1> = [[
                     new ButtonBuilder().setLabel(`Delete ${autoPlural("reminder", rems.length)}`).setStyle(ButtonStyle.Danger).setEmoji("🗑️"),
                     new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary),
-                ];
+                ]];
 
                 const bm = new BtnMsg(cont, btns, {
                     timeout: 1000 * 20,
                 });
 
                 bm.on("press", async (bt, btInt) => {
-                    if(bt.data.label === btns.find(b => b.data.label)?.data.label)
+                    if(bt.data.label === btns.flat().find(b => b.data.label)?.data.label)
                     {
                         await deleteReminders(rems.map(r => r.reminderId), user.id);
                         await btInt.reply({ ...useEmbedify(`${rems.length > 1 ? `All ${rems.length} reminders have` : "Your 1 reminder has"} been deleted successfully.`, settings.embedColors.default), ephemeral: true });

@@ -224,11 +224,11 @@ export class Warning extends Command
                     })
                     .setDescription(descParts.join("\n"));
 
-                const bm = new BtnMsg(ebd, [
+                const bm = new BtnMsg(ebd,
                     new ButtonBuilder()
                         .setLabel("Show warnings")
                         .setStyle(ButtonStyle.Primary)
-                ]);
+                );
 
                 const alertMsg = await bm.sendIn(blChannel);
 

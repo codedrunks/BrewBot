@@ -4,6 +4,7 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
 import { Queue as ErelaQueue, Track, UnresolvedTrack } from "erela.js";
 import { BtnMsg } from "@utils/BtnMsg";
+import { Tuple } from "@src/types";
 
 interface QueuePage {
     [userid: string]: number,
@@ -70,10 +71,10 @@ export class Queue extends Command {
             if(player.queue.current.thumbnail) embed.setThumbnail(player.queue.current.thumbnail);
 
             if(player.queue.length > 10) {
-                const btns: ButtonBuilder[] = [
+                const btns: Tuple<Tuple<ButtonBuilder, 2>, 1> = [[
                     new ButtonBuilder().setEmoji("⬅️").setLabel("Previous").setStyle(ButtonStyle.Primary),
                     new ButtonBuilder().setEmoji("➡️").setLabel("Next").setStyle(ButtonStyle.Primary)
-                ];
+                ]];
 
                 const button = new BtnMsg(embed, btns, { timeout: 60_000 });
 
