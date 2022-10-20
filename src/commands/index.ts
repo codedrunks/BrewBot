@@ -51,6 +51,7 @@ import { Shuffle } from "@commands/music/Shuffle";
 import { Skip } from "@commands/music/Skip";
 import { Stop } from "@commands/music/Stop";
 import { Volume } from "@commands/music/Volume";
+import { TicTacToe } from "@commands/games/TicTacToe";
 
 
 /** Every command in here will get registered when the bot starts up */
@@ -70,6 +71,7 @@ export const commands = [
     Steam,
     Sudoku,
     TwentyFortyEight,
+    TicTacToe,
 
     // mod
     // ReactionRoles,

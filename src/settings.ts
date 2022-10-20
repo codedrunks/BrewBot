@@ -43,7 +43,7 @@ export const settings: Settings = Object.freeze({
         ],
     },
     embedColors: {
-        default: getEnvVar("EMBED_COLOR_DEFAULT") ?? "#faba05",
+        default: getEnvVar("EMBED_COLOR_DEFAULT") ?? 0xfaba05,
         success: getEnvVar("EMBED_COLOR_SUCCESS") ?? Colors.Green,
         gameLost: getEnvVar("EMBED_COLOR_GAME_LOST") ?? Colors.Grey,
         warning: getEnvVar("EMBED_COLOR_WARNING") ?? Colors.Orange,
