@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@utils/index";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
 import { createNewMember, getMember } from "@database/users";
-import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
+import { Levels, totalWorksToLevel, baseAward } from "@src/commands/economy/jobs";
 import { randomItem } from "svcorelib";
 
 const secs4hours = 14400;

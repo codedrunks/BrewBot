@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { getTotalWorks } from "@database/economy";
 import { settings } from "@src/settings";
 import { embedify } from "@utils/embedify";
-import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
+import { Levels, totalWorksToLevel, baseAward } from "@src/commands/economy/jobs";
 
 export class Job extends Command {
     constructor() {
