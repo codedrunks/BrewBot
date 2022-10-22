@@ -1,15 +1,18 @@
-export interface ILevel {
-    [key: number]: {
-        name: string,
-        multiplier: number,
-        phrases: string[]
-    }
+interface JobLevelObj {
+    name: string;
+    multiplier: number;
+    worksRequired: number;
+    phrases: string[];
 }
 
-export const Levels: ILevel = {
+
+const baseAward = 50;
+
+const jobLevels: Record<number, JobLevelObj> = {
     1: {
         name: "Beggar",
         multiplier: .1,
+        worksRequired: 0,
         phrases: [
             "begging for a few hours on the street corner",
             "selling your kidney",
@@ -22,6 +25,7 @@ export const Levels: ILevel = {
     2: {
         name: "McDonald's Employee",
         multiplier: .4,
+        worksRequired: 10,
         phrases: [
             "flipping patties",
             "getting beaten by your manager",
@@ -31,6 +35,7 @@ export const Levels: ILevel = {
     3: {
         name: "ShitCoin Trader",
         multiplier: .8,
+        worksRequired: 25,
         phrases: [
             "selling some doge",
             "foreseeing the future",
@@ -40,6 +45,7 @@ export const Levels: ILevel = {
     4: {
         name: "Twitch Streamer",
         multiplier: 1,
+        worksRequired: 50,
         phrases: [
             "destroying some 12 year olds",
             "playing some fortnite",
@@ -50,6 +56,7 @@ export const Levels: ILevel = {
     5: {
         name: "E-Thot",
         multiplier: 1.5,
+        worksRequired: 100,
         phrases: [
             "selling feet pics",
             "enticing men",
@@ -60,6 +67,7 @@ export const Levels: ILevel = {
     6: {
         name: "CEO of FartBux",
         multiplier: 2.2,
+        worksRequired: 200,
         phrases: [
             "providing value to your company",
             "adding to the price of FartBux",
@@ -70,6 +78,7 @@ export const Levels: ILevel = {
     7: {
         name: "Jeff Bezos Jr.",
         multiplier: 3,
+        worksRequired: 300,
         phrases: [
             "consuming the blood of children",
             "using your dad's wealth to build your own",
@@ -80,6 +89,7 @@ export const Levels: ILevel = {
     8: {
         name: "Elon Musk, Lord and King of Mars",
         multiplier: 5,
+        worksRequired: 500,
         phrases: [
             "inventing new particles such as Assium and Coomium",
             "stealing your employees' ideas",
@@ -89,16 +99,20 @@ export const Levels: ILevel = {
     }
 };
 
-export const totalWorksToLevel = (works: number): number => {
-    // let worksMap = [0, 10, 25, 50, 100, 200, 300, 500];
-    if(works >= 500) return 8;
-    else if(works >= 300) return 7;
-    else if(works >= 200) return 6;
-    else if(works >= 100) return 5;
-    else if(works >= 50) return 4;
-    else if(works >= 25) return 3;
-    else if(works >= 10) return 2;
-    else return 1;
-};
+function totalWorksToLevel(works: number) {
+    const entries = Object.entries(jobLevels)
+        .reverse()
+        .map(([l, o]) => ([Number(l), o])) as [number, JobLevelObj][];
 
-export const baseAward = 50;
+    for(const [lvl, { worksRequired }] of entries) {
+        if(works >= worksRequired)
+            return lvl;
+    }
+    return 1;
+}
+
+export {
+    baseAward,
+    jobLevels,
+    totalWorksToLevel,
+};

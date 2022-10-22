@@ -18,7 +18,7 @@ export class ExecModal extends Modal
                 new TextInputBuilder()
                     .setCustomId("code")
                     .setLabel("Code")
-                    .setPlaceholder("Any TS or CJS code\n(Vars: channel, user, guild, client, and important stuff from D.JS and utils)")
+                    .setPlaceholder("Any TS or CJS code\nImport with \"await import()\", relative to src/modals\nReturn to display result")
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true),
             ]
