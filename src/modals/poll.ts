@@ -5,6 +5,7 @@ import { settings } from "@src/settings";
 import { embedify, zeroPad } from "@src/utils";
 import { createNewGuild, createNewPoll, getGuild, getPolls } from "@src/database/guild";
 import { halves } from "svcorelib";
+import { Tuple } from "@src/types";
 
 interface PollModalData {
     topic: string | null;
@@ -93,8 +94,9 @@ export class CreatePollModal extends Modal
     async submit(int: ModalSubmitInteraction<"cached">): Promise<void> {
         const { guild, channel } = int;
 
+        // already handled in the poll command
         if(!guild || !channel)
-            return; // already handled in the poll command
+            return;
 
         const topicRaw = int.fields.getTextInputValue("topic").trim();
 
@@ -103,48 +105,18 @@ export class CreatePollModal extends Modal
         const voteOptions = int.fields.getTextInputValue("vote_options").trim().split(/\n/gm).filter(v => v.length > 0);
         const headline = this.headline;
 
-        const longFmtRe = /^\d{4}[/-]\d{1,2}[/-]\d{1,2}[\s.,_T]\d{1,2}:\d{1,2}(:\d{1,2})?$/,
-            shortFmtRe = /^\d{1,2}:\d{1,2}$/;
+        const parsed = this.parsePollVals({
+            int,
+            topic: topic ?? null,
+            expiry,
+            voteOptions,
+        });
 
-        const modalInvalid = (msg: string) => {
-            this.emit("invalid", { topic: topic ?? null, expiry, voteOptions });
-            return this.reply(int, embedify(msg, settings.embedColors.error), true);
-        };
+        // is already handled in parsePollVals()
+        if(!parsed)
+            return;
 
-        if(!expiry.match(longFmtRe) && !expiry.match(shortFmtRe))
-            return modalInvalid("Please make sure the poll end date and time are formatted in one of these formats (24 hours, in UTC / GMT+0 time):\n- `YYYY/MM/DD hh:mm`\n- `hh:mm` (today)");
-        if(voteOptions.length > settings.emojiList.length)
-            return modalInvalid(`Please enter ${settings.emojiList.length} vote options at most.`);
-        if(voteOptions.length < 2)
-            return modalInvalid("Please enter at least two options to vote on.");
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const [_, ...rest] = (expiry.match(longFmtRe)
-            ? /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})[\s.,_T](\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
-            : /^(\d{1,2}):(\d{1,2})$/.exec(expiry)
-        )?.filter(v => v) as string[];
-
-        // TODO:FIXME: this shit is utterly broken
-        const d = new Date();
-        let dateParts: number[] = [];
-
-        if(rest.length === 5)
-            dateParts = rest.map(v => parseInt(v));
-        else
-            dateParts = [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), ...rest.map(v => parseInt(v))];
-
-        // parseInt(v) - new Date().getTimezoneOffset() / 60
-            
-        const dueTimestamp = new Date(...<[number]>dateParts);
-        const optionFields = CreatePollModal.reduceOptionFields(voteOptions);
-
-        const dueTs = dueTimestamp.getTime();
-        const nowTs = new Date().getTime() + 30_000;
-
-        const due = new Date(dueTs), now = new Date(nowTs);
-
-        if(dueTs < nowTs)
-            return modalInvalid("Please enter a date and time that is at least one minute from now.");
+        const { dueTime, optionFields } = parsed;
 
         const ebd = new EmbedBuilder()
             .setTitle(this.title ?? "Poll")
@@ -157,8 +129,6 @@ export class CreatePollModal extends Modal
         this.emit("deleteCachedData");
 
         await this.deferReply(int, true);
-
-        console.log();
 
         // send messages & react
         try
@@ -216,7 +186,7 @@ export class CreatePollModal extends Modal
                 topic: topic && topic.length > 0 ? topic : null,
                 voteOptions,
                 votesPerUser: this.votesPerUser,
-                dueTimestamp,
+                dueTimestamp: dueTime,
             });
 
             return this.editReply(int, embedify("Successfully created a poll in this channel."));
@@ -225,5 +195,60 @@ export class CreatePollModal extends Modal
         {
             return this.editReply(int, embedify(`Couldn't create a poll due to an error: ${err}`, settings.embedColors.error));
         }
+    }
+
+    parsePollVals({ int, topic, expiry, voteOptions }: { int: ModalSubmitInteraction } & PollModalData)
+    {
+        const longFmtRe = /^\d{4}[/-]\d{1,2}[/-]\d{1,2}[\s.,_T]\d{1,2}:\d{1,2}(:\d{1,2})?$/,
+            shortFmtRe = /^\d{1,2}:\d{1,2}$/;
+
+        const modalInvalid = (msg: string) => {
+            this.emit("invalid", { topic: topic ?? null, expiry, voteOptions });
+            this.reply(int, embedify(msg, settings.embedColors.error), true);
+            return null;
+        };
+
+        if(!expiry.match(longFmtRe) && !expiry.match(shortFmtRe))
+            return modalInvalid("Please make sure the poll end date and time are formatted in one of these formats (24 hours, in UTC / GMT+0 time):\n- `YYYY/MM/DD hh:mm`\n- `hh:mm` (today)");
+        if(voteOptions.length > settings.emojiList.length)
+            return modalInvalid(`Please enter ${settings.emojiList.length} vote options at most.`);
+        if(voteOptions.length < 2)
+            return modalInvalid("Please enter at least two options to vote on.");
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const [_, ...rest] = (expiry.match(longFmtRe)
+            ? /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})[\s.,_T](\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
+            : /^(\d{1,2}):(\d{1,2})$/.exec(expiry)
+        )?.filter(v => v) as string[];
+
+        const d = new Date();
+        let dateParts: number[] = [];
+
+        if(rest.length === 5)
+            dateParts = rest.map(v => parseInt(v));
+        else
+            dateParts = [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), ...rest.map(v => parseInt(v))];
+
+        // for some reason only months in JS are 0-indexed
+        dateParts[1]--;
+
+        // parseInt(v) - new Date().getTimezoneOffset() / 60
+            
+        const dueTs = Date.UTC(...<Tuple<number, 5>>dateParts);
+        const nowTs = Date.now();
+
+        const optionFields = CreatePollModal.reduceOptionFields(voteOptions);
+
+        const due = new Date(dueTs), now = new Date(nowTs);
+        console.log("due", due);
+        console.log("now", now);
+
+        if(dueTs < nowTs + 30_000)
+            return modalInvalid("Please enter a date and time that is at least one minute from now.");
+
+        return {
+            dueTime: new Date(dueTs),
+            optionFields,
+        };
     }
 }
