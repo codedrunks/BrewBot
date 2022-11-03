@@ -22,13 +22,14 @@ jobs:
     - name: Install node-canvas dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+        sudo apt install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
     - name: Install npm dependencies
       run: |
-        npm install -g tsc
-        npm install
+        npm i -g tsc
+        npm ci
 
-    - run: npm run lint
+    - name: Run ESLint
+      run: npm run lint
 
 
