@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, Colle
 import k from "kleur";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
-import { autoPlural, BtnMsg, embedify, PageEmbed, toUnix10, truncStr, useEmbedify } from "@src/utils";
+import { autoPlural, BtnMsg, embedify, emojis, PageEmbed, toUnix10, truncStr, useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
 import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
 import { Poll as PollObj } from "@prisma/client";
@@ -147,7 +147,7 @@ export class Poll extends Command
                             name: "\u200B",
                             value: pollSlice.reduce((a, c) => ([
                                 `${a}\n`,
-                                `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show <:open_in_browser:994648843331309589>](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
+                                `> **\`${c.pollId}\`** - by <@${c.createdBy}>${c.topic ? "" : ` in <#${c.channel}>`} - [show ${emojis.openInBrowser}](https://discord.com/channels/${c.guildId}/${c.channel}/${c.messages[0]})`,
                                 ...(c.topic ? [`> **Topic:** ${truncStr(c.topic.replace(/[`]{3}\w*/gm, "").replace(/\n+/gm, " "), 80)}`] : ["> (no topic)"]),
                                 `> Ends <t:${toUnix10(c.dueTimestamp)}:R>`,
                             ].join("\n")), ""),

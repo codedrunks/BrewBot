@@ -4,7 +4,7 @@ import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { createGuildSettings, createNewGuild, getGuild, getGuildSettings, setGuild } from "@src/database/guild";
-import { embedify, toUnix10 } from "@src/utils";
+import { embedify, toUnix10, emojis } from "@src/utils";
 
 export class Log extends Command {
     constructor() {
@@ -135,14 +135,14 @@ export class Log extends Command {
 
                                 <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
                                 ${message.embeds.length > 0 ? "(embed)" : (messageAttachmentString.length > 0 ? messageAttachmentString : "(other)")}
-                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
+                                > [show message ${emojis.openInBrowser}](${message.url})`);
                             } else {
                                 messageEmbedString += (`\
 
 
                                 <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
                                 > ${message.embeds.length > 0 ? "(embed)" : (message.content && message.content.length > 0 ? message.content : "(other)")}
-                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
+                                > [show message ${emojis.openInBrowser}](${message.url})`);
                             }
 
                             if(i === 10 || (10 * setNum) + i === messages.size) {

@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildMemberRoleManager, ButtonBuilder, User, ButtonStyle } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
-import { embedify, musicReadableTimeString, BtnMsg } from "@src/utils";
+import { embedify, musicReadableTimeString, BtnMsg, emojis } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
 import { fetchSongInfo, resolveTitle } from "./global.music";
@@ -44,7 +44,7 @@ export class NowPlaying extends Command {
         if(await getPremium(int.guild.id))
         {
             if(info?.url)
-                lyricsLink = `Lyrics: [click to open <:open_in_browser:994648843331309589>](${info.url})\n`;
+                lyricsLink = `Lyrics: [click to open ${emojis.openInBrowser}](${info.url})\n`;
         }
 
         const embed = embedify(`Artist: \`${info?.meta.artists ?? current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`)
