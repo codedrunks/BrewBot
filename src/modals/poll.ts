@@ -124,7 +124,7 @@ export class CreatePollModal extends Modal
             .setFooter({ text: `Click the reaction emojis below to cast ${this.votesPerUser === 1 ? "a vote" : "votes"}.` })
             .setColor(settings.embedColors.default);
 
-        topic && topic.length > 0 && ebd.setDescription(`> **Topic:**${topic.length > 64 ? "\n>" : ""} ${topic}\n`);
+        topic && topic.length > 0 && ebd.setDescription(`> ${topic.length > 64 ? "\n>" : ""} ${topic}\n`);
 
         this.emit("deleteCachedData");
 
@@ -199,7 +199,7 @@ export class CreatePollModal extends Modal
 
     parsePollVals({ int, topic, expiry, voteOptions }: { int: ModalSubmitInteraction } & PollModalData)
     {
-        const longFmtRe = /^\d{4}[/-]\d{1,2}[/-]\d{1,2}[\s.,_T]\d{1,2}:\d{1,2}(:\d{1,2})?$/,
+        const longFmtRe = /^\d{4}[./-]\d{1,2}[./-]\d{1,2}[\s.,_T]+\d{1,2}:\d{1,2}(:\d{1,2})?$/,
             shortFmtRe = /^\d{1,2}:\d{1,2}$/;
 
         const modalInvalid = (msg: string) => {
@@ -217,7 +217,7 @@ export class CreatePollModal extends Modal
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, ...rest] = (expiry.match(longFmtRe)
-            ? /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})[\s.,_T](\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
+            ? /^(\d{4})[./-](\d{1,2})[./-](\d{1,2})[\s.,_T]+(\d{1,2}):(\d{1,2}):?(\d{1,2})?$/.exec(expiry)
             : /^(\d{1,2}):(\d{1,2})$/.exec(expiry)
         )?.filter(v => v) as string[];
 
@@ -232,16 +232,10 @@ export class CreatePollModal extends Modal
         // for some reason only months in JS are 0-indexed
         dateParts[1]--;
 
-        // parseInt(v) - new Date().getTimezoneOffset() / 60
-            
         const dueTs = Date.UTC(...<Tuple<number, 5>>dateParts);
         const nowTs = Date.now();
 
         const optionFields = CreatePollModal.reduceOptionFields(voteOptions);
-
-        const due = new Date(dueTs), now = new Date(nowTs);
-        console.log("due", due);
-        console.log("now", now);
 
         if(dueTs < nowTs + 30_000)
             return modalInvalid("Please enter a date and time that is at least one minute from now.");

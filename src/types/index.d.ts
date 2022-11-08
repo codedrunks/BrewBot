@@ -154,5 +154,5 @@ export type AnyInteraction = CommandInteraction | ButtonInteraction | ModalSubmi
 //#MARKER utils
 
 // The tuple type allows us to create arrays with certain lengths that are type-safe (doesn't protect from push()ing over N elements)
-type Tuple<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never;
+export type Tuple<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never;
 type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N ? R : _TupleOf<T, N, [T, ...R]>;

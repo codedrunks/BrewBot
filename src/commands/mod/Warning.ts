@@ -2,7 +2,7 @@ import { CommandInteraction, GuildMember, EmbedBuilder, ApplicationCommandOption
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { BtnMsg, embedify, emojis, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
 import { addWarning, createNewMember, deleteWarnings, getMember, getWarnings } from "@src/database/users";
 import { Warning as WarningObj } from "@prisma/client";
 import { allOfType } from "svcorelib";
@@ -240,7 +240,7 @@ export class Warning extends Command
 
                 bm.on("destroy", () => alertMsg.edit(bm.getMsgOpts()));
 
-                alertMsg.react("<:banhammer:1015632683096871055>");
+                alertMsg.react(emojis.banHammer);
 
                 const coll = alertMsg.createReactionCollector({
                     filter: (re, usr) => {
