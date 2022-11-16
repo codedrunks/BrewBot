@@ -21,7 +21,7 @@ interface PollVote {
 export class Poll extends Command
 {
     private client: Client;
-    private reactionCollectors = new Collection<{ pollId: number, guildId: string }, ReactionCollector>;
+    private reactionCollectors: { pollId: number, guildId: string, collectors: ReactionCollector[] }[] = [];
 
     constructor(client: Client)
     {
@@ -83,7 +83,7 @@ export class Poll extends Command
 
         try {
             this.checkPolls();
-            setInterval(this.checkPolls, 2000);
+            setInterval(() => this.checkPolls(), 2000);
         }
         catch(err) {
             console.error(k.red("Error while checking polls:"), err);
@@ -97,8 +97,11 @@ export class Poll extends Command
         polls.forEach(async (poll) => {
             const { votesPerUser, guildId, pollId, voteOptions } = poll;
             const msgs = (await this.getPollMsgs(poll))?.map(m => m);
-            msgs && CreatePollModal.watchReactions(msgs, voteOptions, votesPerUser)
-                .forEach(coll => this.reactionCollectors.set({ guildId, pollId }, coll));
+            if(msgs)
+            {
+                const collectors = CreatePollModal.watchReactions(msgs, voteOptions, votesPerUser);
+                this.reactionCollectors.push({ guildId, pollId, collectors });
+            }
         });
     }
 
@@ -287,7 +290,13 @@ export class Poll extends Command
             const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
             const redisKey = `check_poll_${guildId}-${pollId}`;
 
-            this.reactionCollectors.delete({ pollId, guildId });
+            // idk how to do this better
+            let remIdx: undefined | number = undefined;
+            this.reactionCollectors.forEach((c, i) => {
+                if(c.guildId === guildId && c.pollId === pollId)
+                    remIdx = i;
+            });
+            typeof remIdx === "number" && this.reactionCollectors.splice(remIdx, 1);
 
             if(!(await redis.get(redisKey)))
                 continue;
