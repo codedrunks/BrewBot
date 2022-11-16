@@ -1,4 +1,4 @@
-import { EmbedBuilder, EmbedField, Message, MessageOptions, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
+import { EmbedBuilder, EmbedField, Message, MessageOptions, ModalSubmitInteraction, ReactionCollector, TextInputBuilder, TextInputStyle } from "discord.js";
 
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
@@ -29,6 +29,8 @@ export class CreatePollModal extends Modal
     private headline;
     private votesPerUser;
     private title;
+
+    public reactionCollectors: ReactionCollector[] = [];
 
     constructor(headline?: string, votesPerUser = 1, title?: string, modalData?: PollModalData)
     {
@@ -72,6 +74,13 @@ export class CreatePollModal extends Modal
         this.title = title;
     }
 
+    destroy()
+    {
+        this.reactionCollectors.forEach(c => c.stop());
+        this.reactionCollectors = [];
+        this._destroy();
+    }
+
     public static reduceOptionFields(opts: string[]): EmbedField[]
     {
         const optHalves = opts.length > settings.emojiList.length / 3 ? halves(opts) : [opts];
@@ -89,6 +98,35 @@ export class CreatePollModal extends Modal
             value: red.reduce((a, c) => `${a}\n${c.emoji} \u200B ${c.opt}`, ""),
             inline: true,
         }));
+    }
+
+    // TODO: this might get costly if the bot grows
+    /**
+     * Watches for extraneous reactions on the passed poll messages
+     * @param msgs Messages to watch
+     * @param voteOptions The options users can vote on
+     * @static This function is static so it can be reused in @commands/Poll.ts
+     */
+    public static watchReactions(msgs: Message[], voteOptions: string[], votesPerUser: number)
+    {
+        const colls: ReactionCollector[] = [];
+        const pollEmojis = settings.emojiList.slice(0, voteOptions.length);
+ 
+        msgs.forEach(msg => {
+            colls.push(msg.createReactionCollector({
+                // TODO: check
+                filter: (re, user) => {
+                    if(msgs.reduce(
+                        (a, c) => a + c.reactions.cache.filter(r => r.users.cache.has(user.id)).size, 0
+                    ) <= votesPerUser)
+                        re.remove();
+                    if(!pollEmojis.includes(re.emoji.name ?? "_"))
+                        re.remove();
+                    return true; // collector doesn't actually do anything besides remove extraneous reactions
+                },
+            }));
+        });
+        return colls;
     }
 
     async submit(int: ModalSubmitInteraction<"cached">): Promise<void> {
@@ -159,6 +197,8 @@ export class CreatePollModal extends Modal
                     i++;
                 });
             }
+
+            this.reactionCollectors = CreatePollModal.watchReactions(msgs, voteOptions, this.votesPerUser);
 
             const dbGld = await getGuild(guild.id);
 

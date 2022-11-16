@@ -1,10 +1,10 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, PermissionFlagsBits, TextChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, Collection, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, PermissionFlagsBits, ReactionCollector, TextChannel } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { CreatePollModal } from "@src/modals/poll";
 import { autoPlural, BtnMsg, embedify, emojis, PageEmbed, toUnix10, truncStr, useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
-import { deletePoll, getExpiredPolls, getPolls } from "@src/database/guild";
+import { deletePoll, getActivePolls, getExpiredPolls, getPolls } from "@src/database/guild";
 import { Poll as PollObj } from "@prisma/client";
 import { getRedis } from "@src/redis";
 import { Tuple } from "@src/types";
@@ -21,6 +21,7 @@ interface PollVote {
 export class Poll extends Command
 {
     private client: Client;
+    private reactionCollectors = new Collection<{ pollId: number, guildId: string }, ReactionCollector>;
 
     constructor(client: Client)
     {
@@ -77,7 +78,9 @@ export class Poll extends Command
         });
 
         this.client = client;
-    
+
+        this.setupActivePolls();
+
         try {
             this.checkPolls();
             setInterval(this.checkPolls, 2000);
@@ -85,6 +88,18 @@ export class Poll extends Command
         catch(err) {
             console.error(k.red("Error while checking polls:"), err);
         }
+    }
+
+    /** Run once at startup to set up the reaction collectors */
+    async setupActivePolls()
+    {
+        const polls = await getActivePolls();
+        polls.forEach(async (poll) => {
+            const { votesPerUser, guildId, pollId, voteOptions } = poll;
+            const msgs = (await this.getPollMsgs(poll))?.map(m => m);
+            msgs && CreatePollModal.watchReactions(msgs, voteOptions, votesPerUser)
+                .forEach(coll => this.reactionCollectors.set({ guildId, pollId }, coll));
+        });
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption): Promise<void>
@@ -271,6 +286,8 @@ export class Poll extends Command
         for await(const poll of expPolls) {
             const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
             const redisKey = `check_poll_${guildId}-${pollId}`;
+
+            this.reactionCollectors.delete({ pollId, guildId });
 
             if(!(await redis.get(redisKey)))
                 continue;

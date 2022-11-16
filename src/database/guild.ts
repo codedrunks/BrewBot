@@ -120,6 +120,20 @@ export function getPoll(guildId: string, pollId: number)
     });
 }
 
+export function getActivePolls()
+{
+    return prisma.poll.findMany({
+        where: {
+            dueTimestamp: {
+                gt: new Date(),
+            },
+        },
+        orderBy: {
+            dueTimestamp: "asc",
+        },
+    });
+}
+
 export function getExpiredPolls()
 {
     return prisma.poll.findMany({

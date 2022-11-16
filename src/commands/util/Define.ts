@@ -126,7 +126,7 @@ export class Define extends Command
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
-                    text: `By ${trimLength(author, 32)} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
+                    text: `👍 ${thumbs_up} 👎 ${thumbs_down}`,
                     iconURL: icons.urbandictionary,
                 });
 
@@ -359,10 +359,4 @@ export class Define extends Command
             void err;
         }
     }
-}
-
-/** Trims a `str`ing if it's longer than `len` (32 by default) and adds `trimChar` (`…` by default) */
-function trimLength(str: string, len = 32, trimChar = "…")
-{
-    return str.length > len ? str.substring(0, len) + trimChar : str;
 }
