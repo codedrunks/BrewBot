@@ -356,6 +356,8 @@ export class Reminder extends Command
             .setColor(settings.embedColors.default)
             .setDescription(`The following reminder has expired:\n>>> ${name}`);
 
+        const reminderError = (err: Error) => console.error(k.red("Error while checking reminders:\n"), err);
+
         const guildFallback = async (rem: ReminderObj) => {
             try {
                 if(rem.private)
@@ -377,6 +379,8 @@ export class Reminder extends Command
                 // ─────┼─────
                 //  I I │ I ⌐¬
 
+                err instanceof Error && reminderError(err);
+
                 void err;
             }
             finally {
@@ -385,6 +389,8 @@ export class Reminder extends Command
                 }
                 catch(err) {
                     // TODO: see above
+
+                    err instanceof Error && reminderError(err);
                 }
                 finally {
                     this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);

@@ -46,7 +46,7 @@ export abstract class Command
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
-            data.setName(name)
+            data.setName(this.getCmdName(name))
                 .setDescription(desc);
 
             Array.isArray(args) && args.forEach(arg => {
@@ -121,7 +121,7 @@ export abstract class Command
                         return opt;
                     });
                 else
-                    throw new Error("Unimplemented option type");
+                    throw new Error(`Unimplemented argument type in /${cmdMeta.name}`);
             });
         }
         else
@@ -129,7 +129,7 @@ export abstract class Command
             // subcommands
             this.meta = { ...fallbackMeta, ...cmdMeta };
 
-            data.setName(cmdMeta.name)
+            data.setName(this.getCmdName(cmdMeta.name))
                 .setDescription(cmdMeta.desc);
 
             cmdMeta.subcommands.forEach(scmd => {
@@ -212,7 +212,7 @@ export abstract class Command
                                 return opt;
                             });
                         else
-                            throw new Error("Unimplemented option");
+                            throw new Error(`Unimplemented argument type in /${cmdMeta.name} ${scmd.name}`);
                     });
 
                     return sc;
@@ -222,6 +222,11 @@ export abstract class Command
 
         // finalize
         this.slashCmdJson = data.toJSON();
+    }
+
+    private getCmdName(name: string)
+    {
+        return settings.client.commandPrefix ? `${settings.client.commandPrefix}_${name}` : name;
     }
 
     //#SECTION public
