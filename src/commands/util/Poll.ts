@@ -11,11 +11,13 @@ import { Tuple } from "@src/types";
 
 const redis = getRedis();
 
-interface PollVote {
+/** Object that keeps track of one poll option's votes */
+interface PollOptionVotes {
     msg: Message;
     emoji: string;
     option: string;
-    votes: string[]
+    /** user ids that voted for this option */
+    votes: string[];
 }
 
 export class Poll extends Command
@@ -83,7 +85,8 @@ export class Poll extends Command
 
         try {
             this.checkPolls();
-            setInterval(() => this.checkPolls(), 2000);
+            // setInterval(() => this.checkPolls(), 2000);
+            setInterval(() => this.checkPolls(), 20000); //#DEBUG
         }
         catch(err) {
             console.error(k.red("Error while checking polls:"), err);
@@ -96,10 +99,10 @@ export class Poll extends Command
         const polls = await getActivePolls();
         polls.forEach(async (poll) => {
             const { votesPerUser, guildId, pollId, voteOptions } = poll;
-            const msgs = (await this.getPollMsgs(poll))?.map(m => m);
+            const msgs = (await this.fetchPollMsgs(poll))?.map(m => m);
             if(msgs)
             {
-                const collectors = CreatePollModal.watchReactions(msgs, voteOptions, votesPerUser);
+                const collectors = CreatePollModal.watchReactions(this.client.user!.id, msgs, voteOptions, votesPerUser);
                 this.reactionCollectors.push({ guildId, pollId, collectors });
             }
         });
@@ -129,7 +132,7 @@ export class Poll extends Command
                 const redisKey = `poll-modal-data_${guild.id}_${int.user.id}`;
 
                 const modalData = await redis.get(redisKey);
-                const modal = new CreatePollModal(headline, votes_per_user, title, modalData ? JSON.parse(modalData) : undefined);
+                const modal = new CreatePollModal(this.client.user!.id, headline, votes_per_user, title, modalData ? JSON.parse(modalData) : undefined);
 
                 modal.on("invalid", (data) => redis.set(redisKey, JSON.stringify(data)));
                 modal.on("deleteCachedData", () => redis.del(redisKey));
@@ -208,12 +211,12 @@ export class Poll extends Command
                 if(!memberPermissions?.has(PermissionFlagsBits.ManageChannels) && user.id !== poll.createdBy)
                     return this.editReply(int, embedify("You are not the author of this poll so you can't delete it.", settings.embedColors.error));
 
-                const pollMsgs = await this.getPollMsgs(poll);
+                const pollMsgs = await this.fetchPollMsgs(poll);
 
                 if(!pollMsgs)
                     return this.editReply(int, embedify("You can only use this command in a server.", settings.embedColors.error));
 
-                const finalVotes = await this.accumulateVotes(pollMsgs.reduce((a, c) => { a.push(c as never); return a; }, []), poll.voteOptions);
+                const finalVotes = await this.accumulateVotes(pollMsgs.reduce((a, c) => { a.push(c as never); return a; }, []), poll);
 
                 const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
 
@@ -286,63 +289,77 @@ export class Poll extends Command
     {
         const expPolls = await getExpiredPolls();
 
+        // can't Promise.all() else the Discord API could rate limit us, so instead use for ... await
         for await(const poll of expPolls) {
-            const { guildId, pollId, channel, voteOptions, dueTimestamp: endTime } = poll;
+            const { guildId, pollId, channel, dueTimestamp: endTime } = poll;
             const redisKey = `check_poll_${guildId}-${pollId}`;
 
-            // idk how to do this better
-            let remIdx: undefined | number = undefined;
             this.reactionCollectors.forEach((c, i) => {
                 if(c.guildId === guildId && c.pollId === pollId)
-                    remIdx = i;
+                    this.reactionCollectors.splice(i, 1);
             });
-            typeof remIdx === "number" && this.reactionCollectors.splice(remIdx, 1);
 
-            if(!(await redis.get(redisKey)))
+            const hasKey = await redis.get(redisKey);
+            if(hasKey)
                 continue;
 
             await redis.set(redisKey, 1);
+
+            // there is a tiny potential for the in-progress "delete jobs" cache to get
+            // out of whack so this timeout provides eventual consistency after a minute
+            // this problem only really occurs while debugging but who knows
+            const redisDelTimeout = setTimeout(() => redis.del(redisKey), 60_000);
  
             try {
-                const msgs = await this.getPollMsgs(poll);
+                const msgs = await this.fetchPollMsgs(poll);
 
                 if(msgs && msgs.size > 0) {
                     const firstMsg = msgs.at(0)!;
 
-                    const finalVotes = await this.accumulateVotes(msgs.reduce((a, c) => { a.push(c as never); return a; }, []), voteOptions);
+                    const finalVotes = await this.accumulateVotes(msgs.reduce((a, c) => { a.push(c as never); return a; }, []), poll);
 
                     const startTime = firstMsg.createdAt;
 
-                    // can't Promise.all() else the api could rate limit us
-                    await firstMsg.edit({ embeds: [ this.getConclusionEmbed(finalVotes, startTime, endTime, guildId, channel, firstMsg.id) ] });
+                    await firstMsg.edit({
+                        embeds: [ this.getConclusionEmbed(finalVotes, startTime, endTime, guildId, channel, firstMsg.id) ],
+                    });
 
-                    this.sendConclusion(firstMsg, finalVotes, startTime, endTime);
+                    await this.sendConclusion(firstMsg, finalVotes, startTime, endTime);
                 }
 
-                deletePoll(guildId, pollId);
+                await deletePoll(guildId, pollId);
             }
             catch(err) {
                 // TODO: add logging lib
                 console.error(`Error while checking poll with guildId=${guildId} and pollId=${pollId}:\n`, err);
             }
             finally {
+                clearTimeout(redisDelTimeout);
                 await redis.del(redisKey);
             }
         }
     }
 
-    async getPollMsgs({ guildId, channel, messages }: PollObj)
+    /** Fetches all messages of the provided poll */
+    async fetchPollMsgs({ guildId, channel, messages }: PollObj)
     {
         const gui = this.client.guilds.cache.find(g => g.id === guildId);
         if(!gui) return;
-        const chan = (await gui.channels.fetch()).find(c => c.id === channel);
+        const chan = (await gui.channels.fetch()).find(c => c.id === channel) as TextChannel | undefined;
 
-        return (chan as TextChannel | undefined)?.messages.cache
-            .filter(m => messages.includes(m.id))
+        const msgs = await chan?.messages.fetch({
+            // fetch around the centermost message
+            around: messages[Math.floor(messages.length / 2)],
+            // buffer for when the poll is sent in an active channel, as other members could send messages in between
+            limit: messages.length + 20,
+        });
+
+        return msgs
+            ?.filter(m => messages.includes(m.id)) // filter out all extra messages captured above
             .sort((a, b) => a.createdTimestamp < b.createdTimestamp ? 1 : -1);
     }
 
-    getConclusionEmbed(finalVotes: PollVote[], startTime: Date, endTime: Date, guildId: string, channelId: string, firstMsgId: string)
+    getConclusionEmbed(finalVotes: PollOptionVotes[], startTime: Date, endTime: Date, guildId: string, channelId: string, firstMsgId: string)
     {
         const {
             finalVotesFields, peopleVoted, totalVotes, winningOptions, getReducedWinningOpts
@@ -360,7 +377,7 @@ export class Poll extends Command
             .addFields(finalVotesFields);
     }
 
-    parseFinalVotes(finalVotes: PollVote[])
+    parseFinalVotes(finalVotes: PollOptionVotes[])
     {
         const finalVotesFields = CreatePollModal.reduceOptionFields(finalVotes.map(v => `${v.option} - **${v.votes.length}**`, true));
 
@@ -381,13 +398,13 @@ export class Poll extends Command
             totalVotes += score;
         });
 
-        const sortedVotes = finalVotes.sort((a, b) => a.votes.length < b.votes.length ? 1 : -1);
-        const winningOptions = sortedVotes.filter(v => v.votes === sortedVotes[0].votes);
+        const sortedVotes = finalVotes.sort((a, b) => a.votes.length === b.votes.length ? 0 : (a.votes.length < b.votes.length ? 1 : -1));
+        const winningOptions = sortedVotes.filter(v => v.votes.length === sortedVotes[0].votes.length);
 
         const getReducedWinningOpts = (limit?: number) =>
             winningOptions.reduce((a, c, i) => `${a}${
                 limit === undefined || i < limit
-                    ? `\n\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} ${autoPlural("vote", c.votes)}**` : ""}`
+                    ? `\n> ${c.emoji} \u200B ${c.option}${winningOptions.length > 1 ? `\nWith **${c.votes} ${autoPlural("vote", c.votes)}**` : ""}`
                     : ""
             }`, "");
 
@@ -403,29 +420,42 @@ export class Poll extends Command
         };
     }
 
-    sendConclusion(msg: Message, finalVotes: PollVote[], startTime: Date, endTime: Date)
+    sendConclusion(msg: Message, finalVotes: PollOptionVotes[], startTime: Date, endTime: Date)
     {
-        // TODO:
-
         const { peopleVoted, getReducedWinningOpts } = this.parseFinalVotes(finalVotes);
 
         return msg.reply({ embeds: [
             new EmbedBuilder()
                 .setColor(settings.embedColors.default)
-                .setTitle("This poll has closed.")
-                .setDescription(`It ran from <t:${toUnix10(startTime)}:f> to <t:${toUnix10(endTime)}:f>\n${peopleVoted} people have voted and these are the results:\n\n${getReducedWinningOpts()}`)
+                .setTitle("This poll has ended.")
+                .setDescription(`It ran from <t:${toUnix10(startTime)}:f> to <t:${toUnix10(endTime)}:f>\n${peopleVoted} people have voted and these are the results:\n${getReducedWinningOpts()}`)
         ]});
     }
 
-    async accumulateVotes(msgs: Message[], _voteOpts: string[]): Promise<PollVote[]>
+    /** Takes in Message instances to accumulate the provided reaction emoji votes on */
+    async accumulateVotes(msgs: Message[], { voteOptions }: PollObj): Promise<PollOptionVotes[]>
     {
-        for await(const msg of msgs)
-        {
-            const reacts = msg.reactions.cache.entries();
+        const votes: PollOptionVotes[] = [];
+        const voteOpts: { opt: string, emoji: string }[] = voteOptions.map((opt, i) => ({ opt, emoji: settings.emojiList[i] }));
 
-            console.log(reacts);
+        for await(const msg of msgs) {
+            for await(const [em, re] of [...msg.reactions.cache.entries()]) {
+                const voteOpt = voteOpts.find(vo => vo.emoji === em);
+                if(voteOpt)
+                {
+                    if(!votes.find(v => v.emoji === em))
+                        votes.push({
+                            emoji: voteOpt.emoji,
+                            msg: re.message as Message,
+                            option: voteOpt.opt,
+                            votes: (await re.users.fetch())
+                                .filter(u => !u.bot && !u.system)
+                                .map(u => u.id),
+                        });
+                }
+            }
         }
 
-        return [];
+        return votes;
     }
 }

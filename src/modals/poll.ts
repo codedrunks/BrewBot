@@ -26,13 +26,15 @@ export interface CreatePollModal {
 
 export class CreatePollModal extends Modal
 {
+    private clientId;
+
     private headline;
     private votesPerUser;
     private title;
 
     public reactionCollectors: ReactionCollector[] = [];
 
-    constructor(headline?: string, votesPerUser = 1, title?: string, modalData?: PollModalData)
+    constructor(clientId: string, headline?: string, votesPerUser = 1, title?: string, modalData?: PollModalData)
     {
         const p = zeroPad, d = new Date();
         const defaultExpiry = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
@@ -69,6 +71,8 @@ export class CreatePollModal extends Modal
             ],
         });
 
+        this.clientId = clientId;
+
         this.headline = headline;
         this.votesPerUser = votesPerUser;
         this.title = title;
@@ -103,28 +107,30 @@ export class CreatePollModal extends Modal
     // TODO: this might get costly if the bot grows
     /**
      * Watches for extraneous reactions on the passed poll messages
+     * @param clientId ID of the bot client so its reactions can be ignored
      * @param msgs Messages to watch
      * @param voteOptions The options users can vote on
      * @static This function is static so it can be reused in @commands/Poll.ts
      */
-    public static watchReactions(msgs: Message[], voteOptions: string[], votesPerUser: number)
+    public static watchReactions(clientId: string, msgs: Message[], voteOptions: string[], votesPerUser: number)
     {
         const colls: ReactionCollector[] = [];
         const pollEmojis = settings.emojiList.slice(0, voteOptions.length);
  
         msgs.forEach(msg => {
-            colls.push(msg.createReactionCollector({
-                // TODO: check
-                filter: (re, user) => {
-                    if(msgs.reduce(
-                        (a, c) => a + c.reactions.cache.filter(r => r.users.cache.has(user.id)).size, 0
-                    ) <= votesPerUser)
-                        re.remove();
-                    if(!pollEmojis.includes(re.emoji.name ?? "_"))
-                        re.remove();
-                    return true; // collector doesn't actually do anything besides remove extraneous reactions
-                },
-            }));
+            const coll = msg.createReactionCollector();
+            coll.on("collect", (re, user) => {
+                if(user.bot && user.id !== clientId)
+                    re.remove();
+                if(msgs.reduce(
+                    (a, c) => a + c.reactions.cache.filter(r => r.users.cache.has(user.id)).size, 0
+                ) <= votesPerUser)
+                    re.remove();
+                // remove emojis added by users
+                if(!pollEmojis.includes(re.emoji.name ?? "_"))
+                    re.remove();
+            });
+            colls.push(coll);
         });
         return colls;
     }
@@ -198,7 +204,7 @@ export class CreatePollModal extends Modal
                 });
             }
 
-            this.reactionCollectors = CreatePollModal.watchReactions(msgs, voteOptions, this.votesPerUser);
+            this.reactionCollectors = CreatePollModal.watchReactions(this.clientId, msgs, voteOptions, this.votesPerUser);
 
             const dbGld = await getGuild(guild.id);
 
