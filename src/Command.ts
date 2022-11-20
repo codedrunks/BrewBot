@@ -46,7 +46,7 @@ export abstract class Command
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
-            data.setName(this.getCmdName(name))
+            data.setName(this.getFullCmdName(name))
                 .setDescription(desc);
 
             Array.isArray(args) && args.forEach(arg => {
@@ -129,7 +129,7 @@ export abstract class Command
             // subcommands
             this.meta = { ...fallbackMeta, ...cmdMeta };
 
-            data.setName(this.getCmdName(cmdMeta.name))
+            data.setName(this.getFullCmdName(cmdMeta.name))
                 .setDescription(cmdMeta.desc);
 
             cmdMeta.subcommands.forEach(scmd => {
@@ -224,12 +224,13 @@ export abstract class Command
         this.slashCmdJson = data.toJSON();
     }
 
-    private getCmdName(name: string)
-    {
-        return settings.client.commandPrefix ? `${settings.client.commandPrefix}_${name}` : name;
-    }
-
     //#SECTION public
+
+    /** Returns the full name of the given command name, including optional prefix */
+    public getFullCmdName(cmdName: string)
+    {
+        return `${settings.client.commandPrefix ?? ""}${cmdName}`;
+    }
 
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
     public async tryRun(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>
