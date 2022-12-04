@@ -125,7 +125,7 @@ export class Queue extends Command {
                 await this.editReply(int, embed);
             }
         } catch(e) {
-            console.error(e);
+            console.error("/queue error:", e);
         }
     }}
 

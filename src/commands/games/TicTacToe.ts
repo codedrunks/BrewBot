@@ -201,7 +201,7 @@ export class TicTacToe extends Command {
                         });
                     });
                 })
-                .catch(console.error);
+                .catch((err) => console.error("/tictactoe error:", err));
         } else { // le smart CPU
             this.games.set(user.id, game);
 

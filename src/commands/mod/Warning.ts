@@ -124,7 +124,7 @@ export class Warning extends Command
         }
         catch(err)
         {
-            console.log(err);
+            console.error("/warning error:", err);
             const ebd = embedify(`Couldn't ${action} due to an error:\n${err}`, settings.embedColors.error);
 
             if(int.replied || int.deferred)

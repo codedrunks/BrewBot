@@ -75,9 +75,7 @@ export class BtnMsg extends EmitterBase
         this.once("destroy", () => btnListener.removeListener("press", onPress));
 
         // prevents the bot from crashing on unknown interacations
-        this.on("error", (err) => {
-            console.error(err);
-        });
+        this.on("error", (err) => console.error("BtnMsg error:", err));
 
         if (this.opts.timeout > 0) {
             this.timeoutId = setTimeout(() => {

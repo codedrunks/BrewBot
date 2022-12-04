@@ -260,6 +260,7 @@ export abstract class Command
             const embeds = [ embedify(`Couldn't run the command due to an error${err instanceof Error ? `: ${err.message}` : "."}`, settings.embedColors.error) ];
 
             console.error(`Error while running the command ${k.yellow(`/${int.commandName}`)}\n`, err);
+            // TODO: add logging lib
 
             if(typeof int.reply === "function" && !int.replied && !int.deferred)
                 return await int.reply({ embeds, ephemeral: true });
