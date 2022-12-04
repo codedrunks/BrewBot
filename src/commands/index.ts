@@ -24,7 +24,6 @@ import { Emoji } from "@commands/util/Emoji";
 import { Exec } from "@commands/util/Exec";
 import { Help } from "@commands/util/Help";
 import { Ping } from "@commands/util/Ping";
-import { Poll } from "@commands/util/Poll";
 import { Reminder } from "@commands/util/Reminder";
 import { Server } from "@commands/util/Server";
 import { Translate } from "@commands/util/Translate";
@@ -88,7 +87,6 @@ export const commands = [
     Exec,
     Help,
     Ping,
-    Poll,
     Reminder,
     Server,
     Translate,
