@@ -153,7 +153,7 @@ async function registerCommands(client: Client)
 
                 const opts = options.data && options.data.length > 0 ? options.data : undefined;
 
-                const cmd = cmds.find(({ meta }) => meta.name === commandName);
+                const cmd = cmds.find((cmd) => cmd.getFullCmdName(cmd.meta.name) === commandName);
 
                 if(!cmd || !cmd.enabled)
                     return;

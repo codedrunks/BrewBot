@@ -5,9 +5,13 @@ import { Command } from "@src/Command";
 import { axios, embedify } from "@src/utils";
 import { settings } from "@src/settings";
 import languages from "@assets/languages.json";
+import { isArrayEmpty } from "svcorelib";
 
 export class Translate extends Command
 {
+    readonly LANGS = Object.entries(languages)
+        .map(([name, code]) => ({ name, code }));
+
     constructor()
     {
         super({
@@ -16,18 +20,24 @@ export class Translate extends Command
             category: "util",
             args: [
                 {
+                    name: "language",
+                    desc: "English name of the language to translate to",
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                },
+                {
                     name: "text",
                     desc: "The text to translate",
                     type: ApplicationCommandOptionType.String,
                     required: true,
                 },
                 {
-                    name: "language",
-                    desc: "English name of the language to translate to",
+                    name: "input_language",
+                    desc: "Language of the text to translate. Leave empty to auto-detect.",
                     type: ApplicationCommandOptionType.String,
-                    required: true,
-                }
-            ]
+                    required: false,
+                },
+            ],
         });
     }
 
@@ -35,11 +45,9 @@ export class Translate extends Command
     {
         const text = (int.options.get("text", true).value as string).trim();
         const lang = (int.options.get("language", true).value as string).trim();
+        const inLang = (int.options.get("input_language")?.value as string | null)?.trim();
 
-        const langs = Object.entries(languages)
-            .map(([name, code]) => ({ name, code }));
-
-        const fuse = new Fuse(langs, {
+        const fuse = new Fuse(this.LANGS, {
             keys: [ "name" ],
             threshold: 0.5,
         });
@@ -53,7 +61,7 @@ export class Translate extends Command
 
         await this.deferReply(int);
 
-        const tr = await this.getTranslation(text, resLang.code);
+        const tr = await this.getTranslation(text, resLang.code, inLang);
 
         if(!tr)
             return await this.editReply(int, embedify("Couldn't find a translation for that", settings.embedColors.error));
@@ -71,16 +79,16 @@ export class Translate extends Command
         return await this.editReply(int, ebd);
     }
 
-    async getTranslation(text: string, targetLang: string): Promise<{ fromLang: string, translation: string } | null>
+    async getTranslation(text: string, targetLang: string, inLang = "auto")
     {
         try
         {
-            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?sl=auto&tl=${targetLang}&q=${encodeURI(text)}&client=gtx&dt=t&ie=UTF-8&oe=UTF-8`);
+            const { data, status } = await axios.get(`https://translate.googleapis.com/translate_a/single?sl=${inLang}&tl=${targetLang}&q=${encodeURI(text)}&client=gtx&dt=t&ie=UTF-8&oe=UTF-8`);
 
             if(status < 200 || status >= 300)
                 return null;
 
-            const fromLang = data?.[2];
+            const fromLang = data?.[2] as string | undefined;
             let trParts = data?.[0];
 
             if(!fromLang || !trParts)
@@ -89,10 +97,13 @@ export class Translate extends Command
             if(trParts.length > 1)
                 trParts = trParts.map((p: string[]) => p?.[0]);
             else
-                trParts = [trParts?.[0]];
+                trParts = [trParts?.[0]?.[0]];
 
-            const translation = trParts
-                .filter((p: unknown) => typeof p === "string")
+            if(isArrayEmpty(trParts) === true)
+                return null;
+
+            const translation = (trParts as unknown[])
+                .filter(p => typeof p === "string")
                 .join("").trim();
 
             return { fromLang, translation };

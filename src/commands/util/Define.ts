@@ -2,7 +2,7 @@ import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, Applicati
 import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-import { followRedirects, rankVotes, axios } from "@src/utils";
+import { followRedirects, rankVotes, axios, emojis } from "@src/utils";
 import { Tuple } from "@src/types";
 
 type WikiArticle = {
@@ -126,7 +126,7 @@ export class Define extends Command
 
             author && thumbs_up && thumbs_down &&
                 embed.setFooter({
-                    text: `By ${trimLength(author, 32)} - 👍 ${thumbs_up} 👎 ${thumbs_down}`,
+                    text: `👍 ${thumbs_up} 👎 ${thumbs_down}`,
                     iconURL: icons.urbandictionary,
                 });
 
@@ -278,7 +278,7 @@ export class Define extends Command
     /** Returns an embed description for an emoji-choice-dialog */
     emojiChoiceDesc(choices: { name: string, url?: string }[]): string
     {
-        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}**${a.url ? ` - [open <:open_in_browser:994648843331309589>](${a.url})` : ""}`).join("\n");
+        return choices.map((a, i) => `${settings.emojiList[i]}  **${a.name}**${a.url ? ` - [open ${emojis.openInBrowser}](${a.url})` : ""}`).join("\n");
     }
 
     async findWikiArticle(int: CommandInteraction, articles: WikiArticle[])
@@ -359,10 +359,4 @@ export class Define extends Command
             void err;
         }
     }
-}
-
-/** Trims a `str`ing if it's longer than `len` (32 by default) and adds `trimChar` (`…` by default) */
-function trimLength(str: string, len = 32, trimChar = "…")
-{
-    return str.length > len ? str.substring(0, len) + trimChar : str;
 }

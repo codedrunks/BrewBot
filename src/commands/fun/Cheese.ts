@@ -85,7 +85,7 @@ export class Cheese extends Command
             ebdTitle = "**{NAME}**:";
         }
 
-        const { data, status, statusText } = await axios.get<CheeseResp>(`https://api.illusionman1212.tech/cheese${urlPath}${urlParams}`, { timeout: 10000 });
+        const { data, status, statusText } = await axios.get<CheeseResp>(`https://api.illusionman1212.com/cheese${urlPath}${urlParams}`, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
             return await this.editReply(int, embedify(`Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, settings.embedColors.error));

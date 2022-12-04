@@ -78,8 +78,6 @@ export class Whois extends Command
                 goToPageBtn: pages.length > 5,
             });
 
-            pe.on("error", (err) => console.log(err));
-
             await pe.useInt(int);
         }
         else

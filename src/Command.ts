@@ -46,7 +46,7 @@ export abstract class Command
             this.meta = { ...fallbackMeta, ...cmdMeta };
             const { name, desc, args } = this.meta;
 
-            data.setName(name)
+            data.setName(this.getFullCmdName(name))
                 .setDescription(desc);
 
             Array.isArray(args) && args.forEach(arg => {
@@ -96,7 +96,7 @@ export abstract class Command
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
-                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
+                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
                     );
                 else if(arg.type === ApplicationCommandOptionType.Role)
                     data.addRoleOption(opt =>
@@ -121,7 +121,7 @@ export abstract class Command
                         return opt;
                     });
                 else
-                    throw new Error("Unimplemented option type");
+                    throw new Error(`Unimplemented argument type in /${cmdMeta.name}`);
             });
         }
         else
@@ -129,7 +129,7 @@ export abstract class Command
             // subcommands
             this.meta = { ...fallbackMeta, ...cmdMeta };
 
-            data.setName(cmdMeta.name)
+            data.setName(this.getFullCmdName(cmdMeta.name))
                 .setDescription(cmdMeta.desc);
 
             cmdMeta.subcommands.forEach(scmd => {
@@ -187,7 +187,7 @@ export abstract class Command
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
-                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread)
+                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
                             );
                         else if(arg.type === ApplicationCommandOptionType.Role)
                             sc.addRoleOption(opt =>
@@ -212,7 +212,7 @@ export abstract class Command
                                 return opt;
                             });
                         else
-                            throw new Error("Unimplemented option");
+                            throw new Error(`Unimplemented argument type in /${cmdMeta.name} ${scmd.name}`);
                     });
 
                     return sc;
@@ -225,6 +225,12 @@ export abstract class Command
     }
 
     //#SECTION public
+
+    /** Returns the full name of the given command name, including optional prefix */
+    public getFullCmdName(cmdName: string)
+    {
+        return `${settings.client.commandPrefix ?? ""}${cmdName}`;
+    }
 
     /** Called when a user tries to run this command (if the user doesn't have perms this resolves null) */
     public async tryRun(int: CommandInteraction, opt?: CommandInteractionOption<"cached">): Promise<unknown>

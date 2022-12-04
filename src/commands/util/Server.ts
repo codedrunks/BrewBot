@@ -1,6 +1,7 @@
 import { CommandInteraction, CommandInteractionOption, EmbedField, EmbedBuilder, ChannelType, PermissionFlagsBits } from "discord.js";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
+import { toUnix10 } from "@src/utils";
 
 export class Server extends Command
 {
@@ -57,7 +58,7 @@ export class Server extends Command
             guild.description && guild.description.length > 0 && fields.push({ name: "Description", value: guild.description, inline: true });
 
             fields.push({ name: "Owner", value: `<@${guild.ownerId}>`, inline: true });
-            fields.push({ name: "Created", value: guild.createdAt.toUTCString(), inline: true });
+            fields.push({ name: "Created", value: `<t:${toUnix10(guild.createdAt)}:f>`, inline: true });
 
             const verifLevel = verifLevelMap[guild.verificationLevel];
             fields.push({ name: "Verification level", value: verifLevel, inline: true });
@@ -66,7 +67,7 @@ export class Server extends Command
             const botMembers = guild.members.cache.filter(m => m.user.bot).size ?? undefined;
             const onlineMembers = botMembers ? guild.members.cache.filter(m => (!m.user.bot && ["online", "idle", "dnd"].includes(m.presence?.status ?? "_"))).size : undefined;
 
-            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => [ChannelType.GuildNews, ChannelType.GuildText].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.ViewChannel)).size;
+            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.ViewChannel)).size;
             const publicVoiceChannelsAmt = guild.channels.cache.filter(ch => ch.type === ChannelType.GuildVoice && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.Speak)).size;
 
             let memberCount = `Total: ${allMembers}`;

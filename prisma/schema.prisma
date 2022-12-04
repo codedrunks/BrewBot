@@ -37,6 +37,7 @@ model Reminder {
   dueTimestamp DateTime
   guild        String?
   channel      String?
+  private      Boolean  @default(false)
   User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([reminderId, userId])
@@ -82,6 +83,7 @@ model Guild {
   premium       Boolean?       @default(false)
   lastLogColor  String?
   contests      Contest[]
+  polls         Poll[]
   GuildSettings GuildSettings?
 }
 
@@ -95,6 +97,22 @@ model GuildSettings {
   warningThreshold Int      @default(3)
   banVoteAmt       Int      @default(2)
   Guild            Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+}
+
+model Poll {
+  pollId       Int
+  guildId      String
+  channel      String
+  messages     String[]
+  createdBy    String
+  headline     String?
+  topic        String?
+  voteOptions  String[]
+  votesPerUser Int
+  dueTimestamp DateTime
+  Guild        Guild    @relation(fields: [guildId], references: [id])
+
+  @@id([pollId, guildId])
 }
 
 //#MARKER contest
@@ -136,8 +154,8 @@ model SubmissionVote {
 model TwentyFortyEightLeaderboardEntry {
   guildId  String
   userId   String
-  score    Int @default(0)
-  gamesWon Int @default(0)
+  score    Int    @default(0)
+  gamesWon Int    @default(0)
   member   Member @relation(fields: [guildId, userId], references: [guildId, userId])
 
   @@id([guildId, userId])

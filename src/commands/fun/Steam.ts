@@ -206,6 +206,7 @@ export class Steam extends Command
         }
         catch(err)
         {
+            console.error("/steam error:", err);
             await this.editReply(int, embedify("Can't connect to the Steam API. Please try again later.", settings.embedColors.error));
         }
     }

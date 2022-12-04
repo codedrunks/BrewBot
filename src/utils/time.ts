@@ -1,4 +1,4 @@
-import { ParseDurationResult } from "svcorelib";
+import { ParseDurationResult, Stringifiable } from "svcorelib";
 
 export function formatSeconds(seconds: number): string {
     const date = new Date(1970, 0, 1);
@@ -23,4 +23,31 @@ export function musicReadableTimeString(position: ParseDurationResult, duration:
 export function toUnix10(time: Date | number)
 {
     return Math.floor((typeof time === "number" ? time : time.getTime()) / 1000);
+}
+
+export type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
+
+/** Converts a time object into its amount of milliseconds */
+export function timeToMs(timeObj: Partial<TimeObj>)
+{
+    return Math.floor(
+        1000 * (timeObj?.seconds ?? 0)
+        + 1000 * 60 * (timeObj?.minutes ?? 0)
+        + 1000 * 60 * 60 * (timeObj?.hours ?? 0)
+        + 1000 * 60 * 60 * 24 * (timeObj?.days ?? 0)
+        + 1000 * 60 * 60 * 24 * 30.5 * (timeObj?.months ?? 0)
+        + 1000 * 60 * 60 * 24 * 365 * (timeObj?.years ?? 0)
+    );
+}
+
+/**
+ * Pads a passed value with leading zeroes until a length is reached. Examples:  
+ * `zeroPad(9)` -> `09`  
+ * `zeroPad(99)` -> `99`  
+ * `zeroPad(99, 5)` -> `00099`
+ * @param value Any stringifiable value to pad with zeroes
+ * @param padLength The desired length to pad to - default is 2
+ */
+export function zeroPad(value: Stringifiable, padLength = 2) {
+    return String(value).padStart(padLength, "0");
 }

@@ -4,7 +4,7 @@ import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { createGuildSettings, createNewGuild, getGuild, getGuildSettings, setGuild } from "@src/database/guild";
-import { embedify, toUnix10 } from "@src/utils";
+import { embedify, toUnix10, emojis } from "@src/utils";
 
 export class Log extends Command {
     constructor() {
@@ -63,8 +63,8 @@ export class Log extends Command {
         }
 
         try {
-            if (channel?.type === ChannelType.GuildText && typeof(logChannel?.send) === "function") {
-
+            const chanTypes = [ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice];
+            if (chanTypes.includes(channel?.type)) {
                 if(!start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {
                         const lastMessage = messages?.first();
@@ -135,14 +135,14 @@ export class Log extends Command {
 
                                 <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
                                 ${message.embeds.length > 0 ? "(embed)" : (messageAttachmentString.length > 0 ? messageAttachmentString : "(other)")}
-                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
+                                > [show message ${emojis.openInBrowser}](${message.url})`);
                             } else {
                                 messageEmbedString += (`\
 
 
                                 <@${message.author.id}> - <t:${toUnix10(messageDate)}:f>
                                 > ${message.embeds.length > 0 ? "(embed)" : (message.content && message.content.length > 0 ? message.content : "(other)")}
-                                > [show message <:open_in_browser:994648843331309589>](${message.url})`);
+                                > [show message ${emojis.openInBrowser}](${message.url})`);
                             }
 
                             if(i === 10 || (10 * setNum) + i === messages.size) {
@@ -170,14 +170,19 @@ export class Log extends Command {
                             }
                         });
                     }).then(async () => {
-                        for await(const embed of messageSet) {
-                            gld.lastLogColor = String(newEmbedColor);
+                        if(logChannel)
+                        {
+                            for await(const embed of messageSet) {
+                                gld.lastLogColor = String(newEmbedColor);
 
-                            await setGuild(gld);
-                            logChannel.send({ embeds: [embed] });
+                                await setGuild(gld);
+                                logChannel.send({ embeds: [embed] });
+                            }
+
+                            return this.editReply(int, embedify(`Successfully logged **${amount}** message${amount === 1 ? "" : "s"} to **#${logChannel.name}**`, settings.embedColors.default));
                         }
-
-                        return await this.editReply(int, embedify(`Successfully logged **${amount}** message${amount === 1 ? "" : "s"} to **#${logChannel.name}**`, settings.embedColors.default));
+                        // TODO: ". or edit your guild settings in the [control panel.](https://brewbot.co/guild/123/settings)"
+                        return this.editReply(int, embedify("Couldn't find the log channel. Please specify one with the argument `channel`.", settings.embedColors.error));
                     });
             }
             else

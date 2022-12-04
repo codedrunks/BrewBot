@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { embedify, formatSeconds, nowInSeconds } from "@utils/index";
 import { addCoins, getLastWork, getTotalWorks, incrementTotalWorks, setLastWork } from "@database/economy";
 import { createNewMember, getMember } from "@database/users";
-import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
+import { jobLevels, totalWorksToLevel, baseAward } from "@src/commands/economy/jobs";
 import { randomItem } from "svcorelib";
 
 const secs4hours = 14400;
@@ -41,7 +41,7 @@ export class Work extends Command {
             await setLastWork(userid, guildid);
             
             const jobidx = totalWorksToLevel(totalworks);
-            const job = Levels[jobidx as keyof typeof Levels];
+            const job = jobLevels[jobidx as keyof typeof jobLevels];
 
             const payout = Math.round(job.multiplier * baseAward);
 
@@ -60,7 +60,7 @@ export class Work extends Command {
             await setLastWork(userid, guildid);
 
             const jobidx = totalWorksToLevel(totalworks);
-            const job = Levels[jobidx as keyof typeof Levels];
+            const job = jobLevels[jobidx as keyof typeof jobLevels];
 
             const payout = Math.round(job.multiplier * baseAward);
 

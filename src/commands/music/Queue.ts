@@ -56,7 +56,7 @@ export class Queue extends Command {
             //         return "";
             //     const lyricsUrl = await fetchLyricsUrl(title);
             //     if(lyricsUrl)
-            //         return ` - [lyrics <:open_in_browser:994648843331309589>](${lyricsUrl})\n`;
+            //         return ` - [lyrics ${emojis.openInBrowser}](${lyricsUrl})\n`;
             //     return "";
             // };
 

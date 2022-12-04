@@ -1,14 +1,14 @@
 import { CommandInteraction, EmbedBuilder } from "discord.js";
 import { randomItem } from "svcorelib";
 import { AxiosError } from "axios";
-import { axios } from "@src/utils";
+import { axios, emojis } from "@src/utils";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 
 const apiInfo = {
     illusion: {
         name: "KotAPI",
-        url: "https://api.illusionman1212.tech/kotapi",
+        url: "https://api.illusionman1212.com/kotapi",
         embedFooter: "https://github.com/IllusionMan1212/kotAPI"
     },
 };
@@ -18,7 +18,7 @@ const embedTitles = [
     "Good cat",
     "Aww, look at it",
     "What a cutie",
-    "<:qt_cett:610817939276562433>",
+    emojis.qtCett,
 ];
 
 export class Cat extends Command

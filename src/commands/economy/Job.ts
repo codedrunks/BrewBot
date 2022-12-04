@@ -3,7 +3,7 @@ import { Command } from "@src/Command";
 import { getTotalWorks } from "@database/economy";
 import { settings } from "@src/settings";
 import { embedify } from "@utils/embedify";
-import { Levels, totalWorksToLevel, baseAward } from "@commands/economy/Jobs";
+import { jobLevels, totalWorksToLevel, baseAward } from "@src/commands/economy/jobs";
 
 export class Job extends Command {
     constructor() {
@@ -26,7 +26,7 @@ export class Job extends Command {
         if(!totalworks || totalworks == 0) return this.reply(int, embedify("We have no job records for you, ya bum! Consider doing something using `/work`"), true);
 
         const jobidx = totalWorksToLevel(totalworks);
-        const job = Levels[jobidx as keyof typeof Levels];
+        const job = jobLevels[jobidx as keyof typeof jobLevels];
 
         const { name, multiplier } = job;
 

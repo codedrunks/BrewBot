@@ -41,6 +41,8 @@ export const settings: Settings = Object.freeze({
             Intents.GuildMessageReactions,
             Intents.DirectMessages,
         ],
+        /** Optional prefix to better distinguish commands of specific clients */
+        commandPrefix: getEnvVar("COMMAND_PREFIX", "stringNoEmpty"),
     },
     embedColors: {
         default: getEnvVar("EMBED_COLOR_DEFAULT") ?? 0xfaba05,
@@ -58,12 +60,16 @@ export const settings: Settings = Object.freeze({
     },
 }) as Settings;
 
-/** Tests if the environment variable `varName` equals `value` casted to string - both params are case insensitive */
-function envVarEquals(varName: string, value: Stringifiable)
+/** Tests if the environment variable `varName` equals `value` casted to string */
+function envVarEquals(varName: string, value: Stringifiable, caseSensitive = false)
 {
-    return process.env[varName]?.toLowerCase() === value.toString().toLowerCase();
+    const envVal = process.env[varName];
+    const val = String(value);
+    return (caseSensitive ? envVal : envVal?.toLowerCase()) === (caseSensitive ? String(val) : String(val).toLowerCase());
 }
 
+/** Grabs an environment variable's value, and casts it to a `string` - however if the string is empty (unset), undefined is returned */
+export function getEnvVar(varName: string, asType?: "stringNoEmpty"): undefined | string
 /** Grabs an environment variable's value, and casts it to a `string` */
 export function getEnvVar(varName: string, asType?: "string"): undefined | string
 /** Grabs an environment variable's value, and casts it to a `number` */
@@ -95,6 +101,8 @@ export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numb
     case "numberArray":
         transform = v => v.split(commasRegex).map(n => parseInt(n.trim()));
         break;
+    case "stringNoEmpty":
+        transform = v => String(v).trim().length == 0 ? undefined : String(v).trim();
     }
 
     return transform(val) as string; // I'm lazy and ts is happy, so we can all be happy and pretend this doesn't exist
@@ -111,6 +119,7 @@ interface Settings {
     }
     client: {
         intents: GatewayIntentBits[];
+        commandPrefix?: string;
     }
     embedColors: {
         default: ColorResolvable;

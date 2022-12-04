@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/codedrunks/BrewBot.git"
   },
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/codedrunks/BrewBot/issues"
   },
@@ -58,7 +58,7 @@
     "redis": "^4.2.0",
     "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
-    "svcorelib": "^1.16.0",
+    "svcorelib": "^1.18.1",
     "yargs": "^17.5.1"
   },
   "bin": {

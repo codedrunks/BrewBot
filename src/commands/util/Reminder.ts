@@ -5,16 +5,21 @@ import { settings } from "@src/settings";
 import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
-import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
 import { Tuple } from "@src/types";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
-
-type TimeObj = Record<"days"|"hours"|"minutes"|"seconds"|"months"|"years", number>;
+const reminderCheckInterval = 2000;
 
 export class Reminder extends Command
 {
+    /**
+     * Contains all compound keys of reminders that are currently being checked.  
+     * Format: `userId-reminderId`
+     */
+    private reminderCheckBuffer = new Set<string>();
+
     constructor(client: Client)
     {
         super({
@@ -31,6 +36,11 @@ export class Reminder extends Command
                             desc: "The name of the reminder",
                             type: ApplicationCommandOptionType.String,
                             required: true,
+                        },
+                        {
+                            name: "private",
+                            desc: "Set to True to hide this reminder from other people",
+                            type: ApplicationCommandOptionType.Boolean,
                         },
                         {
                             name: "seconds",
@@ -101,14 +111,12 @@ export class Reminder extends Command
 
         if(client instanceof Client)
         {
-            try
-            {
+            try {
                 // since the constructor is called exactly once at startup, this should work just fine
                 this.checkReminders(client);
-                setInterval(() => this.checkReminders(client), 1000);
+                setInterval(() => this.checkReminders(client), reminderCheckInterval);
             }
-            catch(err)
-            {
+            catch(err) {
                 console.error(k.red("Error while checking reminders:"), err);
             }
         }
@@ -116,15 +124,6 @@ export class Reminder extends Command
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">)
     {
-        const getTime = (timeObj: TimeObj) => {
-            return 1000 * timeObj.seconds
-                + 1000 * 60 * timeObj.minutes
-                + 1000 * 60 * 60 * timeObj.hours
-                + 1000 * 60 * 60 * 24 * timeObj.days
-                + 1000 * 60 * 60 * 24 * 30 * timeObj.months
-                + 1000 * 60 * 60 * 24 * 365 * timeObj.years;
-        };
-
         const { user, guild, channel } = int;
 
         let action = "";
@@ -139,6 +138,7 @@ export class Reminder extends Command
 
                 const args = {
                     name: int.options.get("name", true).value as string,
+                    ephemeral: int.options.get("private")?.value as boolean ?? false,
                     seconds: int.options.get("seconds")?.value as number ?? 0,
                     minutes: int.options.get("minutes")?.value as number ?? 0,
                     hours: int.options.get("hours")?.value as number ?? 0,
@@ -147,19 +147,19 @@ export class Reminder extends Command
                     years: int.options.get("years")?.value as number ?? 0,
                 };
 
-                const { name, ...timeObj } = args;
+                const { name, ephemeral, ...timeObj } = args;
 
-                const dueInMs = getTime(timeObj);
+                const dueInMs = timeToMs(timeObj);
 
                 if(dueInMs < 1000 * 5)
                     return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);
 
-                await this.deferReply(int, false);
+                await this.deferReply(int, ephemeral);
 
                 const reminders = await getReminders(user.id);
 
                 if(reminders && reminders.length >= reminderLimit)
-                    return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease free up some space with `/reminder delete`", settings.embedColors.error));
+                    return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease wait until a reminder expires or free up some space with `/reminder delete`", settings.embedColors.error));
 
                 const reminderId = reminders && reminders.length > 0 && reminders.at(-1)
                     ? reminders.at(-1)!.reminderId + 1
@@ -177,9 +177,10 @@ export class Reminder extends Command
                     channel: channel?.id ?? null,
                     reminderId,
                     dueTimestamp,
+                    private: guild?.id ? ephemeral : true,
                 });
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\`\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
             }
             case "list":
             {
@@ -254,21 +255,21 @@ export class Reminder extends Command
                     return await int.editReply(useEmbedify(`Successfully deleted the reminder \`${name}\``, settings.embedColors.default));
                 };
 
-                if(remIdent.match(/d+/))
+                const notFound = () => int.editReply(useEmbedify("Couldn't find a reminder with this name.\nUse `/reminder list` to list all your reminders and their IDs.", settings.embedColors.error));
+
+                if(remIdent.match(/\d+/))
                 {
                     const remId = parseInt(remIdent);
                     const rem = await getReminder(remId, user.id);
 
                     if(!rem)
-                        return await int.editReply(useEmbedify("Couldn't find a reminder with this ID.\nUse `/reminder list` to list all your reminders and their IDs.", settings.embedColors.error));
+                        return notFound();
 
                     return deleteRem(rem);
                 }
                 else
                 {
                     const rems = await getReminders(user.id);
-
-                    const notFound = () => int.editReply(useEmbedify("Couldn't find a reminder with this name.\nUse `/reminder list` to list all your reminders and their IDs.", settings.embedColors.error));
 
                     if(!rems || rems.length === 0)
                         return notFound();
@@ -301,8 +302,8 @@ export class Reminder extends Command
                 const cont = embedify(`Are you sure you want to delete ${rems.length > 1 ? `all ${rems.length} reminders` : "your 1 reminder"}?\nThis action cannot be undone.`, settings.embedColors.warning);
 
                 const btns: Tuple<Tuple<ButtonBuilder, 2>, 1> = [[
-                    new ButtonBuilder().setLabel("Delete all").setStyle(ButtonStyle.Danger).setEmoji("🗑️"),
-                    new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary).setEmoji("❌"),
+                    new ButtonBuilder().setLabel(`Delete ${autoPlural("reminder", rems.length)}`).setStyle(ButtonStyle.Danger).setEmoji("🗑️"),
+                    new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary),
                 ]];
 
                 const bm = new BtnMsg(cont, btns, {
@@ -313,7 +314,7 @@ export class Reminder extends Command
                     if(bt.data.label === btns.flat().find(b => b.data.label)?.data.label)
                     {
                         await deleteReminders(rems.map(r => r.reminderId), user.id);
-                        await btInt.reply({ ...useEmbedify("Deleted all reminders.", settings.embedColors.default), ephemeral: true });
+                        await btInt.reply({ ...useEmbedify(`${rems.length > 1 ? `All ${rems.length} reminders have` : "Your 1 reminder has"} been deleted successfully.`, settings.embedColors.default), ephemeral: true });
                     }
                     else
                         await btInt.reply({ ...useEmbedify("Canceled deletion.", settings.embedColors.default), ephemeral: true });
@@ -353,38 +354,57 @@ export class Reminder extends Command
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
             .setTitle("Reminder")
             .setColor(settings.embedColors.default)
-            .setDescription(`Your reminder with the name \`${name}\` has expired!`);
+            .setDescription(`The following reminder has expired:\n>>> ${name}`);
 
-        const guildFallback = (rem: ReminderObj) => {
-            try
-            {
+        const reminderError = (err: Error) => console.error(k.red("Error while checking reminders:\n"), err);
+
+        const guildFallback = async (rem: ReminderObj) => {
+            try {
+                if(rem.private)
+                    throw new Error("Can't send message in guild as reminder is private.");
+
                 const guild = client.guilds.cache.find(g => g.id === rem.guild);
                 const chan = guild?.channels.cache.find(c => c.id === rem.channel);
 
-                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread].includes(chan.type))
+                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
                 {
                     const c = chan as TextBasedChannel;
                     c.send({ embeds: [ getExpiredEbd(rem) ] });
                 }
             }
-            catch(err)
-            {
+            catch(err) {
                 // TODO: track reminder "loss rate"
                 //
-                //  I  │ I I
-                // ────┼────
-                // I I │ I ⌐¬
+                //   I  │ I I
+                // ─────┼─────
+                //  I I │ I ⌐¬
+
+                err instanceof Error && reminderError(err);
 
                 void err;
             }
-            finally
-            {
-                deleteReminder(rem.reminderId, rem.userId);
+            finally {
+                try {
+                    await deleteReminder(rem.reminderId, rem.userId);
+                }
+                catch(err) {
+                    // TODO: see above
+
+                    err instanceof Error && reminderError(err);
+                }
+                finally {
+                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
+                }
             }
         };
 
         for(const rem of expRems)
         {
+            if(this.reminderCheckBuffer.has(`${rem.userId}-${rem.reminderId}`))
+                continue;
+
+            this.reminderCheckBuffer.add(`${rem.userId}-${rem.reminderId}`);
+
             const usr = client.users.cache.find(u => u.id === rem.userId);
 
             promises.push((async () => {
@@ -393,7 +413,7 @@ export class Reminder extends Command
 
                 try
                 {
-                    const dm = await usr.createDM(true);
+                    const dm = await usr.createDM(rem.private);
 
                     const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
 
@@ -401,6 +421,7 @@ export class Reminder extends Command
                         return guildFallback(rem);
 
                     await deleteReminder(rem.reminderId, rem.userId);
+                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
                 }
                 catch(err)
                 {

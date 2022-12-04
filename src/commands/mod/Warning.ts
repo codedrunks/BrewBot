@@ -2,7 +2,7 @@ import { CommandInteraction, GuildMember, EmbedBuilder, ApplicationCommandOption
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { BtnMsg, embedify, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
+import { BtnMsg, embedify, emojis, PageEmbed, toUnix10, useEmbedify } from "@src/utils";
 import { addWarning, createNewMember, deleteWarnings, getMember, getWarnings } from "@src/database/users";
 import { Warning as WarningObj } from "@prisma/client";
 import { allOfType } from "svcorelib";
@@ -172,7 +172,7 @@ export class Warning extends Command
 
                 const headerEbd = new EmbedBuilder()
                     .setTitle("You've received a warning")
-                    .setDescription(`You have been warned in the server [${guild.name}](https://discord.com/channels/${guild.id})\n**Reason:** ${reason}\n\nYou have been warned ${allWarnings.length} time${allWarnings.length === 1 ? "" : "s"} in this server.`)
+                    .setDescription(`You have been warned in the server [${guild.name}](https://discord.com/channels/${guild.id})\n**Reason:** ${reason}\n\n${allWarnings.length === 1 ? "This is your first warning" : `You have been warned ${allWarnings.length} times`} in this server.`)
                     .setFooter({ text: "If you have questions, please contact the moderators of the server." })
                     .setColor(settings.embedColors.warning);
 
@@ -240,7 +240,7 @@ export class Warning extends Command
 
                 bm.on("destroy", () => alertMsg.edit(bm.getMsgOpts()));
 
-                alertMsg.react("<:banhammer:1015632683096871055>");
+                alertMsg.react(emojis.banHammer);
 
                 const coll = alertMsg.createReactionCollector({
                     filter: (re, usr) => {
