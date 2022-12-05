@@ -256,4 +256,3 @@ Markdown that isn't allowed anywhere:
 > #### Events:
 > - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance
 
-<br>
