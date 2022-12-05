@@ -1,6 +1,7 @@
 export * from "./@TryCatchMethod";
 export * from "./BtnMsg";
 export * from "./embedify";
+export * from "./emojis";
 export * from "./misc";
 export * from "./Modal";
 export * from "./PageEmbed";

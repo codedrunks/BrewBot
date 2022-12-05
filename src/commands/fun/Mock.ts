@@ -1,5 +1,6 @@
 import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { Command } from "@src/Command";
+import { emojis } from "@src/utils";
 
 export class Mock extends Command
 {
@@ -41,7 +42,7 @@ export class Mock extends Command
         if(ephemeral)
             return await this.reply(int, mockified, ephemeral);
 
-        await channel.send(`<:mock:506303207400669204> ${mockified}`);
+        await channel.send(`${emojis.mock} ${mockified}`);
 
         await this.reply(int, "Sent the message.", true);
     }

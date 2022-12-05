@@ -441,7 +441,6 @@ class Board {
 
                 //letter label
                 if (x === 0) {
-                    console.log(y);
                     const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
                     ctx.fillStyle = "rgb(70, 46, 25)";
                     ctx.fillRect((y * 250) + 100, 0, 250, 100);
@@ -750,7 +749,7 @@ export class Chess extends Command
                             gameBoard.embedId = message.id;
                             updateDescription(gameBoard);
                         })
-                        .catch(console.error);
+                        .catch((err) => console.error("/chess error:", err));
 
                 } else {
                     const messageId = gameBoard.embedId;
@@ -825,7 +824,7 @@ export class Chess extends Command
                     });
                 });
             })
-                .catch(console.error);
+                .catch((err) => console.error("/chess error:", err));
         }
         
         if (opt.name === "move" && args && args.length === 2) {
@@ -945,7 +944,7 @@ export class Chess extends Command
                     }
 
                 } catch(err) {
-                    console.log(err);
+                    console.error("general error in /chess:", err);
 
                     if(err instanceof Error) {
                         status = err.message;

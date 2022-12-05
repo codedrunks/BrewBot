@@ -71,8 +71,6 @@ export async function fetchSongInfo(query: string | { song: string, artist: stri
                 : `?q=${songOrQuery}`
         }`;
 
-        console.log("Fetching lyrics from", uri);
-
         const { data, status } = await axios.get(uri, {
             timeout: 1000 * 5,
         });

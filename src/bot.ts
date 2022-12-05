@@ -153,7 +153,7 @@ async function registerCommands(client: Client)
 
                 const opts = options.data && options.data.length > 0 ? options.data : undefined;
 
-                const cmd = cmds.find(({ meta }) => meta.name === commandName);
+                const cmd = cmds.find((cmd) => cmd.getFullCmdName(cmd.meta.name) === commandName);
 
                 if(!cmd || !cmd.enabled)
                     return;
@@ -181,7 +181,10 @@ async function registerCommands(client: Client)
     }
 }
 
-/** Prints a styled list of items to the console * @param limit Max amount of items per line */
+/**
+ * Prints a styled list of items to the console
+ * @param limit Max amount of items per line
+ */
 function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
 {
     let msg = "";
