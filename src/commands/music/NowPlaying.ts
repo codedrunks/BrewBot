@@ -4,7 +4,7 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString, BtnMsg, emojis } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
-import { fetchSongInfo, resolveTitle } from "./global.music";
+import { fetchSongInfo } from "./global.music";
 import { Tuple } from "@src/types";
 
 const ten_secs = 10_000;
@@ -38,7 +38,8 @@ export class NowPlaying extends Command {
 
         const readableTime = musicReadableTimeString(currentTime, duration);
 
-        const info = await fetchSongInfo(resolveTitle(current.title));
+        // TODO: don't await, just edit the sent message later on
+        const info = await fetchSongInfo(current.title);
 
         let lyricsLink = "";
         if(await getPremium(int.guild.id))

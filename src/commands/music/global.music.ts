@@ -40,6 +40,8 @@ export const filterTurnOff: Set<string> = new Set();
  */
 export async function fetchSongInfo(query: string | { song: string, artist: string }): Promise<SongInfo | undefined>
 {
+    /** geniURL fuzzy search threshold, lower = more strict, API default = 0.65 */
+    const threshold = 0.4;
     try
     {
         const sanitize = (str: string) => {
@@ -69,10 +71,16 @@ export async function fetchSongInfo(query: string | { song: string, artist: stri
             artistName
                 ? `?artist=${artistName}&song=${songOrQuery}`
                 : `?q=${songOrQuery}`
-        }`;
+        }&threshold=${threshold}`;
+
+        const authorization = process.env["GENIURL_TOKEN"];
 
         const { data, status } = await axios.get(uri, {
             timeout: 1000 * 5,
+            ...(authorization && authorization.length > 0
+                ? { headers: { authorization } }
+                : {}
+            ),
         });
 
         if(status < 200 || status > 300)
@@ -96,8 +104,8 @@ export function resolveTitle(songTitle: string): { artist: string, song: string 
         // eslint-disable-next-line prefer-const
         let [ artist, song ] = songTitle.split("-").map(s => s.trim());
 
-        if(artist.match(new RegExp(`^.*${artChars}.*`)))
-            artist = artist.split(new RegExp(artChars, "g"))?.[0] ?? artist;
+        if(artist.match(new RegExp(`^.*${artChars}.*`, "i")))
+            artist = artist.split(new RegExp(artChars, "gi"))?.[0] ?? artist;
 
         return {
             artist,
