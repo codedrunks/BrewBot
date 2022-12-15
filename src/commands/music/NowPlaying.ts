@@ -4,7 +4,7 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify, musicReadableTimeString, BtnMsg, emojis } from "@src/utils";
 import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
-import { fetchSongInfo } from "./global.music";
+import { fetchSongInfo, SongInfo } from "./global.music";
 import { Tuple } from "@src/types";
 
 const ten_secs = 10_000;
@@ -38,21 +38,15 @@ export class NowPlaying extends Command {
 
         const readableTime = musicReadableTimeString(currentTime, duration);
 
-        // TODO: don't await, just edit the sent message later on
-        const info = await fetchSongInfo(current.title);
+        const getNowPlayingEmbed = (info?: SongInfo, lyricsLink?: string) => {
+            const embed = embedify(`Artist: \`${info?.meta.artists ?? current.author}\`${lyricsLink ?? ""}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`)
+                .setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`)
+                .setTitle(`${current.title}`);
+            if(current?.uri) embed.setURL(current.uri);
+            return embed;
+        };
 
-        let lyricsLink = "";
-        if(await getPremium(int.guild.id))
-        {
-            if(info?.url)
-                lyricsLink = `Lyrics: [click to open ${emojis.openInBrowser}](${info.url})\n`;
-        }
-
-        const embed = embedify(`Artist: \`${info?.meta.artists ?? current.author}\`\n${lyricsLink}\n\`${current.isStream ? formatDuration(player.position, "%h:%m:%s", true) : readableTime}\`\nRequested by: <@${(current.requester as User).id}>`)
-            .setThumbnail(`https://img.youtube.com/vi/${current.identifier}/mqdefault.jpg`)
-            .setTitle(`${current.title}`);
-
-        if(current?.uri) embed.setURL(current.uri);
+        const embed = getNowPlayingEmbed();
 
         const btns: Tuple<Tuple<ButtonBuilder, 5>, 1> = [[
             new ButtonBuilder().setEmoji("⏪").setLabel("- 10s").setStyle(ButtonStyle.Primary),
@@ -103,6 +97,18 @@ export class NowPlaying extends Command {
             button.destroy();
         });
 
-        await int.editReply({ ...button.getReplyOpts(), embeds: [ embed ]});
+        await int.editReply({ ...button.getReplyOpts(), embeds: [ getNowPlayingEmbed() ]});
+
+        if(await getPremium(int.guild.id))
+        {
+            const info = await fetchSongInfo(current.title);
+            if(!info) return;
+            let lyricsLink;
+
+            if(info?.url)
+                lyricsLink = `Lyrics: [click to open ${emojis.openInBrowser}](${info.url})\n`;
+
+            await int.editReply({ ...button.getReplyOpts(), embeds: [ getNowPlayingEmbed(info, lyricsLink) ] });
+        }
     }
 }

@@ -10,7 +10,7 @@ interface ISkip {
     lastMessage?: Message<boolean> | undefined,
 }
 
-interface SongInfo {
+export interface SongInfo {
     url: string;
     path: string;
     meta: {
