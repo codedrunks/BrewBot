@@ -114,6 +114,7 @@ export class Play extends Command {
         if(( res.loadType == "PLAYLIST_LOADED" ? reduceSongsLength(res.tracks) : res.tracks[0].duration ) + (player.queue.totalSize ?? 0) > four_hours 
             && !(await getPremium(guild.id)))
             return this.editReply(int, embedify("Total queue time will be over 4 hours, please upgrade to our premium tier to add more songs to your queue."));
+            // return this.editReply(int, embedify("Total queue time will be over 4 hours, please [upgrade to our premium tier](https://brewbot.co/premium) to add more songs to your queue."));
         // TODO: link to premium ^
 
         if(player.state !== "CONNECTED") player.connect();
