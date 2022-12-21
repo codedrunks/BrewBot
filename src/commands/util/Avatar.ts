@@ -35,7 +35,7 @@ export class Avatar extends Command
     {
         await this.deferReply(int);
 
-        const usr = int.options.getUser("user");
+        const usr = int.options.getUser("user") ?? int.user;
         const fmt = int.options.get("format") as string | null;
 
         const format = (fmt ?? undefined) as ("png" | "gif" | undefined);
