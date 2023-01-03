@@ -34,16 +34,14 @@ export const skipVotes: Record<string, ISkip> = {};
 
 export const filterTurnOff: Set<string> = new Set();
 
-/**
- * Fetches song info by song and artist name or query.  
- * Using separate song and artist props is recommended so geniURL can optimize its results.
- */
+/** Fetches song info by song and artist name or query. Now with server-side filtering for both! */
 export async function fetchSongInfo(query: string | { song: string, artist: string }): Promise<SongInfo | undefined>
 {
     /** geniURL fuzzy search threshold, lower = more strict, API default = 0.65 */
-    const threshold = 0.4;
+    const threshold = 0.3;
     try
     {
+        /** Trim out stuff like `(Bunger Remix)` or `ft. DJ Bunger` */
         const sanitize = (str: string) => {
             const regexes = [
                 /\(.*\)|\[.*\]/g,
@@ -76,7 +74,7 @@ export async function fetchSongInfo(query: string | { song: string, artist: stri
         const authorization = process.env["GENIURL_TOKEN"];
 
         const { data, status } = await axios.get(uri, {
-            timeout: 1000 * 5,
+            timeout: 1000 * 15,
             ...(authorization && authorization.length > 0
                 ? { headers: { authorization } }
                 : {}
@@ -97,8 +95,9 @@ export async function fetchSongInfo(query: string | { song: string, artist: stri
 /** Resolves a song title string to an artist and song name, or as a fallback to the original title string. */
 export function resolveTitle(songTitle: string): { artist: string, song: string } | string
 {
-    if(songTitle.match(/^.*-.*/))
+    if(songTitle.includes("-"))
     {
+        // filter out the secondary artist(s)
         const artChars = "[&xv,]";
 
         // eslint-disable-next-line prefer-const
