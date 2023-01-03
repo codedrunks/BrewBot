@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { Command } from "@src/Command";
-import { axios } from "@src/utils";
+import { axios, embedify } from "@src/utils";
 import { settings } from "@src/settings";
 
 export type JokeType = "single" | "twopart";
@@ -103,10 +103,10 @@ export class Joke extends Command
         const { data, status, statusText } = await axios.get(url, { timeout: 10000 });
 
         if(status < 200 || status >= 300)
-            return await this.editReply(int, `JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`);
+            return await this.editReply(int, embedify(`JokeAPI is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, settings.embedColors.error));
 
         if(data.error === true)
-            return await this.editReply(int, "Couldn't find a joke that matches the set filters.");
+            return await this.editReply(int, embedify(`Encountered an error while searching for jokes:\n${data?.causedBy?.join("\n") ?? "Unknown Error"}`, settings.embedColors.error));
 
         let jokes: JokeObj[];
 
@@ -125,7 +125,7 @@ export class Joke extends Command
             const poweredBy = amount > 1 && i === amount - 1 || amount === 1 || !amount;
 
             embed.setFooter({
-                text: `${jokes.length > 1 ? `(${i + 1}/${amount})${poweredBy ? " - " : ""}` : ""}${poweredBy ? "https://jokeapi.dev" : ""}`,
+                text: `${jokes.length > 1 ? `(${i + 1}/${amount})${category ? "" : ` - Category: ${j.category}`}` : ""}${poweredBy ? " - https://jokeapi.dev" : ""}`,
                 ...(poweredBy ? { iconURL: "https://cdn.sv443.net/jokeapi/icon_tiny.png" } : {}),
             });
 
