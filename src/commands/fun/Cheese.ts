@@ -63,7 +63,7 @@ export class Cheese extends Command
         });
     }
 
-    async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void>
+    async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">)
     {
         await this.deferReply(int);
 
@@ -87,8 +87,10 @@ export class Cheese extends Command
 
         const { data, status, statusText } = await axios.get<CheeseResp>(`https://api.illusionman1212.com/cheese${urlPath}${urlParams}`, { timeout: 10000 });
 
+        const unavailable = () => this.editReply(int, embedify(`Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, settings.embedColors.error));
+
         if(status < 200 || status >= 300)
-            return await this.editReply(int, embedify(`Say Cheese is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, settings.embedColors.error));
+            return unavailable();
 
         if(data.failed === false)
         {
@@ -109,13 +111,12 @@ export class Cheese extends Command
                     .setURL(cheese.link)
                 : undefined;
 
-            await int.editReply({
+            return await int.editReply({
                 embeds: [ embed ],
                 ...Command.useButtons(btn),
             });
-
-            return await this.editReply(int, embed);
         }
+        return unavailable();
     }
 
     embedifyCheese(cheese: CheeseObj, title: string)
