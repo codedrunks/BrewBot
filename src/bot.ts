@@ -12,6 +12,7 @@ import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
 import { getRedis } from "@src/redis";
 import { registerFont } from "canvas";
+import { autoPlural } from "./utils";
 
 const { env, exit } = process;
 
@@ -52,7 +53,7 @@ async function init()
 
         const evts = registerEvents().filter(e => e.enabled);
 
-        console.log(`• Registered ${k.green(evts.length)} client event${evts.length != 1 ? "s" : ""}`);
+        console.log(`• Registered ${k.green(evts.length)} client ${autoPlural("event", evts)}`);
         printDbgItmList(evts.map(e => e.constructor.name ?? e.names.join("&")));
 
         await registerCommands(cl);
@@ -91,7 +92,6 @@ async function init()
         await prisma.$disconnect();
 
         client.user?.setPresence({ status: "dnd", activities: [{ type: ActivityType.Playing, name: "shutting down..." }] });
-        client.user?.setPresence({ status: "invisible", activities: [{ type: ActivityType.Playing, name: "shutting down..." }] });
 
         setTimeout(() => exit(0), 100);
     }));
@@ -128,6 +128,7 @@ async function registerCommands(client: Client)
     catch(err)
     {
         console.error(k.red("Error while registering commands:\n") + (err instanceof Error) ? String(err) : "Unknown Error");
+        process.exit(1);
     }
 
     try
@@ -140,10 +141,10 @@ async function registerCommands(client: Client)
         if(!cmds)
             throw new Error("No commands found to listen to");
 
-        console.log(`• Registered ${k.green(slashCmds.length)} slash command${slashCmds.length != 1 ? "s" : ""}`);
+        console.log(`• Registered ${k.green(slashCmds.length)} slash ${autoPlural("command", slashCmds)}`);
         printDbgItmList(cmds.map(c => c.meta.name));
 
-        console.log(`• Registered ${k.green(ctxMenus.length)} context menu${ctxMenus.length != 1 ? "s" : ""}`);
+        console.log(`• Registered ${k.green(ctxMenus.length)} context ${autoPlural("menu", ctxMenus)}`);
         printDbgItmList(ctxMenus.map(c => c.meta.name));
 
         client.on("interactionCreate", async (int) => {
