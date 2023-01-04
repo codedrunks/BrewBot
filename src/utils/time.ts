@@ -35,7 +35,7 @@ export function timeToMs(timeObj: Partial<TimeObj>)
         + 1000 * 60 * (timeObj?.minutes ?? 0)
         + 1000 * 60 * 60 * (timeObj?.hours ?? 0)
         + 1000 * 60 * 60 * 24 * (timeObj?.days ?? 0)
-        + 1000 * 60 * 60 * 24 * 30.5 * (timeObj?.months ?? 0)
+        + 1000 * 60 * 60 * 24 * 30 * (timeObj?.months ?? 0)
         + 1000 * 60 * 60 * 24 * 365 * (timeObj?.years ?? 0)
     );
 }
