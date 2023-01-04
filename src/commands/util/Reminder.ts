@@ -7,7 +7,6 @@ import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, ge
 import { Reminder as ReminderObj } from "@prisma/client";
 import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
 import { Tuple } from "@src/types";
-import { unused } from "svcorelib";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
@@ -250,8 +249,7 @@ export class Reminder extends Command
                     return this.reply(int, embedify("Please enter the expiry date and time in the following format (24 hours, UTC):\n`YYYY-MM-DD hh:mm:ss`", settings.embedColors.error), true);
 
                 // match() above makes sure this exec() can't return null
-                const [_match, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
-                unused(_match);
+                const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
 
                 const [year, month, day, hour, minute, second] = timeComponents.slice(0, 6).map(c => Number(c));
 
@@ -277,8 +275,7 @@ export class Reminder extends Command
                     return this.reply(int, embedify("Please enter the expiry time in one of the following formats (24 hours, UTC):\n`hh:mm:ss` or `hh:mm`", settings.embedColors.error), true);
 
                 // match() above makes sure this exec() can't return null
-                const [_match, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
-                unused(_match);
+                const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
 
                 const [hour, minute, second] = timeComponents
                     .slice(0, 3)
