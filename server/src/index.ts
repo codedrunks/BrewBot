@@ -3,13 +3,15 @@ import express, { NextFunction, Request, Response } from "express";
 import helmet from "helmet";
 import k from "kleur";
 import cors from "cors";
+import dotenv from "dotenv";
 
 import { getAuthTokens } from "./auth";
 import { getEnvVar, respond } from "./util";
 import { initResourceFuncs } from "./resources";
 
-const app = express();
+dotenv.config();
 
+const app = express();
 const authTokens = getAuthTokens();
 
 app.use(cors({

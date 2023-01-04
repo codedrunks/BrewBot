@@ -1,11 +1,10 @@
+import { getEnvVar } from "./util";
+
+/**
+ * Returns the auth tokens as a Set  
+ * Note: Lookups in Sets (`O(1)`) are faster than in Arrays (`O(n)`) - [source](https://www.tech-hour.com/javascript-performance-and-optimization)
+ */
 export function getAuthTokens() {
-    const envVal = process.env["AUTH_TOKENS"];
-    let tokens: string[] = [];
-
-    if(!envVal || envVal.length === 0)
-        tokens = [];
-    else
-        tokens = envVal.split(/,/g);
-
-    return new Set<string>(tokens);
+    const tokens = getEnvVar("AUTH_TOKENS", "stringArray");
+    return new Set<string>(tokens ?? []);
 }

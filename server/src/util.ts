@@ -1,6 +1,11 @@
 import { Response } from "express";
+import dotenv from "dotenv";
 import { JSONCompatible } from "svcorelib";
+
 import { RespType } from "./types/server";
+
+// Import order could be off so init dotenv twice to be sure
+dotenv.config();
 
 /** Grabs an environment variable's value, and casts it to a `string` - however if the string is empty (unset), undefined is returned */
 export function getEnvVar(varName: string, asType?: "stringNoEmpty"): undefined | string
