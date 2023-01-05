@@ -802,8 +802,7 @@ export class Chess extends Command
             }).then((message) => {
                 const filter = (_reaction: MessageReaction, user: User) => !user.bot && user.id === p2?.id;
 
-                message.react("✅");
-                message.react("❌");
+                message.react("✅").then(() => message.react("❌"));
 
                 message.awaitReactions({filter, max: 1, time: 60000}).then((collected) => {
                     let userReaction: MessageReaction|undefined = undefined;
