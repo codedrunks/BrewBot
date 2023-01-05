@@ -3,6 +3,8 @@ import { Canvas, createCanvas } from "canvas";
 import fs from "fs-extra";
 import { Command } from "@src/Command";
 import path from "path";
+import { useEmbedify } from "@src/utils";
+import { settings } from "@src/settings";
 
 const games = new Map<string[], Board>();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -792,13 +794,15 @@ export class Chess extends Command
 
             let gameBoard = null;
 
+            if(p2 && (p2 as User).bot)
+                return void int.followUp(useEmbedify("You can't start a game of chess with a bot.", settings.embedColors.error));
+
             await channel?.send({
                 content: `${int.user} has challenged ${p2} to a game of chess.`
             }).then((message) => {
-                const filter = (reaction: MessageReaction, user: User) => user.id === p2?.id;
+                const filter = (_reaction: MessageReaction, user: User) => !user.bot && user.id === p2?.id;
 
-                message.react("✅");
-                message.react("❌");
+                message.react("✅").then(() => message.react("❌"));
 
                 message.awaitReactions({filter, max: 1, time: 60000}).then((collected) => {
                     let userReaction: MessageReaction|undefined = undefined;

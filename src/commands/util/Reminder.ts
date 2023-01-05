@@ -28,8 +28,8 @@ export class Reminder extends Command
             category: "util",
             subcommands: [
                 {
-                    name: "set",
-                    desc: "Sets a new reminder",
+                    name: "set_timer",
+                    desc: "Sets a new reminder in the style of a timer that starts from now",
                     args: [
                         {
                             name: "name",
@@ -87,6 +87,52 @@ export class Reminder extends Command
                     ],
                 },
                 {
+                    name: "set_date",
+                    desc: "Sets a new reminder by providing an expiry date and time in UTC",
+                    args: [
+                        {
+                            name: "name",
+                            desc: "The name of the reminder",
+                            type: ApplicationCommandOptionType.String,
+                            required: true,
+                        },
+                        {
+                            name: "expiry",
+                            desc: "UTC, 24 hours. Format: YYYY-MM-DD hh:mm:ss",
+                            type: ApplicationCommandOptionType.String,
+                            required: true,
+                        },
+                        {
+                            name: "private",
+                            desc: "Set to True to hide this reminder from other people",
+                            type: ApplicationCommandOptionType.Boolean,
+                        },
+                    ]
+                },
+                {
+                    name: "set_time",
+                    desc: "Sets a new reminder for a specific time today (in UTC)",
+                    args: [
+                        {
+                            name: "name",
+                            desc: "The name of the reminder",
+                            type: ApplicationCommandOptionType.String,
+                            required: true,
+                        },
+                        {
+                            name: "expiry",
+                            desc: "UTC, 24 hours. Format: hh:mm:ss OR hh:mm",
+                            type: ApplicationCommandOptionType.String,
+                            required: true,
+                        },
+                        {
+                            name: "private",
+                            desc: "Set to True to hide this reminder from other people",
+                            type: ApplicationCommandOptionType.Boolean,
+                        },
+                    ],
+                },
+                {
                     name: "list",
                     desc: "Lists all your reminders",
                 },
@@ -129,11 +175,41 @@ export class Reminder extends Command
         let action = "";
         try
         {
+            const tooSoon = () => this.reply(int, embedify("Please enter an expiry that's at least five seconds from now.", settings.embedColors.error), true);
+
+            const setNewReminder = async (name: string, dueTimestamp: Date, ephemeral: boolean) => {
+                await this.deferReply(int, ephemeral);
+
+                const reminders = await getReminders(user.id);
+
+                if(reminders && reminders.length >= reminderLimit)
+                    return this.editReply(int, embedify("Sorry, but you can't set more than 10 reminders.\nPlease wait until a reminder expires or free up some space with `/reminder delete`", settings.embedColors.error));
+
+                const reminderId = reminders && reminders.length > 0 && reminders.at(-1)
+                    ? reminders.at(-1)!.reminderId + 1
+                    : 1;
+
+                if(!await getUser(user.id))
+                    await createNewUser(user.id);
+
+                await setReminder({
+                    name,
+                    guild: guild?.id ?? null,
+                    userId: user.id,
+                    channel: channel?.id ?? null,
+                    reminderId,
+                    dueTimestamp,
+                    private: guild?.id ? ephemeral : true,
+                });
+
+                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+            };
+
             switch(opt.name)
             {
-            case "set":
+            case "set_timer":
             {
-                //#SECTION add reminder
+                //#SECTION set reminder by timer from now
                 action = "set a reminder";
 
                 const args = {
@@ -152,35 +228,67 @@ export class Reminder extends Command
                 const dueInMs = timeToMs(timeObj);
 
                 if(dueInMs < 1000 * 5)
-                    return await this.reply(int, embedify("Please enter at least five seconds.", settings.embedColors.error), true);
-
-                await this.deferReply(int, ephemeral);
-
-                const reminders = await getReminders(user.id);
-
-                if(reminders && reminders.length >= reminderLimit)
-                    return await int.editReply(useEmbedify("Sorry, but you can't set more than 10 reminders.\nPlease wait until a reminder expires or free up some space with `/reminder delete`", settings.embedColors.error));
-
-                const reminderId = reminders && reminders.length > 0 && reminders.at(-1)
-                    ? reminders.at(-1)!.reminderId + 1
-                    : 1;
-
-                if(!await getUser(user.id))
-                    await createNewUser(user.id);
+                    return tooSoon();
 
                 const dueTimestamp = new Date(Date.now() + dueInMs);
 
-                await setReminder({
-                    name: args.name,
-                    guild: guild?.id ?? null,
-                    userId: user.id,
-                    channel: channel?.id ?? null,
-                    reminderId,
-                    dueTimestamp,
-                    private: guild?.id ? ephemeral : true,
-                });
+                return setNewReminder(args.name, dueTimestamp, ephemeral);
+            }
+            case "set_date":
+            {
+                //#SECTION set reminder by datetime
+                action = "set a reminder";
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                const name = int.options.get("name", true).value as string,
+                    expiry = (int.options.get("expiry", true).value as string).trim(),
+                    ephemeral = int.options.get("private")?.value as boolean ?? false;
+
+                const expiryRegex = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\s,]+(\d{1,2})[:](\d{1,2})[:](\d{1,2})$/;
+
+                if(!expiry.match(expiryRegex))
+                    return this.reply(int, embedify("Please enter the expiry date and time in the following format (24 hours, UTC):\n`YYYY-MM-DD hh:mm:ss`", settings.embedColors.error), true);
+
+                // match() above makes sure this exec() can't return null
+                const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
+
+                const [year, month, day, hour, minute, second] = timeComponents.slice(0, 6).map(c => Number(c));
+
+                const dueTimestamp = Date.UTC(year, month - 1, day, hour, minute, second);
+
+                if(dueTimestamp - Date.now() < 1000 * 5)
+                    return tooSoon();
+
+                return setNewReminder(name, new Date(dueTimestamp), ephemeral);
+            }
+            case "set_time":
+            {
+                //#SECTION set reminder by time today
+                action = "set a reminder";
+
+                const name = int.options.get("name", true).value as string,
+                    expiry = (int.options.get("expiry", true).value as string).trim(),
+                    ephemeral = int.options.get("private")?.value as boolean ?? false;
+
+                const expiryRegex = /^(\d{1,2})[:](\d{1,2})([:](\d{1,2}))?$/;
+
+                if(!expiry.match(expiryRegex))
+                    return this.reply(int, embedify("Please enter the expiry time in one of the following formats (24 hours, UTC):\n`hh:mm:ss` or `hh:mm`", settings.embedColors.error), true);
+
+                // match() above makes sure this exec() can't return null
+                const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
+
+                const [hour, minute, second] = timeComponents
+                    .slice(0, 3)
+                    // remove the `:` captured by the optional group and default to 0 if undefined
+                    .map(c => !c ? 0 : (c.includes(":") ? Number(c.substring(1)) : Number(c)));
+
+                const d = new Date();
+                const dueTimestamp = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), hour, minute, second);
+
+                if(dueTimestamp - Date.now() < 1000 * 5)
+                    return tooSoon();
+
+                return setNewReminder(name, new Date(dueTimestamp), ephemeral);
             }
             case "list":
             {
@@ -356,9 +464,10 @@ export class Reminder extends Command
             .setColor(settings.embedColors.default)
             .setDescription(`The following reminder has expired:\n>>> ${name}`);
 
-        const reminderError = (err: Error) => console.error(k.red("Error while checking reminders:\n"), err);
+        const reminderError = (err: Error) => console.error(k.red("Error while checking expired reminders:\n"), err);
 
-        const guildFallback = async (rem: ReminderObj) => {
+        /** Sends the expiry reminder in the guild and channel it was created in, but only if it is not private */
+        const remindPublicly = async (rem: ReminderObj) => {
             try {
                 if(rem.private)
                     throw new Error("Can't send message in guild as reminder is private.");
@@ -369,7 +478,7 @@ export class Reminder extends Command
                 if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
                 {
                     const c = chan as TextBasedChannel;
-                    c.send({ embeds: [ getExpiredEbd(rem) ] });
+                    c.send({ content: `<@${rem.userId}>`, embeds: [ getExpiredEbd(rem) ] });
                 }
             }
             catch(err) {
@@ -409,23 +518,26 @@ export class Reminder extends Command
 
             promises.push((async () => {
                 if(!usr)
-                    return guildFallback(rem);
+                    return remindPublicly(rem);
 
                 try
                 {
-                    const dm = await usr.createDM(rem.private);
+                    if(rem.private) {
+                        const dm = await usr.createDM();
 
-                    const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
+                        const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
 
-                    if(!dm || !msg)
-                        return guildFallback(rem);
+                        if(!dm || !msg)
+                            return remindPublicly(rem);
+                    }
+                    else remindPublicly(rem);
 
                     await deleteReminder(rem.reminderId, rem.userId);
                     this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
                 }
                 catch(err)
                 {
-                    return guildFallback(rem);
+                    return remindPublicly(rem);
                 }
             })());
         }
