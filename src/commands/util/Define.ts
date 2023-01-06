@@ -144,8 +144,7 @@ export class Define extends Command
         case "wikipedia":
         {
             const normalize = (str: string) => str
-                .replace(/\s(\(|\))\s/gm, " ")
-                .replace(/a/gm, "a");
+                .replace(/\s(\(|\))\s/gm, " ");
 
             const errored = (reason: "offline" | "notfound") => this.editReply(int, embedify(
                 reason === "offline"
