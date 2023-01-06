@@ -5,7 +5,6 @@ const client = createClient();
 client.on("error", (err) => { 
     if(err.code == "ECONNREFUSED") {
         console.error(`Cannot connect to redis instance at ${err.address}:${err.port}, is it running?`);
-        process.exit(1);
     }
 });
 
