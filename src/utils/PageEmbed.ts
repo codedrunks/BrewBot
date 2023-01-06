@@ -23,7 +23,7 @@ interface PageEmbedSettings {
     goToPageBtn: boolean;
     /**
      * After how many milliseconds this PageEmbed times out, after which it deregisters and destroys itself.  
-     * Defaults to 30 minutes.
+     * Defaults to 14 minutes.
      */
     timeout: number;
     /** Whether the pages automatically overflow at the beginning and end - defaults to true */

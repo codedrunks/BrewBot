@@ -6,5 +6,6 @@ export * from "./misc";
 export * from "./Modal";
 export * from "./PageEmbed";
 export * from "./request";
+export * from "./SelectionMsg";
 export * from "./sorting";
 export * from "./time";
