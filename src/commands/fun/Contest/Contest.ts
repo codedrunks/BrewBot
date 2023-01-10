@@ -207,7 +207,7 @@ export class Contest extends Command
             return await this.editReply(int, embedify("There's no currently active contest"));
         }
 
-        const embedDesc = `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = `${contest.description}\n\nuse \`/contest submit contest_id:${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new EmbedBuilder()
             .setTitle(contest.name)
@@ -269,7 +269,7 @@ export class Contest extends Command
         const field1Name = didContestEnd ? "Started" : "Start";
         const field2Name = didContestEnd ? "Ended" : "End";
 
-        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit contest_id:${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new EmbedBuilder()
             .setTitle(contest.name)
