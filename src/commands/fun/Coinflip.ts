@@ -2,13 +2,15 @@ import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "
 import { randRange } from "svcorelib";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-
-// idx 0: heads, idx 1: tails - TODO: make some sexy emoji for this specifically maybe?
-const coins = ["🇭","🇹"];
+import { autoPlural } from "@src/utils";
 
 export class Coinflip extends Command {
-    constructor()
-    {
+    readonly COINS = [
+        { name: "Heads", emoji: "🇭" },
+        { name: "Tails", emoji: "🇹" },
+    ];
+
+    constructor() {
         super({
             name: "coinflip",
             desc: "Flips one or multiple coins",
@@ -20,7 +22,6 @@ export class Coinflip extends Command {
                     desc: "How many coins to flip.",
                     type: ApplicationCommandOptionType.Integer,
                     min: 1,
-                    max: 50,
                 }
             ]
         });
@@ -31,16 +32,21 @@ export class Coinflip extends Command {
 
         let replyText = "";
 
-        if(amount > 1)
-        {
+        if(amount > 1) {
             const flips = [];
             for(let i = 0; i < amount; i++)
-                flips.push(coins[randRange(0, 1)]);
+                flips.push(randRange(0, 1));
 
-            replyText = `Flipped ${amount} coin${amount != 1 ? "s" : ""}. Result:\n\n${flips.join(" ")}`;
+            replyText = [
+                `Flipped ${amount} ${autoPlural("coin", amount)}. Result:`,
+                `> ${this.COINS[0].emoji} Heads: **${flips.filter(f => f === 0)}**`,
+                `> ${this.COINS[1].emoji} Tails: **${flips.filter(f => f === 1)}**`
+            ].join("\n");
         }
-        else
-            replyText = `You flipped a coin: ${coins[randRange(0, 1)]}`;
+        else {
+            const coin = this.COINS[randRange(0, 1)];
+            replyText = `You flipped a coin.\nIt landed on **${coin.emoji} ${coin.name}**`;
+        }
 
         const embed = new EmbedBuilder()
             .setColor(settings.embedColors.default)
