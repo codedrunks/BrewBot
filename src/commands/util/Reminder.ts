@@ -11,6 +11,8 @@ import { Tuple } from "@src/types";
 /** Max reminders per user (global) */
 const reminderLimit = 10;
 const reminderCheckInterval = 2000;
+/** To not exceed the embed limits */
+const maxNameLength = 250;
 
 export class Reminder extends Command
 {
@@ -178,6 +180,9 @@ export class Reminder extends Command
             const tooSoon = () => this.reply(int, embedify("Please enter an expiry that's at least five seconds from now.", settings.embedColors.error), true);
 
             const setNewReminder = async (name: string, dueTimestamp: Date, ephemeral: boolean) => {
+                if(name.length > maxNameLength)
+                    return this.reply(int, embedify(`Please enter a name that's not longer than ${maxNameLength} characters`, settings.embedColors.error));
+
                 await this.deferReply(int, ephemeral);
 
                 const reminders = await getReminders(user.id);
@@ -202,7 +207,7 @@ export class Reminder extends Command
                     private: guild?.id ? ephemeral : true,
                 });
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                return await this.editReply(int, embedify(`I've set the following reminder:\n>>> ${name}\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nID: \`${reminderId}\` • To list your reminders use \`/reminder list\``, settings.embedColors.success));
             };
 
             switch(opt.name)
@@ -459,6 +464,8 @@ export class Reminder extends Command
 
         const promises: Promise<void>[] = [];
 
+        // TODO: add buttons to reinstate the reminder and add more time to it
+        // e.g.: [+5m] [+10m] [+1h] [+3h] [+12h]
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
             .setTitle("Reminder")
             .setColor(settings.embedColors.default)
