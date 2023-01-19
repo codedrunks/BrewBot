@@ -11,6 +11,8 @@ import { Tuple } from "@src/types";
 /** Max reminders per user (global) */
 const reminderLimit = 10;
 const reminderCheckInterval = 2000;
+/** To not exceed the embed limits */
+const maxNameLength = 250;
 
 export class Reminder extends Command
 {
@@ -98,7 +100,7 @@ export class Reminder extends Command
                         },
                         {
                             name: "expiry",
-                            desc: "UTC, 24 hours. Format: YYYY-MM-DD hh:mm:ss",
+                            desc: "UTC, 24 hours. Format: YYYY-MM-DD hh:mm:ss (or) YYYY-MM-DD hh:mm",
                             type: ApplicationCommandOptionType.String,
                             required: true,
                         },
@@ -121,7 +123,7 @@ export class Reminder extends Command
                         },
                         {
                             name: "expiry",
-                            desc: "UTC, 24 hours. Format: hh:mm:ss OR hh:mm",
+                            desc: "UTC, 24 hours. Format: hh:mm:ss (or) hh:mm",
                             type: ApplicationCommandOptionType.String,
                             required: true,
                         },
@@ -178,6 +180,9 @@ export class Reminder extends Command
             const tooSoon = () => this.reply(int, embedify("Please enter an expiry that's at least five seconds from now.", settings.embedColors.error), true);
 
             const setNewReminder = async (name: string, dueTimestamp: Date, ephemeral: boolean) => {
+                if(name.length > maxNameLength)
+                    return this.reply(int, embedify(`Please enter a name that's not longer than ${maxNameLength} characters`, settings.embedColors.error));
+
                 await this.deferReply(int, ephemeral);
 
                 const reminders = await getReminders(user.id);
@@ -202,7 +207,7 @@ export class Reminder extends Command
                     private: guild?.id ? ephemeral : true,
                 });
 
-                return await this.editReply(int, embedify(`I've set a reminder with the name \`${name}\` (ID \`${reminderId}\`)\nDue: ${time(toUnix10(dueTimestamp), "f")}\n\nTo list your reminders, use \`/reminder list\``, settings.embedColors.success));
+                return await this.editReply(int, embedify(`I've set the following reminder:\n> ${name}\n> Due: ${time(toUnix10(dueTimestamp), "f")}\n\nID: \`${reminderId}\` • To list your reminders use \`/reminder list\``, settings.embedColors.success));
             };
 
             switch(opt.name)
@@ -243,15 +248,17 @@ export class Reminder extends Command
                     expiry = (int.options.get("expiry", true).value as string).trim(),
                     ephemeral = int.options.get("private")?.value as boolean ?? false;
 
-                const expiryRegex = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\s,]+(\d{1,2})[:](\d{1,2})[:](\d{1,2})$/;
+                const expiryRegex = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\s,]+(\d{1,2})[:](\d{1,2})([:](\d{1,2}))?$/;
 
                 if(!expiry.match(expiryRegex))
-                    return this.reply(int, embedify("Please enter the expiry date and time in the following format (24 hours, UTC):\n`YYYY-MM-DD hh:mm:ss`", settings.embedColors.error), true);
+                    return this.reply(int, embedify("Please enter the expiry date and time in one of the following formats (24 hours, UTC):\n`YYYY-MM-DD hh:mm:ss` **or** `YYYY-MM-DD hh:mm`", settings.embedColors.error), true);
 
                 // match() above makes sure this exec() can't return null
                 const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
 
-                const [year, month, day, hour, minute, second] = timeComponents.slice(0, 6).map(c => Number(c));
+                const [year, month, day, hour, minute, second] = timeComponents
+                    .slice(0, 6)
+                    .map(c => !c ? 0 : (c.includes(":") ? Number(c.substring(1)) : Number(c)));
 
                 const dueTimestamp = Date.UTC(year, month - 1, day, hour, minute, second);
 
@@ -272,7 +279,7 @@ export class Reminder extends Command
                 const expiryRegex = /^(\d{1,2})[:](\d{1,2})([:](\d{1,2}))?$/;
 
                 if(!expiry.match(expiryRegex))
-                    return this.reply(int, embedify("Please enter the expiry time in one of the following formats (24 hours, UTC):\n`hh:mm:ss` or `hh:mm`", settings.embedColors.error), true);
+                    return this.reply(int, embedify("Please enter the expiry time in one of the following formats (24 hours, UTC):\n`hh:mm:ss` **or** `hh:mm`", settings.embedColors.error), true);
 
                 // match() above makes sure this exec() can't return null
                 const [, ...timeComponents] = expiryRegex.exec(expiry) as unknown as Tuple<string, 7>;
@@ -302,24 +309,22 @@ export class Reminder extends Command
                 if(!reminders || reminders.length === 0)
                     return await this.editReply(int, embedify("You don't have any active reminders.\nCreate a new one with `/reminder set`", settings.embedColors.error));
 
-                const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) => acc + `> \`${cur.reminderId}\` : ${cur.name}\n> ${time(toUnix10(cur.dueTimestamp), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`, "");
-                const getReminderEbd = (remStr: string, curPage?: number, maxPage?: number) =>
-                {
+                const iconURL = user.avatarURL({ extension: "png", size: 512 }) ?? undefined;
+
+                const getReminderStr = (reminders: ReminderObj[]) => reminders.reduce((acc, cur, i) =>
+                    acc + `> ${cur.name.replace(/\n/gm, "\n> ")}\n> ID: \`${cur.reminderId}\` • ${time(toUnix10(cur.dueTimestamp), "f")}${i !== reminders.length - 1 ? "\n\n" : ""}`
+                , "");
+                const getReminderEbd = (remStr: string, curPage?: number, maxPage?: number) => {
                     const ebd = new EmbedBuilder()
                         .setTitle("Your reminders:")
                         .setDescription(remStr + "\n\nTo delete a reminder, use `/reminder delete`")
-                        .setAuthor({
-                            name: user.username,
-                            iconURL: avatar ?? undefined,
-                        })
+                        .setAuthor({ name: user.username, iconURL })
                         .setColor(settings.embedColors.default);
 
                     curPage && maxPage && ebd.setFooter({ text: `Page ${curPage}/${maxPage}` });
 
                     return ebd;
                 };
-
-                const avatar = user.avatarURL({ extension: "png", size: 512 });
 
                 const remStr = getReminderStr(reminders);
 
@@ -459,11 +464,13 @@ export class Reminder extends Command
 
         const promises: Promise<void>[] = [];
 
+        // TODO: add buttons to reinstate the reminder and add more time to it
+        // e.g.: [+5m] [+10m] [+1h] [+3h] [+12h]
         const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
-            .setTitle("Reminder")
-            .setColor(settings.embedColors.default)
-            .setDescription(`The following reminder has expired:\n>>> ${name}`);
+            .setDescription(`Your reminder has expired:\n> ${name.replace(/\n/gm, "\n> ")}`)
+            .setColor(settings.embedColors.default);
 
+        // TODO: add logger
         const reminderError = (err: Error) => console.error(k.red("Error while checking expired reminders:\n"), err);
 
         /** Sends the expiry reminder in the guild and channel it was created in, but only if it is not private */
@@ -478,7 +485,7 @@ export class Reminder extends Command
                 if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
                 {
                     const c = chan as TextBasedChannel;
-                    c.send({ content: `<@${rem.userId}>`, embeds: [ getExpiredEbd(rem) ] });
+                    c.send({ content: `Reminder! <@${rem.userId}>`, embeds: [ getExpiredEbd(rem) ] });
                 }
             }
             catch(err) {

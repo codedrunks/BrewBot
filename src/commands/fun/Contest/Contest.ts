@@ -26,7 +26,7 @@ export class Contest extends Command
                 },
                 {
                     name: "current",
-                    desc: "Get the currently active contest in the server",
+                    desc: "Shows the currently active contest of the server",
                 },
                 {
                     name: "list",
@@ -55,7 +55,7 @@ export class Contest extends Command
                             required: true
                         }
                     ],
-                    perms: ["ADMINISTRATOR"]
+                    perms: ["MANAGE_CHANNELS"]
                 },
                 {
                     name: "set_role",
@@ -68,7 +68,7 @@ export class Contest extends Command
                             required: true,
                         }
                     ],
-                    perms: ["ADMINISTRATOR"]
+                    perms: ["MANAGE_ROLES"]
                 },
                 {
                     name: "submit",
@@ -94,13 +94,13 @@ export class Contest extends Command
                     args: [
                         {
                             name: "contest_id",
-                            desc: "ID of contest you want to vote on",
+                            desc: "The ID of the contest you want to submit your vote to",
                             type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "contestant",
-                            desc: "Contestant you want to vote for",
+                            desc: "The contestant you want to vote for",
                             type: ApplicationCommandOptionType.User,
                             required: true,
                         }
@@ -112,13 +112,13 @@ export class Contest extends Command
                     args: [
                         {
                             name: "contest_id",
-                            desc: "ID of contest you want to remove the vote from",
+                            desc: "The ID of the contest you want to remove your vote from",
                             type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "contestant",
-                            desc: "Contestant you want to remove the vote from",
+                            desc: "The contestant you want to remove the vote from",
                             type: ApplicationCommandOptionType.User,
                             required: true,
                         }
@@ -142,13 +142,13 @@ export class Contest extends Command
                     args: [
                         {
                             name: "contest_id",
-                            desc: "ID of contest you want your submissions removed from",
+                            desc: "The ID of the contest you want the submission removed from",
                             type: ApplicationCommandOptionType.Number,
                             required: true,
                         },
                         {
                             name: "user",
-                            desc: "User you want to delete the submission of",
+                            desc: "The contestant you want to delete the submission of",
                             type: ApplicationCommandOptionType.User,
                             required: true,
                         },
@@ -207,7 +207,7 @@ export class Contest extends Command
             return await this.editReply(int, embedify("There's no currently active contest"));
         }
 
-        const embedDesc = `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = `${contest.description}\n\nuse \`/contest submit contest_id:${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new EmbedBuilder()
             .setTitle(contest.name)
@@ -269,7 +269,7 @@ export class Contest extends Command
         const field1Name = didContestEnd ? "Started" : "Start";
         const field2Name = didContestEnd ? "Ended" : "End";
 
-        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const embedDesc = didContestEnd ? contest.description : `${contest.description}\n\nuse \`/contest submit contest_id:${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new EmbedBuilder()
             .setTitle(contest.name)

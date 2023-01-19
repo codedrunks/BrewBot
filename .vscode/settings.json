@@ -45,6 +45,7 @@
     },
     "files.exclude": {
         "out/**": true,
+        ".command_hash": true,
     },
     "git.branchPrefix": "feat/",
     "git.branchProtection": [ "main" ],

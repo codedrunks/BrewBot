@@ -1,6 +1,7 @@
 import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v10";
+import { RESTPostAPIApplicationCommandsJSONBody, Routes } from "discord-api-types/v10";
 import { ButtonInteraction, Client, Collection, ButtonBuilder, ModalSubmitInteraction, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
+import { createHash } from "node:crypto";
 
 import { Command } from "@src/Command";
 import { Event } from "@src/Event";
@@ -15,10 +16,11 @@ import EventEmitter from "events";
 import { embedify } from "./utils";
 import { settings } from "./settings";
 import { unused } from "svcorelib";
-// import { PutGuildCommandResult } from "./types";
+import { pathExists, readFile, writeFile } from "fs-extra";
+import k from "kleur";
 
 
-const rest = new REST({ version: "10" })
+const rest = new REST({ version: "10", timeout: 30_000 })
     .setToken(process.env.BOT_TOKEN ?? "ERR_NO_ENV");
 
 let client: Client;
@@ -98,6 +100,8 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
 
     initHelp();
 
+    const { commandsChanged } = await updateCommandHash(slashCmds);
+
 
     // use this when ready for production, as global commands are cached and take an hour to update across guilds - guild commands on the other hand update instantly
     // see https://discordjs.guide/interactions/slash-commands.html#global-commands
@@ -110,26 +114,52 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     // 
     // console.log(`• Registered ${k.green(slashCmds.length)} global slash command${slashCmds.length != 1 ? "s" : ""}`);
 
-    // register guild commands
-    for await(const guild of guilds)
-    {
-        // console.log(`Registering guild commands in ${client.guilds.cache.find(g => g.id === guild)?.name}`);
+    if(commandsChanged) {
+        const r = k.bold(k.bgYellow(k.black("↻ ")));
+        console.log(`${r} ${k.underline("Command meta has changed, updating commands")} ${r}\n`);
 
-        const restRes = await rest.put(
-            Routes.applicationGuildCommands(process.env.CLIENT_ID ?? "ERR_NO_ENV", guild), {
-                body: slashCmds
-            },
-        );
+        // register guild commands
+        for await(const guild of guilds) {
+            // console.log(`Registering guild commands in ${client.guilds.cache.find(g => g.id === guild)?.name}`);
 
-        unused(restRes);
+            const restRes = await rest.put(
+                Routes.applicationGuildCommands(process.env.CLIENT_ID ?? "ERR_NO_ENV", guild), {
+                    body: slashCmds
+                },
+            );
 
-        // #DEBUG use this to get a command's ID
-        // if(guild === "693878197107949572")
-        // {
-        //     const cmd = (restRes as PutGuildCommandResult[])?.find(cmd => cmd.name === "ferret");
-        //     console.log(cmd);
-        // }
+            unused(restRes);
+
+            // #DEBUG use this to get a command's ID
+            // if(guild === "693878197107949572")
+            // {
+            //     const cmd = (restRes as PutGuildCommandResult[])?.find(cmd => cmd.name === "ferret");
+            //     console.log(cmd);
+            // }
+        }
     }
+}
+
+const cmdHashPath = ".command_hash";
+
+/** Sets a new command hash by providing the JSON data */
+async function updateCommandHash(cmds: RESTPostAPIApplicationCommandsJSONBody[]) {
+    const curHash = await pathExists(cmdHashPath)
+        ? (await readFile(cmdHashPath)).toString()
+        : "";
+    const newHash = createHash("SHA512")
+        .update(JSON.stringify(cmds))
+        .digest("binary");
+
+    let commandsChanged = false;
+
+    if(newHash !== curHash) {
+        await writeFile(cmdHashPath, newHash);
+
+        commandsChanged = true;
+    }
+
+    return { commandsChanged };
 }
 
 

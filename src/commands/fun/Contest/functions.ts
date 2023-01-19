@@ -41,7 +41,7 @@ function runStartingContestsJobs(cl: Client, starting: (StartingContest & { guil
     starting.forEach(contest => {
         const timeTillStart = contest.startDate.getTime() - new Date().getTime();
 
-        const description = `${contest.description}\n\n\n\nuse \`/contest submit ${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
+        const description = `${contest.description}\n\n\n\nuse \`/contest submit contest_id:${contest.id}\` to submit your entry\n\n24 hour voting period will start after the deadline`;
 
         const embed = new EmbedBuilder()
             .setAuthor({ name: "Contest Started!" })

@@ -1,12 +1,13 @@
 node_modules/
 out/
-.env
-src/test.ts
-src/test.js
-data.json
-application.yml
-logs/
 dump.rdb
 
-# directory to store git patches
+src/test.ts
+src/test.js
+logs/
 .patches
+
+.env
+data.json
+application.yml
+.command_hash
