@@ -56,17 +56,16 @@ async function init()
         console.log(`• Registered ${k.green(evts.length)} client ${autoPlural("event", evts)}`);
         printDbgItmList(evts.map(e => e.constructor.name ?? e.names.join("&")));
 
-        await registerCommands(cl);
-
         user.setPresence({
             status: "online",
             activities: [{ type: ActivityType.Watching, name: "ur mom" }],
         });
 
+        await Promise.all([ registerCommands(cl), doContestStuff(cl) ]);
+
         console.log(`• Active in ${k.green(guilds.cache.size)} guild${guilds.cache.size != 1 ? "s" : ""}`);
         printDbgItmList(guilds.cache.map(g => g.name), 4);
 
-        await doContestStuff(cl);
 
         clientReadyInitLava(cl);
 
@@ -186,7 +185,7 @@ async function registerCommands(client: Client)
  * Prints a styled list of items to the console
  * @param limit Max amount of items per line
  */
-function printDbgItmList(list: string[] | Stringifiable[], limit = 6)
+function printDbgItmList(list: string[] | Stringifiable[], limit = 10)
 {
     let msg = "";
 
