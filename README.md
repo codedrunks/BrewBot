@@ -51,19 +51,26 @@ In order for a command or event to be initialized on startup, add it to the arra
 At the moment, `src/bot.ts` only sets guild-specific commands as these update pretty quickly (global commands take up to an hour to propagate).  
 The regular Discord client doesn't update the locally saved slash commands when the bot restarts, so it's sometimes necessary to reload the Discord app with `Ctrl+R`  
 If that still didn't work, or when you just want to remove a command or change its arguments, it's sometimes also necessary to delete them from Discord servers entirely.  
-The bot inserts a fresh copy of all commands at next startup. To clear all global commands and guild commands, use `npm run clearCommands`
+To clear all global commands and guild commands, use `npm run clearCommands`  
+  
+All slash and context commands' meta objects are hashed to create a checksum at each startup that's saved to `.command_hash` in the project root.  
+Only if this hash changes will the commands be re-sent to the Discord API. This is to reduce startup time and prevent us from getting rate limited.  
+If you want to force your commands to be updated for whatever reason, delete or edit the `.command_hash` file and restart the bot (Note: it's invisible in VSC and Win Explorer by default).
 
 <br>
 
 ### Context menu commands:
 There are two types of context menus; message and user. This dictates where they will be situated in the Discord client and what properties are passed.  
-Use `int.isUserContextMenu()` and `int.isMessageContextMenu()` to tell TS what type of context menu it's dealing with, then you will be able to access the `int.targetMessage` or `int.targetUser` and `int.targetMember` props.  
+Use an if-condition with `int.isUserContextMenu()` and `int.isMessageContextMenu()` to tell TS what type of context menu it's dealing with, then you will be able to access the `int.targetMessage` or `int.targetUser` and `int.targetMember` props.  
 Other than how the commands are sent and that a user can't pass any arguments, context commands are pretty much the same as slash commands.  
   
 To create a new context menu, use the Template.ts in `src/context/` to create a sub-class of `src/CtxMenu.ts`  
 Make sure the file and class name are changed, and the meta object in the constructor is filled out.  
 To specify who can use the context command, use the `memberPerms` meta prop.  
-Lastly, as with slash commands, add the class to the array in `src/context/index.ts`
+Lastly, as with slash commands, add the class to the array in `src/context/index.ts`  
+  
+Just like the slash commands, the context commands will only be re-sent to the API, if their meta object changes.  
+For more info, read the [slash command section.](#slash-commands)
 
 <br>
 
@@ -166,7 +173,7 @@ All messages can have:
 
 <br>
 
-Interaction replies and MessageEmbeds (title, fields & description) can have:
+Interaction replies and EmbedBuilders (title, fields & description) can have:
 - Hyperlinks (`[text](url)`)
 
 <br>
@@ -220,7 +227,7 @@ Markdown that isn't allowed anywhere:
 <br>
 
 > ### PageEmbed
-> This class is a wrapper for MessageEmbed that handles scrolling through multiple of them via MessageButtons.  
+> This class is a wrapper for EmbedBuilder that handles scrolling through multiple of them via MessageButtons.  
 > It offers lots of configurability and dynamically changeable pages.  
 >   
 > #### Methods:
