@@ -2,6 +2,7 @@ import { CommandInteraction, CommandInteractionOption, PermissionFlagsBits } fro
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { getPremium, togglePremium } from "@src/database/music";
+import { settings } from "@src/settings";
 
 export class Premium extends Command {
     constructor() {
@@ -13,7 +14,6 @@ export class Premium extends Command {
                 {
                     name: "toggle",
                     desc: "Give premium to current guild [DEV ONLY]",
-                    devOnly: true,
                     perms: [PermissionFlagsBits.Administrator],
                 },
                 {
@@ -30,7 +30,7 @@ export class Premium extends Command {
 
         if(!int.guild?.id) return this.followUpReply(int, embedify("This command cannot be used in DMs"));
 
-        if(opt.name == "toggle") {
+        if(opt.name == "toggle" && settings.devs.includes(int.user.id)) {
             const a = await togglePremium(int.guild.id);
 
             return this.followUpReply(int, embedify(`${int.guild.name} ${a ? "now has" : "no longer has"} premium`));
