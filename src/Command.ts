@@ -40,7 +40,7 @@ export abstract class Command
         if(cmdMeta.desc.length > 100)
             throw new Error(`${k.yellow(`/${cmdMeta.name}`)}: Description can't be longer than 100 chars, got ${cmdMeta.desc.length}`);
 
-        if(Command.isCommandMeta(cmdMeta))
+        if(!Command.isSubcommandMeta(cmdMeta))
         {
             // top level command
             this.meta = { ...fallbackMeta, ...cmdMeta };
