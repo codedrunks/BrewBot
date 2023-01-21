@@ -12,7 +12,7 @@ export class GuildJoined extends Event
 
     async run(guild: Guild)
     {
-        await registerGuildCommands(guild.id);
+        await registerGuildCommands(guild.id, true);
 
         // TODO: add logger lib here
     }
