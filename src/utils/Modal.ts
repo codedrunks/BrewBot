@@ -1,5 +1,5 @@
 import { ActionRowBuilder, TextInputBuilder, ModalBuilder as DjsModal, ModalSubmitInteraction, EmbedBuilder, ButtonBuilder, ModalActionRowComponentBuilder } from "discord.js";
-import { randomUUID } from "crypto";
+import { nanoid } from "nanoid";
 import { registerModal } from "@src/registry";
 import { Command } from "@src/Command";
 import { EmitterBase } from "./EmitterBase";
@@ -26,7 +26,7 @@ export abstract class Modal extends EmitterBase {
     constructor(data: ModalConstructor) {
         super();
 
-        this.id = randomUUID();
+        this.id = nanoid();
 
         this.internalModal = new DjsModal()
             .setCustomId(this.id)

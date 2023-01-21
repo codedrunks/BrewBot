@@ -2,11 +2,12 @@ import { Message, EmbedBuilder, ButtonInteraction, TextBasedChannel, ButtonBuild
 import { time } from "@discordjs/builders";
 import { clamp } from "svcorelib";
 import { APIEmbed } from "discord-api-types/v10";
-import { randomUUID } from "crypto";
+import { nanoid } from "nanoid";
+
 import { EmitterBase } from "@utils/EmitterBase";
 import { Command } from "@src/Command";
 import { btnListener } from "@src/registry";
-import { useEmbedify } from "./embedify";
+import { useEmbedify } from "@src/utils";
 import { settings } from "@src/settings";
 import { AnyInteraction, DiscordAPIFile, Tuple } from "@src/types";
 
@@ -86,7 +87,7 @@ export class PageEmbed extends EmitterBase
     {
         super();
 
-        this.btnId = randomUUID();
+        this.btnId = nanoid();
 
         this.pages = pages.map(p => p instanceof EmbedBuilder ? p.toJSON() : p);
         this.files = files?.length ? files : [];

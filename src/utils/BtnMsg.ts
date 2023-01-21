@@ -1,5 +1,5 @@
-import { randomUUID } from "crypto";
 import { ButtonInteraction, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextBasedChannel, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
+import { nanoid } from "nanoid";
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
@@ -48,7 +48,7 @@ export class BtnMsg extends EmitterBase
     {
         super();
 
-        this.btnId = randomUUID();
+        this.btnId = nanoid();
 
         this.msg = message instanceof EmbedBuilder ? [message] : message;
 
