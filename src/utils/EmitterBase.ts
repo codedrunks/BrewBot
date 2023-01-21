@@ -4,19 +4,21 @@ export abstract class EmitterBase extends EventEmitter
 {
     protected destroyed = false;
 
-    constructor()
-    {
+    constructor() {
         super({ captureRejections: true });
     }
 
     /** Destroys this instance, emits the "destroy" event, then removes all event listeners */
-    public destroy()
-    {
+    public destroy() {
         this._destroy();
     }
 
-    protected _destroy(emitDestroy = true)
-    {
+    /** Whether destroy() has been called or not */
+    public isDestroyed() {
+        return this.destroyed;
+    }
+
+    protected _destroy(emitDestroy = true) {
         if(this.destroyed)
             return;
 
