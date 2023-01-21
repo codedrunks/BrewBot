@@ -31,6 +31,7 @@ export class ExecModal extends Modal
         try {
             const { channel, user, guild, client } = int;
 
+            // only destructured to be made available to the eval()
             unused(channel, user, guild, client);
 
             const code = int.fields.getTextInputValue("code").trim();
@@ -41,7 +42,7 @@ export class ExecModal extends Modal
             try
             {
                 const lines = [
-                    "import { EmbedBuilder, ButtonBuilder, Colors, CommandInteraction, ButtonInteraction, Collection, User, Member, Guild } from \"discord.js\";",
+                    "import { EmbedBuilder, ButtonBuilder, ButtonStyle, Colors, CommandInteraction, ButtonInteraction, Collection, User, Member, Guild } from \"discord.js\";",
                     "import { BtnMsg, PageEmbed, embedify, useEmbedify, toUnix10, truncStr, truncField } from \"../utils/\";",
                     "(async () => {",
                     code,
