@@ -170,11 +170,13 @@ export class Reminder extends Command
         }
     }
 
+    //#MARKER run
+
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">)
     {
         const { user, guild, channel } = int;
 
-        let action = "";
+        let action = "run the reminder command";
         try
         {
             const tooSoon = () => this.reply(int, embedify("Please enter an expiry that's at least five seconds from now.", settings.embedColors.error), true);

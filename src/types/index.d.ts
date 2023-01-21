@@ -92,11 +92,11 @@ export interface CommandMeta extends CmdMetaBase {
 /** Meta information of a Command instance that has multiple subcommands - see https://discordjs.guide/interactions/slash-commands.html#subcommands */
 export interface SubcommandMeta extends CmdMetaBase {
     /** Array of subcommands */
-    subcommands: Omit<CommandMeta, "memberPerms" | "category">[];
+    subcommands: Pick<CommandMeta, "name" | "desc" | "args" | "perms">[];
 }
 
-/** Result of PUTing a guild command to the Discord API */
-export interface PutGuildCommandResult {
+/** Result of PUTing an application guild command (slash or context) to the Discord API */
+export interface PutApplicationGuildCommandsResult {
     application_id: string;
     default_member_permissions: null | string;
     default_permission: boolean;
