@@ -1,12 +1,13 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, TextBasedChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, Embed, EmbedBuilder, Message, TextBasedChannel } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
 import { time } from "@discordjs/builders";
 import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Reminder as ReminderObj } from "@prisma/client";
-import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
+import { autoPlural, BtnMsg, ButtonsTuple, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
 import { Tuple } from "@src/types";
+import { randomItem } from "svcorelib";
 
 /** Max reminders per user (global) */
 const reminderLimit = 10;
@@ -475,6 +476,104 @@ export class Reminder extends Command
         // TODO: add logger
         const reminderError = (err: Error) => console.error(k.red("Error while checking expired reminders:\n"), err);
 
+        /** Edits `msg` to have the reschedule buttons and handles the listening and reminder rescheduling */
+        const editReschedMsg = (msg: Message, rem: ReminderObj) => {
+            const min = 60_000;
+            const hr = min * 60;
+            const day = hr * 24;
+
+            const reschedBtns = [
+                {
+                    label: "+ 5m",
+                    val: 5 * min,
+                },
+                {
+                    label: "+ 15m",
+                    val: 15 * min,
+                },
+                {
+                    label: "+ 1h",
+                    val: hr,
+                },
+                {
+                    label: "+ 3h",
+                    val: 3 * hr,
+                },
+                {
+                    label: "+ 8h",
+                    val: 8 * hr,
+                },
+                {
+                    label: "+ 12h",
+                    val: 12 * hr,
+                },
+                {
+                    label: "+ 1d",
+                    val: day,
+                },
+                {
+                    label: "+ 3d",
+                    val: 6 * hr,
+                },
+                {
+                    label: "+ 7d",
+                    val: 6 * hr,
+                },
+            ].map(({ label, val }) => ({
+                val,
+                label,
+                btn: new ButtonBuilder().setStyle(ButtonStyle.Secondary).setLabel(label),
+            }));
+
+            reschedBtns.push({
+                val: 0,
+                label: "Submit",
+                btn: new ButtonBuilder().setStyle(ButtonStyle.Primary).setLabel("Submit"),
+            });
+            reschedBtns.push({
+                val: 0,
+                label: "Cancel",
+                btn: new ButtonBuilder().setStyle(ButtonStyle.Danger).setLabel("Cancel"),
+            });
+
+            const getEbd = (rem: ReminderObj) => new EmbedBuilder()
+                .setColor(settings.embedColors.default)
+                .setDescription(`Rescheduling the reminder.\nPress any of the buttons below to add time onto this reminder.\n\nCurrent expiry: <t:${toUnix10(rem.dueTimestamp.getTime())}:F>`);
+
+            const ebd = getEbd(rem);
+
+            const slicedBtnsInput = reschedBtns.map(({ btn }) => btn);
+            const slicedBtns: ButtonBuilder[][] = [];
+            while(slicedBtnsInput.length > 0)
+                slicedBtns.push(slicedBtnsInput.splice(0, 5));
+
+            const editReschedBm = new BtnMsg(ebd, slicedBtns as ButtonsTuple);
+
+            const newReminder = { ...rem };
+
+            /** Adds the `value` in milliseconds to the newReminder */
+            const addValueToReminder = (value: number) => {
+                newReminder.dueTimestamp = new Date(newReminder.dueTimestamp.getTime() + value);
+                msg.edit({ ...editReschedBm.getMsgOpts(), embeds: [ getEbd(newReminder) ]});
+            };
+
+            editReschedBm.on("press", (btn, int) => {
+                const reschedBt = reschedBtns.find(b => b.label === btn.data.label);
+                if(int.user.id === rem.userId && reschedBt) {
+                    if(btn.data.label === "Submit")
+                        console.log("TODO");
+                    else if(btn.data.label === "Cancel")
+                        console.log("TODO");
+                    else
+                        addValueToReminder(reschedBt.val);
+                }
+            });
+
+            msg.edit({
+                ...editReschedBm.getMsgOpts(),
+            });
+        };
+
         /** Sends the expiry reminder in the guild and channel it was created in, but only if it is not private */
         const remindPublicly = async (rem: ReminderObj) => {
             try {
@@ -486,8 +585,18 @@ export class Reminder extends Command
 
                 if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
                 {
-                    const c = chan as TextBasedChannel;
-                    c.send({ content: `Reminder! <@${rem.userId}>`, embeds: [ getExpiredEbd(rem) ] });
+                    const reschedBm = new BtnMsg("", new ButtonBuilder().setLabel("Reschedule").setStyle(ButtonStyle.Secondary).setEmoji("⏭️"));
+
+                    const msg = (chan as TextBasedChannel).send({
+                        ...reschedBm.getMsgOpts(),
+                        content: `🔔 Reminder! <@${rem.userId}>`,
+                        embeds: [ getExpiredEbd(rem) ],
+                    });
+
+                    reschedBm.on("press", async (btn, btInt) => {
+                        if(btInt.user.id === rem.userId && btn.data.label === "Reschedule")
+                            editReschedMsg(msg instanceof Promise ? await msg : msg, rem);
+                    });
                 }
             }
             catch(err) {
@@ -526,6 +635,8 @@ export class Reminder extends Command
             const usr = client.users.cache.find(u => u.id === rem.userId);
 
             promises.push((async () => {
+                const reschedBtn = new ButtonBuilder().setLabel("Reschedule").setStyle(ButtonStyle.Secondary).setEmoji("⏭️");
+
                 if(!usr)
                     return remindPublicly(rem);
 

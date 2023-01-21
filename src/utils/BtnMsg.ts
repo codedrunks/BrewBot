@@ -21,6 +21,8 @@ export interface BtnMsg {
     on(event: "error", listener: (err: Error) => void): this;
 }
 
+export type ButtonsTuple = Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>;
+
 /**
  * Wrapper for discord.js' `ButtonBuilder`  
  * Contains convenience methods for easier creation of messages with attached buttons
@@ -44,7 +46,7 @@ export class BtnMsg extends EmitterBase
      * @param message The message or reply content
      * @param buttons Up to 5 rows of 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
      */
-    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>, options?: Partial<BtnMsgOpts>)
+    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | ButtonsTuple, options?: Partial<BtnMsgOpts>)
     {
         super();
 
