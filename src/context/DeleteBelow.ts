@@ -16,10 +16,13 @@ export class DeleteBelow extends CtxMenu
     }
 
     async run(int: ContextMenuCommandInteraction) {
-        const err = (msg?: string) => int.reply({
-            ...useEmbedify(`Couldn't delete the messages${msg ? `:\n${msg}` : " due to an error."}`, settings.embedColors.error),
-            ephemeral: true,
-        });
+        const err = (msg?: string) => {
+            const ebdOpts = useEmbedify(`Couldn't delete the messages${msg ? `:\n${msg}` : " due to an error."}`, settings.embedColors.error);
+            if(int.deferred || int.replied)
+                int.editReply(ebdOpts);
+            else
+                int.reply({ ...ebdOpts, ephemeral: true });
+        };
 
         // this condition will never be true, it's just for TS to shut up
         if(!int.isMessageContextMenuCommand())
