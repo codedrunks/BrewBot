@@ -1,6 +1,6 @@
 import { CtxMenu } from "@src/CtxMenu";
 import { settings } from "@src/settings";
-import { BtnMsg, embedify, useEmbedify } from "@src/utils";
+import { autoPlural, BtnMsg, embedify, useEmbedify } from "@src/utils";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord-api-types/v10";
 import { ButtonBuilder, ButtonStyle, Collection, ContextMenuCommandInteraction, GuildTextBasedChannel, Message } from "discord.js";
 
@@ -49,20 +49,13 @@ export class DeleteBelow extends CtxMenu
 
             msgCount = msgs.size;
 
-            const deleteMsgs = async () => await (channel as GuildTextBasedChannel).bulkDelete(msgs, true);
-
-            if(msgCount < 5) {
-                deleteMsgs();
-                return int.editReply(useEmbedify(`Successfully deleted ${msgCount > 1 ? `all ${msgCount} messages` : "the message"}`, settings.embedColors.success));
-            }
-
             const sortedMsgs = msgs.sort((a, b) => a.createdTimestamp === b.createdTimestamp ? 0 : (a.createdTimestamp < b.createdTimestamp ? -1 : 1));
 
             const firstMsgLink = sortedMsgs.at(0)!.url,
                 lastMsgLink = sortedMsgs.at(-1)!.url;
 
             const bm = new BtnMsg(
-                embedify(`Are you sure you want to delete ${msgCount} messages from [here](${firstMsgLink}) to [here](${lastMsgLink})?`),
+                embedify(`Are you sure you want to delete ${msgCount} ${autoPlural("message", msgCount)} from [here](${firstMsgLink}) to [here](${lastMsgLink})?`),
                 [[
                     new ButtonBuilder().setLabel("Delete").setStyle(ButtonStyle.Danger),
                     new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary),
@@ -75,7 +68,7 @@ export class DeleteBelow extends CtxMenu
             bm.on("press", async (btn, btnInt) => {
                 await btnInt.deferUpdate();
                 if(btn.data.label === "Delete") {
-                    deleteMsgs();
+                    await (channel as GuildTextBasedChannel).bulkDelete(msgs, true);
                     replied = true;
                     bm.destroy();
                     int.editReply({ ...bm.getReplyOpts(), ...useEmbedify(`Successfully deleted ${msgCount > 1 ? `all ${msgCount} messages` : "the message"}`, settings.embedColors.success) });
