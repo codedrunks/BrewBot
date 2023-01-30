@@ -1,6 +1,6 @@
 import { CtxMenu } from "@src/CtxMenu";
 import { settings } from "@src/settings";
-import { autoPlural, BtnMsg, embedify, useEmbedify } from "@src/utils";
+import { BtnMsg, embedify, useEmbedify } from "@src/utils";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord-api-types/v10";
 import { ButtonBuilder, ButtonStyle, Collection, ContextMenuCommandInteraction, GuildTextBasedChannel, Message } from "discord.js";
 
@@ -55,7 +55,10 @@ export class DeleteBelow extends CtxMenu
                 lastMsgLink = sortedMsgs.at(-1)!.url;
 
             const bm = new BtnMsg(
-                embedify(`Are you sure you want to delete ${msgCount} ${autoPlural("message", msgCount)} from [here](${firstMsgLink}) to [here](${lastMsgLink})?`),
+                embedify(msgCount > 1
+                    ? `Are you sure you want to delete ${msgCount} messages from [here](${firstMsgLink}) to [here](${lastMsgLink})?`
+                    : `Are you sure you want to delete [this message](${firstMsgLink})?`
+                ),
                 [[
                     new ButtonBuilder().setLabel("Delete").setStyle(ButtonStyle.Danger),
                     new ButtonBuilder().setLabel("Cancel").setStyle(ButtonStyle.Secondary),
