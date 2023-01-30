@@ -141,7 +141,7 @@ async function registerCommands(client: Client)
             throw new Error("No commands found to listen to");
 
         console.log(`• Registered ${k.green(slashCmds.length)} slash ${autoPlural("command", slashCmds)}`);
-        printDbgItmList(cmds.map(c => c.meta.name));
+        printDbgItmList(cmds.map(c => c.getFullCmdName(c.meta.name)));
 
         console.log(`• Registered ${k.green(ctxMenus.length)} context ${autoPlural("menu", ctxMenus)}`);
         printDbgItmList(ctxMenus.map(c => c.meta.name));

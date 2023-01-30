@@ -1,6 +1,5 @@
 import { ClientEvents, ApplicationCommandOptionType, BufferResolvable, JSONEncodable, APIAttachment, Attachment, AttachmentBuilder, AttachmentPayload, CommandInteraction, ButtonInteraction, ModalSubmitInteraction, ContextMenuCommandInteraction } from "discord.js";
 import { PermissionFlagsBits } from "discord-api-types/v10";
-import { ContextMenuCommandType } from "@discordjs/builders";
 import { Stream } from "node:stream";
 
 //#MARKER commands
@@ -139,8 +138,8 @@ export type EventName = keyof ClientEvents;
 
 export interface CtxMeta {
     name: string;
-    /** Accepts `User` or `Message` of `ApplicationCommandType` enum from `discord-api-types/v10` */
-    type: ContextMenuCommandType;
+    /** Whether this context menu is attached to a user profile (or mention) or a message */
+    type: ApplicationCommandType.User | ApplicationCommandType.Message;
     /** Default member permissions needed to use this context menu */
     memberPerms?: PermissionFlagsBits[];
 }
