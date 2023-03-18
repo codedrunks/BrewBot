@@ -1,4 +1,4 @@
-import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType, TextBasedChannel } from "discord.js";
+import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType, TextBasedChannel, Message, Collection } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -83,7 +83,7 @@ export class Log extends Command {
                 let newEmbedColor: ColorResolvable = embedColors[0];
 
                 channel.messages.fetch({ limit: amount, before: startMessageID })
-                    .then(async (messages) => {
+                    .then(async (messages: Collection<string, Message>) => {
                         messages.set(startMessageID!, await channel.messages.fetch(startMessageID!));
 
                         const lastMessage = messages?.first();
