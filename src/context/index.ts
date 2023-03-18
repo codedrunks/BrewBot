@@ -1,5 +1,4 @@
 import { DeleteBelow } from "./DeleteBelow";
-import { Emoji } from "./Emoji";
 
 import { ResetNickname } from "./ResetNickname";
 
@@ -8,7 +7,6 @@ import { ResetNickname } from "./ResetNickname";
 export const contextMenus = [
     // message
     DeleteBelow,
-    Emoji,
 
     // user
     ResetNickname,
