@@ -214,8 +214,7 @@ Markdown that isn't allowed anywhere:
 >   
 > #### Methods:
 > - `destroy()` emits the `destroy` event, removes all event listeners and tells the registry to deregister this BtnMsg
-> - `getReplyOpts()` returns properties that can be spread onto an interaction reply like `int.reply({ ...btmsg.getReplyOpts(), foo: "bar" })`
-> - `getMsgOpts()` same as `getReplyOpts()` but for sending a message with `channel.send()`
+> - `getMsgOpts()` returns properties that can be passed to or spread onto reply options or "send message" options
 > - `sendIn()` sends this BtnMsg in the provided channel
 >   
 > #### Events:
