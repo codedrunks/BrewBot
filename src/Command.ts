@@ -96,7 +96,7 @@ export abstract class Command
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
-                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
+                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice)
                     );
                 else if(arg.type === ApplicationCommandOptionType.Role)
                     data.addRoleOption(opt =>
@@ -187,7 +187,7 @@ export abstract class Command
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
-                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
+                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice)
                             );
                         else if(arg.type === ApplicationCommandOptionType.Role)
                             sc.addRoleOption(opt =>

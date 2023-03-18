@@ -65,7 +65,7 @@ export class Log extends Command {
         }
 
         try {
-            const chanTypes = [ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice];
+            const chanTypes = [ChannelType.GuildText, ChannelType.AnnouncementThread, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
             if (chanTypes.includes(channel?.type)) {
                 if(!start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {

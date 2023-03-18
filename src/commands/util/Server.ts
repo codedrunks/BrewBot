@@ -67,7 +67,7 @@ export class Server extends Command
             const botMembers = guild.members.cache.filter(m => m.user.bot).size ?? undefined;
             const onlineMembers = botMembers ? guild.members.cache.filter(m => (!m.user.bot && ["online", "idle", "dnd"].includes(m.presence?.status ?? "_"))).size : undefined;
 
-            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.ViewChannel)).size;
+            const publicTxtChannelsAmt = guild.channels.cache.filter(ch => [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildForum].includes(ch.type) && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.ViewChannel)).size;
             const publicVoiceChannelsAmt = guild.channels.cache.filter(ch => ch.type === ChannelType.GuildVoice && ch.permissionsFor(guild.roles.everyone).has(PermissionFlagsBits.Speak)).size;
 
             let memberCount = `Total: ${allMembers}`;
