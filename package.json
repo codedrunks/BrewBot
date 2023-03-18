@@ -14,7 +14,7 @@
     "predeploy": "npx prisma generate && npx prisma migrate deploy",
     "deploy": "tsc && tsc-alias && node out/bot.js",
     "win-redis": "call src\\tools\\redis.bat",
-    "link": "npm link"
+    "cli": "node --enable-source-maps out/tools/cli/index.js"
   },
   "repository": {
     "type": "git",

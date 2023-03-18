@@ -125,14 +125,16 @@ See `brewbot -h` for help.
 ### General
 | Command | Description |
 | --- | --- |
-| `npm start` | start the bot regularly |
-| `npm run watch` | start the bot and watch for file changes to recompile automatically |
-| `npm run lint` | lints the code with eslint |
-| `npm test` | runs the script at `src/test.ts` |
-| `npm run clearCommands` | clears all global and guild commands (takes a few minutes) |
-| `npm run deploy` | runs prisma deployment scripts and launches the bot without watching |
-| `npm run predeploy` | only runs prisma deployment scripts without launching the bot |
-| `npm run win-redis` | use this command on Windows devices to launch redis-server in a WSL window |
+| `npm start` | Start the bot regularly |
+| `npm run watch` | Start the bot and watch for file changes to recompile automatically |
+| `npm run lint` | Lints the code with eslint |
+| `npm test` | Runs the script at `src/test.ts` |
+| `npm run clearCommands` | Clears all global and guild commands (takes a few minutes) |
+| `npm run deploy` | Runs prisma deployment scripts and launches the bot without watching |
+| `npm run predeploy` | Only runs prisma deployment scripts without launching the bot |
+| `npm run win-redis` | (Windows only) Launches redis-server in a new WSL window |
+| `npm link` then `brewbot <args>` | (Unix only) Runs the BrewBot CLI. Use -h to list all commands. |
+| `npm run cli -- <args>` | (Windows only) Runs the BrewBot CLI. Use -h to list all commands. |
 
 <br>
 
