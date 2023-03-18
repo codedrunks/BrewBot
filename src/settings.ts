@@ -79,7 +79,7 @@ export function getEnvVar(varName: string, asType: "stringArray"): undefined | s
 /** Grabs an environment variable's value, and casts it to a `number[]` */
 export function getEnvVar(varName: string, asType: "numberArray"): undefined | number[]
 /** Grabs an environment variable's value, and casts it to a specific type (default string) */
-export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numberArray")>(varName: string, asType: T = "string" as T): undefined | (string | number | string[] | number[])
+export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numberArray" | "stringNoEmpty")>(varName: string, asType: T = "string" as T): undefined | (string | number | string[] | number[])
 {
     const val = process.env[varName];
 
