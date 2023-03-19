@@ -1,15 +1,19 @@
 import { CommandInteraction, EmbedBuilder } from "discord.js";
+import { getRandomFerret } from "canarado-ferret-api";
 import { randomItem } from "svcorelib";
 import { Command } from "@src/Command";
-import { axios } from "@src/utils";
 import { settings } from "@src/settings";
 
 const titles = [
     "Look at this cutie",
-    "One ferret, coming up",
+    "One ferret image, coming up",
     "Ferret time :)",
-    "<a:madeWithAdobe:740517707958452257>",
+    "<a:madeWithAdobe:740517707958452257>", // requires the bot being in the CoJ server
 ];
+
+interface FerretObj {
+    url: string;
+}
 
 export class Ferret extends Command
 {
@@ -27,16 +31,16 @@ export class Ferret extends Command
     {
         await this.deferReply(int);
 
-        const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
+        const res = await getRandomFerret() as unknown as FerretObj;
 
-        if(status < 200 || status >= 300 || !data.file)
-            return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, true);
+        if(typeof res.url !== "string")
+            return await this.reply(int, "Ferret API is currently unreachable. Please try again later.", true);
 
         const embed = new EmbedBuilder()
             .setTitle(randomItem(titles))
             .setColor(settings.embedColors.default)
-            .setFooter({ text: "https://ferret.canarado.xyz" })
-            .setImage(data.file);
+            .setFooter({ text: "https://ferret-api.canarado.xyz" })
+            .setImage(res.url);
 
         await this.editReply(int, embed);
     }
