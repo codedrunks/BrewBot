@@ -2,7 +2,7 @@ import { CtxMenu } from "@src/CtxMenu";
 import { settings } from "@src/settings";
 import { BtnMsg, embedify, useEmbedify } from "@src/utils";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord-api-types/v10";
-import { ButtonBuilder, ButtonStyle, Collection, ContextMenuCommandInteraction, GuildTextBasedChannel, Message } from "discord.js";
+import { ButtonBuilder, ButtonStyle, Collection, GuildTextBasedChannel, Message, MessageContextMenuCommandInteraction } from "discord.js";
 
 
 export class DeleteBelow extends CtxMenu
@@ -15,7 +15,7 @@ export class DeleteBelow extends CtxMenu
         });
     }
 
-    async run(int: ContextMenuCommandInteraction) {
+    async run(int: MessageContextMenuCommandInteraction) {
         const err = (msg?: string) => {
             const ebdOpts = useEmbedify(`Couldn't delete the messages${msg ? `:\n${msg}` : " due to an error."}`, settings.embedColors.error);
             if(int.deferred || int.replied)
@@ -23,10 +23,6 @@ export class DeleteBelow extends CtxMenu
             else
                 int.reply({ ...ebdOpts, ephemeral: true });
         };
-
-        // this condition will never be true, it's just for TS to shut up
-        if(!int.isMessageContextMenuCommand())
-            return;
 
         const msg = int.targetMessage;
 
