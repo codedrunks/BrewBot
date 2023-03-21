@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, TextBasedChannel } from "discord.js";
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonInteraction, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, Message, TextBasedChannel } from "discord.js";
 import k from "kleur";
 import { time } from "@discordjs/builders";
 import { Reminder as ReminderObj } from "@prisma/client";
@@ -737,4 +737,8 @@ async function checkReminders(client: Client)
     }
 
     await Promise.allSettled(promises);
+}
+
+async function rescheduleReminder(rem: ReminderObj, btnInt: ButtonInteraction) {
+    void "TODO";
 }
