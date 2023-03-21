@@ -33,7 +33,7 @@ export class ResetNickname extends CtxMenu
         catch(err)
         {
             if(err instanceof DiscordAPIError && err.status >= 400)
-                return int.reply({ ...useEmbedify(`I can't reset the nickname of someone as noble as <@${int.targetMember?.user?.id}>\nOnly users with roles below the \`BrewBot\` can have their nickname reset.`, settings.embedColors.error), ephemeral: true });
+                return int.reply({ ...useEmbedify(`I can't reset the nickname of someone as noble as <@${int.targetMember?.user?.id}>\nOnly users with roles below the \`BrewBot\` role can have their nickname reset.`, settings.embedColors.error), ephemeral: true });
         }
 
         if(!int.replied)
