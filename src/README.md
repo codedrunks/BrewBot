@@ -61,8 +61,8 @@ If you want to force your commands to be updated for whatever reason, delete or 
 
 ### Context menu commands:
 There are two types of context menus; message and user. This dictates where they will be situated in the Discord client and what properties are passed.  
-Use an if-condition with `int.isUserContextMenu()` and `int.isMessageContextMenu()` to tell TS what type of context menu it's dealing with, then you will be able to access the `int.targetMessage` or `int.targetUser` and `int.targetMember` props.  
-Other than how the commands are sent and that a user can't pass any arguments, context commands are pretty much the same as slash commands.  
+To tell TS what type of context menu it's dealing with, set the type of the `int` parameter of the run method to either `MessageContextMenuCommandInteraction` or `UserContextMenuCommandInteraction`, then you will be able to access the `int.targetMessage` or `int.targetUser` and `int.targetMember` props.  
+Other than how the commands are sent and that a user can't pass any arguments to them, context commands are pretty much the same as slash commands.  
   
 To create a new context menu, use the Template.ts in `src/context/` to create a sub-class of `src/CtxMenu.ts`  
 Make sure the file and class name are changed, and the meta object in the constructor is filled out.  
@@ -183,6 +183,7 @@ Interaction replies and EmbedBuilders (title, fields & description) can have:
 Markdown that isn't allowed anywhere:
 - Tables
 - HTML mixins (`<details>` etc)
+- Images (`![alt](src)`)
 
 <br><br>
 
@@ -223,7 +224,7 @@ Markdown that isn't allowed anywhere:
 > Use `BtnMsg.on("name", (args) => {})` to subscribe to them
 > - `press` is emitted whenever the button is pressed by a user and gets passed the MessageButton and ButtonInteraction instances  
 > - `timeout` is emitted when the timeout of the BtnMsg, set in the settings object, is reached. After the timeout, the `.destroy()` method is automatically called  
-> - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive evetns again.  
+> - `destroy` is emitted whenever the `.destroy()` method is called and it prompts the registry to deregister this BtnMsg instance. It gets passed an array of `MessageButton.customId`'s. After this event is emitted, all previously registered event listeners will be removed and will never receive events again.  
 
 <br>
 
@@ -252,14 +253,14 @@ Markdown that isn't allowed anywhere:
 <br>
 
 > ### Modal
-> The modal is a configurable form dialog that gets shown to a user.  
-> Modals only work in the desktop client, not the mobile app.  
+> The modal is a configurable form dialog that opens when a user runs a command.  
+> In the Discord app it is shown as a popup / popover form.  
 >   
 > This is an abstract class, so you need to create a sub-class extending `Modal`
 > 
 > #### Methods:
-> - `submit()` is executed when the user submitted the modal - this method needs to be overridden in a sub-class
-> - `getInternalModal()` returns the modal object that needs to be passed to an interaction's `showModal()` method
+> - `submit()` is executed when the user has entered all data and submitted the modal - this method needs to be overridden in a sub-class
+> - `getInternalModal()` returns the modal object that needs to be passed to an interaction's `int.showModal()` method. This will actually open the modal for the user.
 > 
 > #### Events:
 > - `destroy` gets emitted when `.destroy()` is called to trigger the registry to delete this instance
