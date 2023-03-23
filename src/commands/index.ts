@@ -11,7 +11,6 @@ import { Steam } from "@commands/fun/Steam";
 import { Sudoku } from "@commands/games/Sudoku";
 import { TwentyFortyEight } from "@commands/games/2048";
 
-// import { ReactionRoles } from "@commands/mod/ReactionRoles";
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
 import { Say } from "@commands/mod/Say";
@@ -74,7 +73,6 @@ export const commands = [
     TicTacToe,
 
     // mod
-    // ReactionRoles,
     Delete,
     Log,
     Say,

@@ -110,25 +110,6 @@ export interface PutApplicationGuildCommandsResult {
     version: string;
 }
 
-//#SECTION reactionroles
-
-export interface ReactionRole {
-    /** Reaction emoji */
-    emoji: string;
-    /** Role ID */
-    id: string;
-}
-
-export interface ReactionMsg {
-    /** Guild ID */
-    guild: string;
-    msgs: {
-        /** Message ID */
-        message: string;
-        roles: ReactionRole[];
-    }[];
-}
-
 //#MARKER events
 
 /** Client event names */
