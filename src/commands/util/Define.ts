@@ -2,7 +2,7 @@ import { CommandInteraction, ButtonBuilder, EmbedBuilder, ButtonStyle, Applicati
 import { embedify, useEmbedify } from "@utils/embedify";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-import { followRedirects, rankVotes, axios, emojis } from "@src/utils";
+import { followRedirects, rankVotes, axios, emojis, autoPlural } from "@src/utils";
 import { Tuple } from "@src/types";
 
 type WikiArticle = {
@@ -238,8 +238,8 @@ export class Define extends Command
                 return {
                     word: data.word,
                     phonetic: data.phonetic,
-                    partOfSpeech: meanings ? meanings[0]?.partOfSpeech : undefined,
-                    definitions: meanings ? meanings[0].definitions.map((d: Record<string, string>) => d.definition).slice(0, 8) : undefined,
+                    partOfSpeech: meanings?.[0]?.partOfSpeech,
+                    definitions: meanings?.[0]?.definitions?.map((d: Record<string, string>) => d.definition)?.slice(0, 8),
                     pronounciation: Array.isArray(data.phonetics) && data.phonetics.length > 0 ? data.phonetics[0]?.audio : undefined,
                     source: Array.isArray(data.sourceUrls) ? data.sourceUrls[0] : data.sourceUrls,
                 };
@@ -249,8 +249,8 @@ export class Define extends Command
 
             const desc = [
                 `**${entry.word}** ${entry.partOfSpeech ? `(${entry.partOfSpeech}) ` : ""}${entry.phonetic ? `\`${entry.phonetic}\`` : ""}\n`,
-                `Definition${entry.definitions?.length === 1 ? "" : "s"}:`,
-                entry.definitions ? `- ${entry.definitions.join("\n- ")}` : "(no definitions found)",
+                `${autoPlural("Definition", entry.definitions ?? 1)}:`,
+                entry.definitions ? `- ${entry.definitions.join("\n- ")}` : "(no definition found)",
             ].join("\n");
 
             embed.setTitle(`Dictionary entry for **${term}**:`)

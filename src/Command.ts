@@ -362,20 +362,20 @@ export abstract class Command
     //#SECTION static
 
     /**
-     * Returns an object from passed buttons that can be spread onto an interaction reply  
-     * Returns an empty object if no buttons were passed, so it's always safe to spread
+     * Returns an object from passed buttons that can be passed to or spread onto an interaction reply
      * @example ```ts
-     * await int.reply({ ...Command.useButtons(btns), content: "foo" });
+     * await int.reply(Command.useButtons(btns));
+     * await channel.send({ ...Command.useButtons(btns), content: "foo", embeds: [] });
      * ```
      */
     public static useButtons(buttons?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>): { components: ActionRowBuilder<ButtonBuilder>[] }
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [[buttons]] : []);
-        const rows: ActionRowBuilder<ButtonBuilder>[] = [];
 
-        actRows.forEach(row => {
-            rows.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
-        });
+        const rows = actRows.reduce<ActionRowBuilder<ButtonBuilder>[]>((a, row) => {
+            a.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
+            return a;
+        }, []);
 
         return { components: rows };
     }
