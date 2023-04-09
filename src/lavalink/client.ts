@@ -7,6 +7,7 @@ import { trackEnd } from "@src/lavalink/lib/trackEnd";
 import { SpotifyOptions } from "better-erela.js-spotify/dist/typings";
 import { playerMove } from "./lib/playerMove";
 import { playerCreate } from "./lib/playerCreate";
+import { settings } from "@src/settings";
 
 let client: Client;
 const plugins: Plugin[] = [];
@@ -41,12 +42,17 @@ process.env.LAVALINK_HOSTS?.split(",").map((v) => {
 
 
 export function lavaRetrieveClient(cl: Client) {
+    if(!settings.commands.musicEnabled)
+        return;
+
     client = cl;
 
     manager = initializeManagerFromClient(client);
 }
 
 export function clientReadyInitLava(cl: Client) {
+    if(!settings.commands.musicEnabled)
+        return;
     manager.init(cl.user?.id);
 }
 

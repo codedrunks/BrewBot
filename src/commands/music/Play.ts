@@ -5,6 +5,7 @@ import { four_hours, getMusicManager, reduceSongsLength } from "@src/lavalink/cl
 import { embedify } from "@utils/embedify";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { randomizeArray, randRange } from "svcorelib";
+import { settings } from "@src/settings";
 
 export class Play extends Command {
     constructor() {
@@ -60,6 +61,8 @@ export class Play extends Command {
                 }
             ],
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

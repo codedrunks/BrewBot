@@ -22,6 +22,8 @@ export class Premium extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void> {

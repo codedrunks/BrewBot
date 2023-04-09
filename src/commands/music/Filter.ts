@@ -5,6 +5,7 @@ import { embedify } from "@src/utils";
 import { ApplicationCommandOptionType, CommandInteraction, Guild, GuildMemberRoleManager } from "discord.js";
 import { Player } from "erela.js";
 import { filterTurnOff } from "./global.music";
+import { settings } from "@src/settings";
 
 export class Filter extends Command {
     constructor() {
@@ -47,6 +48,8 @@ export class Filter extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

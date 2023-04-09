@@ -3,6 +3,7 @@ import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { settings } from "@src/settings";
 
 export class Stop extends Command {
     constructor() {
@@ -11,6 +12,8 @@ export class Stop extends Command {
             desc: "Clears the queue and makes the bot leave the voice channel",
             category: "music"
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

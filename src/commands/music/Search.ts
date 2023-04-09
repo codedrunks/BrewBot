@@ -5,6 +5,7 @@ import { embedify } from "@utils/embedify";
 import { getPremium, isDJOnlyandhasDJRole } from "@database/music";
 import { SearchQuery, SearchResult } from "erela.js";
 import { randRange } from "svcorelib";
+import { settings } from "@src/settings";
 
 const activeSearches: Set<string> = new Set();
 
@@ -62,6 +63,8 @@ export class Search extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

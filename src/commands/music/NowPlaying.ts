@@ -6,6 +6,7 @@ import { formatDuration, parseDuration } from "svcorelib";
 import { getPremium, isDJOnlyandhasDJRole } from "@src/database/music";
 import { fetchSongInfo, SongInfo } from "./global.music";
 import { Tuple } from "@src/types";
+import { settings } from "@src/settings";
 
 const ten_secs = 10_000;
 
@@ -16,6 +17,8 @@ export class NowPlaying extends Command {
             desc: "Shows the current playing song",
             category: "music"
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {
