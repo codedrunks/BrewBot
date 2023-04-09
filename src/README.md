@@ -97,7 +97,7 @@ When launching to production, you want redis to be daemonized, this can be done 
   
 [^1]: If you are using systemd, create a `redis.conf` in `/etc/redis/redis.conf` and make sure to add the line `supervised systemd`.  
   
-In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in `%UserProfile%\.wslconfig`, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. Also if you are on windows, be aware that WSL does not keep applications alive without a bash terminal running, so do not close the WSL window while developing.
+In our specific application, your redis-server must be running on `127.0.0.1:6379` which is the default for redis-server, and if you are on windows, make sure to add the line `localhostForwarding=true` to your .wslconfig located in `%UserProfile%\.wslconfig`, if this file does not exist, please create one and be sure to add the header `[wsl2]` or `[wsl1]`. On WSL, if Redis is installed through systemd, it should be kept alive in the background even after closing the WSL process.
 
 Another thing is to have a config for your instance of Redis, in testing/development you can do something like this to have an instance that does not save to disk. On WSL, you must do this because redis will not have write permissions to save to disk.
 ```sh
