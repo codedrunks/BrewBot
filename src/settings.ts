@@ -11,7 +11,7 @@ dotenv.config();
  * Global miscellaneous settings for the bot
  * @readonly
  */
-export const settings: Settings = Object.freeze({
+export const settings: Settings = {
     debug: {
         /** Whether to send a bell sound in the console when the bot is ready */
         bellOnReady: envVarEquals("BELL_ON_READY", true),
@@ -45,20 +45,21 @@ export const settings: Settings = Object.freeze({
         commandPrefix: getEnvVar("COMMAND_PREFIX", "stringNoEmpty"),
     },
     embedColors: {
-        default: getEnvVar("EMBED_COLOR_DEFAULT") ?? 0xfaba05,
-        success: getEnvVar("EMBED_COLOR_SUCCESS") ?? Colors.Green,
-        gameLost: getEnvVar("EMBED_COLOR_GAME_LOST") ?? Colors.Grey,
-        warning: getEnvVar("EMBED_COLOR_WARNING") ?? Colors.Orange,
-        error: getEnvVar("EMBED_COLOR_ERROR") ?? Colors.DarkRed,
-        contestWinner: getEnvVar("EMBED_COLOR_CONTEST_WINNER") ?? Colors.Gold,
+        default: getEnvVar("EMBED_COLOR_DEFAULT") as ColorResolvable ?? 0xfaba05,
+        success: getEnvVar("EMBED_COLOR_SUCCESS") as ColorResolvable ?? Colors.Green,
+        gameLost: getEnvVar("EMBED_COLOR_GAME_LOST") as ColorResolvable ?? Colors.Grey,
+        warning: getEnvVar("EMBED_COLOR_WARNING") as ColorResolvable ?? Colors.Orange,
+        error: getEnvVar("EMBED_COLOR_ERROR") as ColorResolvable ?? Colors.DarkRed,
+        contestWinner: getEnvVar("EMBED_COLOR_CONTEST_WINNER") as ColorResolvable ?? Colors.Gold,
     },
     /** Incremental list of emojis used in reactions */
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
-    devs: getEnvVar("DEV_IDS", "stringArray"),
+    devs: getEnvVar("DEV_IDS", "stringArray") ?? [],
     commands: {
         execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
+        musicEnabled:!envVarEquals("MUSIC_CMDS_ENABLED", false),
     },
-}) as Settings;
+};
 
 /** Tests if the environment variable `varName` equals `value` casted to string */
 function envVarEquals(varName: string, value: Stringifiable, caseSensitive = false)
@@ -68,17 +69,18 @@ function envVarEquals(varName: string, value: Stringifiable, caseSensitive = fal
     return (caseSensitive ? envVal : envVal?.toLowerCase()) === (caseSensitive ? String(val) : String(val).toLowerCase());
 }
 
-/** Grabs an environment variable's value, and casts it to a `string` - however if the string is empty (unset), undefined is returned */
-export function getEnvVar(varName: string, asType?: "stringNoEmpty"): undefined | string
-/** Grabs an environment variable's value, and casts it to a `string` */
+// first one is the default overload
+/** Grabs an environment variable's value, and casts it to a `string` - if the variable is present but empty, an empty string is returned */
 export function getEnvVar(varName: string, asType?: "string"): undefined | string
-/** Grabs an environment variable's value, and casts it to a `number` */
+/** Grabs an environment variable's value, and casts it to a `string` - if the variable is empty, undefined is returned */
+export function getEnvVar(varName: string, asType?: "stringNoEmpty"): undefined | string
+/** Grabs an environment variable's value, and casts it to a `number` - returns NaN if the variable couldn't be parsed */
 export function getEnvVar(varName: string, asType: "number"): undefined | number
-/** Grabs an environment variable's value, and casts it to a `string[]` */
+/** Grabs an environment variable's value, and casts it to a `string[]` by splitting on commas */
 export function getEnvVar(varName: string, asType: "stringArray"): undefined | string[]
-/** Grabs an environment variable's value, and casts it to a `number[]` */
+/** Grabs an environment variable's value, and casts it to a `number[]` by splitting on commas - includes NaN if the number(s) couldn't be parsed */
 export function getEnvVar(varName: string, asType: "numberArray"): undefined | number[]
-/** Grabs an environment variable's value, and casts it to a specific type (default string) */
+/** Grabs an environment variable's value, and casts it to a specific type (`"string"` by default) */
 export function getEnvVar<T extends ("string" | "number" | "stringArray" | "numberArray" | "stringNoEmpty")>(varName: string, asType: T = "string" as T): undefined | (string | number | string[] | number[])
 {
     const val = process.env[varName];
@@ -133,5 +135,6 @@ interface Settings {
     devs: string[];
     commands: {
         execEnabled: boolean;
+        musicEnabled: boolean;
     }
 }
