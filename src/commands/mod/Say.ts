@@ -1,6 +1,7 @@
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { ApplicationCommandOptionType, CommandInteraction, TextBasedChannel } from "discord.js";
 import { Command } from "@src/Command";
+import logger from "@src/logger";
 
 export class Say extends Command
 {
@@ -40,6 +41,8 @@ export class Say extends Command
         else
             sendChannel = int.channel;
 
+        logger.info(`${int.user.username} used "Say" with message: "${message}"${sendChannel ? ` in channel: ${sendChannel}` : ""}`);
+
         if(typeof sendChannel?.send === "function")
         {
             await sendChannel.send({ content: message });
@@ -47,5 +50,6 @@ export class Say extends Command
         }
         else
             return await this.editReply(int, "Couldn't find a channel with that name");
+
     }
 }

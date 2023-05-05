@@ -12,6 +12,7 @@ import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
 import { getRedis } from "@src/redis";
 import { registerFont } from "canvas";
+import logger from "./logger";
 
 const { env, exit } = process;
 
@@ -19,6 +20,7 @@ dotenv.config();
 
 async function init()
 {
+    logger.info("Initializing...\n");
     console.log("Initializing...\n");
 
     if(!allOfType([ env.BOT_TOKEN, env.CLIENT_ID ], "string"))

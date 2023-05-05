@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@discordjs/rest": "^0.5.0",
+    "@eximius/winston-graylog2": "^2.1.3",
     "@prisma/client": "^4.3.1",
     "axios": "^0.27.2",
     "better-erela.js-spotify": "^1.3.8",
@@ -59,6 +60,7 @@
     "simple-statistics": "^7.7.5",
     "steamapi": "^2.2.0",
     "svcorelib": "^1.16.0",
+    "winston": "^3.8.2",
     "yargs": "^17.5.1"
   },
   "bin": {
