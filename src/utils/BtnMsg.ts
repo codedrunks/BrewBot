@@ -1,5 +1,5 @@
-import { randomUUID } from "crypto";
 import { ButtonInteraction, ActionRowBuilder, ButtonBuilder, EmbedBuilder, TextBasedChannel, APIButtonComponentWithCustomId, ButtonStyle } from "discord.js";
+import { nanoid } from "nanoid";
 
 import { btnListener } from "@src/registry";
 import { EmitterBase } from "@utils/EmitterBase";
@@ -21,6 +21,8 @@ export interface BtnMsg {
     on(event: "error", listener: (err: Error) => void): this;
 }
 
+export type ButtonsTuple = Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>;
+
 /**
  * Wrapper for discord.js' `ButtonBuilder`  
  * Contains convenience methods for easier creation of messages with attached buttons
@@ -28,7 +30,7 @@ export interface BtnMsg {
 export class BtnMsg extends EmitterBase
 {
     readonly btns: ButtonBuilder[][];
-    readonly msg: string | EmbedBuilder[];
+    readonly msg: string | EmbedBuilder[] | null;
 
     readonly opts: BtnMsgOpts;
 
@@ -41,14 +43,14 @@ export class BtnMsg extends EmitterBase
      * Wrapper for discord.js' `ButtonBuilder`  
      * Contains convenience methods for easier creation of messages with attached buttons  
      * Use `.on("press")` to listen for button presses
-     * @param message The message or reply content
+     * @param message The message or reply content - set to null if you don't need a content
      * @param buttons Up to 5 rows of 5 ButtonBuilder instances - customIDs will be managed by this BtnMsg
      */
-    constructor(message: string | EmbedBuilder | EmbedBuilder[], buttons: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>, options?: Partial<BtnMsgOpts>)
+    constructor(message: string | EmbedBuilder | EmbedBuilder[] | null, buttons: ButtonBuilder | ButtonsTuple, options?: Partial<BtnMsgOpts>)
     {
         super();
 
-        this.btnId = randomUUID();
+        this.btnId = nanoid();
 
         this.msg = message instanceof EmbedBuilder ? [message] : message;
 
@@ -118,6 +120,7 @@ export class BtnMsg extends EmitterBase
      * @example ```ts
      * await int.reply(new BtnMsg().getReplyOpts())
      * ```
+     * @deprecated Should be replaced with `getMsgOpts()`
      */
     public getReplyOpts()
     {
@@ -140,7 +143,7 @@ export class BtnMsg extends EmitterBase
             embeds: this.msg,
             ...btns,
         } : {
-            content: this.msg,
+            content: this.msg ?? undefined,
             ...btns,
         };
     }

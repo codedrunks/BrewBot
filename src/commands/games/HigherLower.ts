@@ -11,7 +11,7 @@ export class HigherLower extends Command
     {
         super({
             name: "higherlower",
-            desc: "Guess the random number that is searched for only by getting the hints \"higher\" and \"lower\".",
+            desc: "Guess the random number that is searched for by only getting the hints \"higher\" and \"lower\"",
             category: "games",
             args: [
                 {
@@ -19,7 +19,7 @@ export class HigherLower extends Command
                     desc: "The maximum number that can be chosen. Defaults to 1000. Must be between 10 and 1,000,000,000",
                     type: ApplicationCommandOptionType.Number,
                     min: 10,
-                    max: 1000000000,
+                    max: 1_000_000_000,
                 }
             ]
         });

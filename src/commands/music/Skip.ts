@@ -4,6 +4,7 @@ import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
 import { isDJOnlyandhasDJRole } from "@database/music";
 import { skipVotes } from "./global.music";
+import { settings } from "@src/settings";
 
 export class Skip extends Command {
     constructor() {
@@ -26,6 +27,8 @@ export class Skip extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

@@ -3,6 +3,7 @@ import { CommandInteraction, GuildMemberRoleManager } from "discord.js";
 import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
+import { settings } from "@src/settings";
 
 export class Pause extends Command {
     constructor() {
@@ -11,6 +12,8 @@ export class Pause extends Command {
             desc: "Pause the currently playing song",
             category: "music"
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

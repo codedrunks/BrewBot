@@ -5,6 +5,7 @@ import { embedify } from "@utils/embedify";
 import { Queue as ErelaQueue, Track, UnresolvedTrack } from "erela.js";
 import { BtnMsg } from "@utils/BtnMsg";
 import { Tuple } from "@src/types";
+import { settings } from "@src/settings";
 
 interface QueuePage {
     [userid: string]: number,
@@ -22,6 +23,8 @@ export class Queue extends Command {
             desc: "Shows the current music queue",
             category: "music"
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction): Promise<void> {

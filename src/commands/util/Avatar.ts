@@ -53,7 +53,7 @@ export class Avatar extends Command
             }
             catch(err)
             {
-                status = err instanceof AxiosError ? parseInt(err.status ?? "415") : 415;
+                status = err instanceof AxiosError ? Number(err.status ?? 415) : 415;
             }
 
             const avatarUrl = (status >= 400 ? usr.avatarURL({ extension: "png", size: 4096 }) : requestedAvUrl);
@@ -64,7 +64,7 @@ export class Avatar extends Command
                     .setTitle(`Avatar of ${usr.username}:`)
                     .setColor(settings.embedColors.default)
                     .setImage(avatarUrl);
-                format && ebd.setFooter({ text: `[${format.toUpperCase()}]` });
+                format && ebd.setFooter({ text: `[${format?.toUpperCase()}]` });
 
                 return await this.editReply(int, ebd);
             }

@@ -1,18 +1,17 @@
 import { ActivityType, ApplicationCommandType, Client, ComponentType, InteractionType } from "discord.js";
 import dotenv from "dotenv";
 import k from "kleur";
-import { allOfType, system, Stringifiable } from "svcorelib";
+import { allOfType, system } from "svcorelib";
 
 import botLogs from "@src/botLogs";
 import { initRegistry, registerGuildCommands, registerEvents, getCommands, modalSubmitted, getCtxMenus, btnListener } from "@src/registry";
-import { commands as slashCmds } from "@src/commands";
 import { settings } from "@src/settings";
 import { prisma } from "@database/client";
 import { doContestStuff } from "@commands/fun/Contest/functions";
 import { lavaRetrieveClient, clientReadyInitLava, clientUpdateVoiceStateLava } from "@src/lavalink/client";
 import { getRedis } from "@src/redis";
 import { registerFont } from "canvas";
-import { autoPlural } from "./utils";
+import { autoPlural, printDbgItmList, ringBell } from "./utils";
 
 const { env, exit } = process;
 
@@ -81,7 +80,8 @@ async function init()
     });
 
     client.on("raw", (d) => {
-        clientUpdateVoiceStateLava(d);
+        if(settings.commands.musicEnabled)
+            clientUpdateVoiceStateLava(d);
     });
 
 
@@ -140,8 +140,11 @@ async function registerCommands(client: Client)
         if(!cmds)
             throw new Error("No commands found to listen to");
 
-        console.log(`• Registered ${k.green(slashCmds.length)} slash ${autoPlural("command", slashCmds)}`);
-        printDbgItmList(cmds.map(c => c.meta.name));
+        const enabledCmds = cmds.filter(c => c.enabled);
+        const ofText = enabledCmds.length != cmds.length ? ` (of ${cmds.length} total)` : "";
+
+        console.log(`• Registered ${k.green(enabledCmds.length)} slash ${autoPlural("command", enabledCmds)}${ofText}`);
+        printDbgItmList(enabledCmds.map(c => c.getFullCmdName(c.meta.name)));
 
         console.log(`• Registered ${k.green(ctxMenus.length)} context ${autoPlural("menu", ctxMenus)}`);
         printDbgItmList(ctxMenus.map(c => c.meta.name));
@@ -179,31 +182,6 @@ async function registerCommands(client: Client)
     {
         console.error(k.red("Error while listening for slash commands:\n") + k.red(err instanceof Error ? String(err) : "Unknown Error"));
     }
-}
-
-/**
- * Prints a styled list of items to the console
- * @param limit Max amount of items per line
- */
-function printDbgItmList(list: string[] | Stringifiable[], limit = 10)
-{
-    let msg = "";
-
-    list = list.map(itm => itm.toString()).sort();
-
-    while(list.length > 0)
-    {
-        const items = list.splice(0, limit);
-        msg += `│ ${k.gray(`${items.join(", ")}${items.length === 8 ? "," : ""}`)}\n`;
-    }
-
-    console.log(msg);
-}
-
-/** Triggers the console bell sound */
-function ringBell()
-{
-    settings.debug.bellOnReady && process.stdout.write("\u0007");
 }
 
 init();

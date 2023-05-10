@@ -11,7 +11,6 @@ import { Steam } from "@commands/fun/Steam";
 import { Sudoku } from "@commands/games/Sudoku";
 import { TwentyFortyEight } from "@commands/games/2048";
 
-// import { ReactionRoles } from "@commands/mod/ReactionRoles";
 import { Delete } from "@commands/mod/Delete";
 import { Log } from "@commands/mod/Log";
 import { Say } from "@commands/mod/Say";
@@ -24,7 +23,7 @@ import { Emoji } from "@commands/util/Emoji";
 import { Exec } from "@commands/util/Exec";
 import { Help } from "@commands/util/Help";
 import { Ping } from "@commands/util/Ping";
-import { Reminder } from "@commands/util/Reminder";
+import { Reminder } from "@src/commands/util/Reminder";
 import { Server } from "@commands/util/Server";
 import { Translate } from "@commands/util/Translate";
 import { Whois } from "@commands/util/Whois";
@@ -74,7 +73,6 @@ export const commands = [
     TicTacToe,
 
     // mod
-    // ReactionRoles,
     Delete,
     Log,
     Say,

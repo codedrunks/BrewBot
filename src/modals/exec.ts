@@ -4,7 +4,7 @@ import { transpile } from "typescript";
 
 import { Modal } from "@utils/Modal";
 import { settings } from "@src/settings";
-import { embedify, truncField } from "@src/utils";
+import { embedify, truncStr } from "@src/utils";
 
 export class ExecModal extends Modal
 {
@@ -31,6 +31,7 @@ export class ExecModal extends Modal
         try {
             const { channel, user, guild, client } = int;
 
+            // only destructured to be made available to the eval()
             unused(channel, user, guild, client);
 
             const code = int.fields.getTextInputValue("code").trim();
@@ -41,7 +42,7 @@ export class ExecModal extends Modal
             try
             {
                 const lines = [
-                    "import { EmbedBuilder, ButtonBuilder, Colors, CommandInteraction, ButtonInteraction, Collection, User, Member, Guild } from \"discord.js\";",
+                    "import { EmbedBuilder, ButtonBuilder, ButtonStyle, Colors, CommandInteraction, ButtonInteraction, Collection, User, Member, Guild } from \"discord.js\";",
                     "import { BtnMsg, PageEmbed, embedify, useEmbedify, toUnix10, truncStr, truncField } from \"../utils/\";",
                     "(async () => {",
                     code,
@@ -98,14 +99,15 @@ export class ExecModal extends Modal
                     if(result instanceof Buffer)
                         result = `<Buffer(${result.length}) ${
                             result.reduce((a, c, i) => i < bufTruncLen ?
-                                (a + ((i > 0 ? " " : "") + c.toString(16)))
+                                (a + ((i > 0 ? " " : "") + (c.toString(16).length == 1 ? "0" : "") + c.toString(16)))
                                 : (i === bufTruncLen ? a + " ..." : a),
                             "")
                         }>\n\nStringified:\n${result.toString()}`;
 
-                    if(typeof result === "string" || String(result).length > 1000)
-                        return truncField(String(result));
-                    else return result;
+                    if(typeof result === "string" || String(result).length > 900)
+                        return truncStr(String(result), 900);
+                    else
+                        return result;
                 };
 
                 const resStr = String(result).trim();
@@ -127,7 +129,7 @@ export class ExecModal extends Modal
                 ebd.addFields([
                     {
                         name: "Error:",
-                        value: `\`\`\`\n${truncField(String(error))}\n\`\`\``,
+                        value: `\`\`\`\n${truncStr(String(error), 980)}\n\`\`\``,
                         inline: false
                     },
                     {
@@ -141,7 +143,7 @@ export class ExecModal extends Modal
         }
         catch(err)
         {
-            const ebd = embedify(`Couldn't exec due to an error: ${err}`, settings.embedColors.error);
+            const ebd = embedify(`Couldn't exec due to an error:${err instanceof Error ? `\n${err.stack}` : String(err)}`, settings.embedColors.error);
 
             if(int.replied || int.deferred)
                 return this.editReply(int, ebd);

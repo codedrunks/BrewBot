@@ -1,27 +1,21 @@
-import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder, TextBasedChannel } from "discord.js";
-import k from "kleur";
+// contains the reminder command class and the creation of reminders
+
+import { ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, Client, CommandInteraction, CommandInteractionOption, EmbedBuilder } from "discord.js";
+import { time } from "@discordjs/builders";
+import { Reminder as ReminderObj } from "@prisma/client";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
-import { time } from "@discordjs/builders";
-import { createNewUser, deleteReminder, deleteReminders, getExpiredReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
-import { Reminder as ReminderObj } from "@prisma/client";
 import { autoPlural, BtnMsg, embedify, PageEmbed, timeToMs, toUnix10, useEmbedify } from "@src/utils";
+import { createNewUser, deleteReminder, deleteReminders, getReminder, getReminders, getUser, setReminder } from "@src/database/users";
 import { Tuple } from "@src/types";
+import { initReminderCheck, reminderLimit } from "./reminderCheck";
+import { initReminderRescheduling } from "./reminderRescheduling";
 
-/** Max reminders per user (global) */
-const reminderLimit = 10;
-const reminderCheckInterval = 2000;
-/** To not exceed the embed limits */
-const maxNameLength = 250;
+/** To not exceed the embed limits & strain the DB */
+export const maxNameLength = 250;
 
 export class Reminder extends Command
 {
-    /**
-     * Contains all compound keys of reminders that are currently being checked.  
-     * Format: `userId-reminderId`
-     */
-    private reminderCheckBuffer = new Set<string>();
-
     constructor(client: Client)
     {
         super({
@@ -157,31 +151,26 @@ export class Reminder extends Command
             ],
         });
 
-        if(client instanceof Client)
-        {
-            try {
-                // since the constructor is called exactly once at startup, this should work just fine
-                this.checkReminders(client);
-                setInterval(() => this.checkReminders(client), reminderCheckInterval);
-            }
-            catch(err) {
-                console.error(k.red("Error while checking reminders:"), err);
-            }
+        if(client instanceof Client) {
+            initReminderCheck(client);
+            initReminderRescheduling(client);
         }
     }
+
+    //#MARKER run
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">)
     {
         const { user, guild, channel } = int;
 
-        let action = "";
+        let action = "run the reminder command";
         try
         {
             const tooSoon = () => this.reply(int, embedify("Please enter an expiry that's at least five seconds from now.", settings.embedColors.error), true);
 
             const setNewReminder = async (name: string, dueTimestamp: Date, ephemeral: boolean) => {
                 if(name.length > maxNameLength)
-                    return this.reply(int, embedify(`Please enter a name that's not longer than ${maxNameLength} characters`, settings.embedColors.error));
+                    return this.reply(int, embedify(`Please enter a name that's no longer than ${maxNameLength} characters`, settings.embedColors.error));
 
                 await this.deferReply(int, ephemeral);
 
@@ -365,7 +354,7 @@ export class Reminder extends Command
                 const deleteRem = async ({ reminderId, name }: ReminderObj) => {
                     await deleteReminder(reminderId, user.id);
 
-                    return await int.editReply(useEmbedify(`Successfully deleted the reminder \`${name}\``, settings.embedColors.default));
+                    return await int.editReply(useEmbedify(`Successfully deleted the following reminder:\n> ${name.replace(/\n/gm, "\n> ")}`, settings.embedColors.default));
                 };
 
                 const notFound = () => int.editReply(useEmbedify("Couldn't find a reminder with this name.\nUse `/reminder list` to list all your reminders and their IDs.", settings.embedColors.error));
@@ -452,103 +441,5 @@ export class Reminder extends Command
             else
                 int.reply(cont);
         }
-    }
-
-    //#MARKER check reminders
-    async checkReminders(client: Client)
-    {
-        const expRems = await getExpiredReminders();
-
-        if(!expRems || expRems.length === 0)
-            return;
-
-        const promises: Promise<void>[] = [];
-
-        // TODO: add buttons to reinstate the reminder and add more time to it
-        // e.g.: [+5m] [+10m] [+1h] [+3h] [+12h]
-        const getExpiredEbd = ({ name }: ReminderObj) => new EmbedBuilder()
-            .setDescription(`Your reminder has expired:\n> ${name.replace(/\n/gm, "\n> ")}`)
-            .setColor(settings.embedColors.default);
-
-        // TODO: add logger
-        const reminderError = (err: Error) => console.error(k.red("Error while checking expired reminders:\n"), err);
-
-        /** Sends the expiry reminder in the guild and channel it was created in, but only if it is not private */
-        const remindPublicly = async (rem: ReminderObj) => {
-            try {
-                if(rem.private)
-                    throw new Error("Can't send message in guild as reminder is private.");
-
-                const guild = client.guilds.cache.find(g => g.id === rem.guild);
-                const chan = guild?.channels.cache.find(c => c.id === rem.channel);
-
-                if(chan && [ChannelType.GuildText, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildForum].includes(chan.type))
-                {
-                    const c = chan as TextBasedChannel;
-                    c.send({ content: `Reminder! <@${rem.userId}>`, embeds: [ getExpiredEbd(rem) ] });
-                }
-            }
-            catch(err) {
-                // TODO: track reminder "loss rate"
-                //
-                //   I  │ I I
-                // ─────┼─────
-                //  I I │ I ⌐¬
-
-                err instanceof Error && reminderError(err);
-
-                void err;
-            }
-            finally {
-                try {
-                    await deleteReminder(rem.reminderId, rem.userId);
-                }
-                catch(err) {
-                    // TODO: see above
-
-                    err instanceof Error && reminderError(err);
-                }
-                finally {
-                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
-                }
-            }
-        };
-
-        for(const rem of expRems)
-        {
-            if(this.reminderCheckBuffer.has(`${rem.userId}-${rem.reminderId}`))
-                continue;
-
-            this.reminderCheckBuffer.add(`${rem.userId}-${rem.reminderId}`);
-
-            const usr = client.users.cache.find(u => u.id === rem.userId);
-
-            promises.push((async () => {
-                if(!usr)
-                    return remindPublicly(rem);
-
-                try
-                {
-                    if(rem.private) {
-                        const dm = await usr.createDM();
-
-                        const msg = await dm.send({ embeds: [ getExpiredEbd(rem) ]});
-
-                        if(!dm || !msg)
-                            return remindPublicly(rem);
-                    }
-                    else remindPublicly(rem);
-
-                    await deleteReminder(rem.reminderId, rem.userId);
-                    this.reminderCheckBuffer.delete(`${rem.userId}-${rem.reminderId}`);
-                }
-                catch(err)
-                {
-                    return remindPublicly(rem);
-                }
-            })());
-        }
-
-        await Promise.allSettled(promises);
     }
 }

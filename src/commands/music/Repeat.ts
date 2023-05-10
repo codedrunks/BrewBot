@@ -3,6 +3,7 @@ import { Command } from "@src/Command";
 import { getMusicManager } from "@src/lavalink/client";
 import { embedify } from "@utils/embedify";
 import { isDJOnlyandhasDJRole } from "@database/music";
+import { settings } from "@src/settings";
 
 export class Repeat extends Command {
     constructor() {
@@ -21,6 +22,8 @@ export class Repeat extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void> {

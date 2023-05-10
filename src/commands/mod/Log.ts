@@ -1,4 +1,4 @@
-import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType } from "discord.js";
+import { CommandInteraction, TextChannel, EmbedBuilder, ColorResolvable, ApplicationCommandOptionType, ChannelType, TextBasedChannel, Message, Collection } from "discord.js";
 import k from "kleur";
 import { Command } from "@src/Command";
 import { settings } from "@src/settings";
@@ -38,7 +38,9 @@ export class Log extends Command {
     }
 
     async run(int: CommandInteraction): Promise<void> {
-        const { guild, channel } = int;
+        const { guild } = int;
+
+        const channel = int.channel as TextBasedChannel;
 
         if(!guild || !channel)
             return this.reply(int, embedify("This command can only be used in a server.", settings.embedColors.error), true);
@@ -63,7 +65,7 @@ export class Log extends Command {
         }
 
         try {
-            const chanTypes = [ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice];
+            const chanTypes = [ChannelType.GuildText, ChannelType.AnnouncementThread, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
             if (chanTypes.includes(channel?.type)) {
                 if(!start) {
                     channel.messages.fetch({ limit: 1 }).then(messages => {
@@ -81,8 +83,7 @@ export class Log extends Command {
                 let newEmbedColor: ColorResolvable = embedColors[0];
 
                 channel.messages.fetch({ limit: amount, before: startMessageID })
-                    .then(async (messages) => {
-                        
+                    .then(async (messages: Collection<string, Message>) => {
                         messages.set(startMessageID!, await channel.messages.fetch(startMessageID!));
 
                         const lastMessage = messages?.first();

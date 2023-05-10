@@ -74,7 +74,7 @@ export class Translate extends Command
         const ebd = new EmbedBuilder()
             .setTitle(`Translating ${fromLangName ? `from **${fromLangName}** ` : ""}to **${toLangName}**:`)
             .setColor(settings.embedColors.default)
-            .setDescription(`> **Translation:**\n> ${translation}\n\n> **Original text:**\n> ${text}`);
+            .setDescription(`> **Translation:**\n> ${translation}\n\n> **Input text:**\n> ${text}`);
 
         return await this.editReply(int, ebd);
     }

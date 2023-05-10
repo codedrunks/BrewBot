@@ -3,7 +3,7 @@ import { isIP } from "net";
 import { Command } from "@src/Command";
 import { axios, embedify } from "@src/utils";
 import { settings } from "@src/settings";
-import { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 
 interface MimeInfo {
     exts: string[];
@@ -135,7 +135,7 @@ export class Ping extends Command {
             const contentType = headers["content-type"];
             const hstsHeader = headers["strict-transport-security"];
 
-            const mimeType = (contentType && contentType.includes(";") ? contentType.split(";")[0] : contentType)?.trim();
+            const mimeType = (contentType && contentType.includes(";") ? contentType.split(";")[0] : contentType)?.trim() ?? "";
             const mimeInfo = this.MIME_MAP.get(mimeType);
 
             const hstsEnabled = hstsHeader?.toLowerCase().includes("max-age");
@@ -179,7 +179,7 @@ export class Ping extends Command {
             return this.editReply(int, ebd);
         }
         catch(err) {
-            if(Ping.isAxiosError(err))
+            if(isAxiosError(err))
             {
                 const ebd = new EmbedBuilder()
                     .setTitle("URL Information:")
@@ -206,11 +206,6 @@ export class Ping extends Command {
             }
             return this.editReply(int, embedify("Encountered an internal error. Please try again later.", settings.embedColors.error));
         }
-    }
-
-    static isAxiosError(val: unknown): val is AxiosError
-    {
-        return typeof val === "object" && (val as Record<string, unknown>)?.isAxiosError === true;
     }
 
     parseUrl(urlArg: string)

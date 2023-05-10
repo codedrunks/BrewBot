@@ -2,6 +2,7 @@ import { ApplicationCommandOptionType, CommandInteraction, CommandInteractionOpt
 import { Command } from "@src/Command";
 import { embedify } from "@utils/embedify";
 import { addDJRoleId, toggleDJOnly, getDJRoleIds, removeDJRoleId } from "@database/music";
+import { settings } from "@src/settings";
 
 export class DJ extends Command {
     constructor() {
@@ -47,6 +48,8 @@ export class DJ extends Command {
                 }
             ]
         });
+
+        this.enabled = settings.commands.musicEnabled;
     }
 
     async run(int: CommandInteraction, opt: CommandInteractionOption<"cached">): Promise<void> {

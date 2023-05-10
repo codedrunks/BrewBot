@@ -40,7 +40,7 @@ export abstract class Command
         if(cmdMeta.desc.length > 100)
             throw new Error(`${k.yellow(`/${cmdMeta.name}`)}: Description can't be longer than 100 chars, got ${cmdMeta.desc.length}`);
 
-        if(Command.isCommandMeta(cmdMeta))
+        if(!Command.isSubcommandMeta(cmdMeta))
         {
             // top level command
             this.meta = { ...fallbackMeta, ...cmdMeta };
@@ -96,7 +96,7 @@ export abstract class Command
                         opt.setName(arg.name)
                             .setDescription(arg.desc)
                             .setRequired(arg.required ?? false)
-                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
+                            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice)
                     );
                 else if(arg.type === ApplicationCommandOptionType.Role)
                     data.addRoleOption(opt =>
@@ -187,7 +187,7 @@ export abstract class Command
                                 opt.setName(arg.name)
                                     .setDescription(arg.desc)
                                     .setRequired(arg.required ?? false)
-                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildPublicThread, ChannelType.GuildPrivateThread, ChannelType.GuildVoice)
+                                    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice)
                             );
                         else if(arg.type === ApplicationCommandOptionType.Role)
                             sc.addRoleOption(opt =>
@@ -362,20 +362,20 @@ export abstract class Command
     //#SECTION static
 
     /**
-     * Returns an object from passed buttons that can be spread onto an interaction reply  
-     * Returns an empty object if no buttons were passed, so it's always safe to spread
+     * Returns an object from passed buttons that can be passed to or spread onto an interaction reply
      * @example ```ts
-     * await int.reply({ ...Command.useButtons(btns), content: "foo" });
+     * await int.reply(Command.useButtons(btns));
+     * await channel.send({ ...Command.useButtons(btns), content: "foo", embeds: [] });
      * ```
      */
     public static useButtons(buttons?: ButtonBuilder | Tuple<Tuple<ButtonBuilder, 1|2|3|4|5>, 1|2|3|4|5>): { components: ActionRowBuilder<ButtonBuilder>[] }
     {
         const actRows = Array.isArray(buttons) ? buttons : (buttons ? [[buttons]] : []);
-        const rows: ActionRowBuilder<ButtonBuilder>[] = [];
 
-        actRows.forEach(row => {
-            rows.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
-        });
+        const rows = actRows.reduce<ActionRowBuilder<ButtonBuilder>[]>((a, row) => {
+            a.push(new ActionRowBuilder<ButtonBuilder>().setComponents(row));
+            return a;
+        }, []);
 
         return { components: rows };
     }

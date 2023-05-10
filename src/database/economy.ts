@@ -1,7 +1,7 @@
 import { prisma } from "@database/client";
-import { PrismaPromise } from "@prisma/client";
 import { getRedis } from "@src/redis";
 import { nowInSeconds } from "@utils/time";
+import { Prisma } from "@prisma/client";
 
 const redis = getRedis();
 
@@ -204,7 +204,7 @@ export async function incrementTotalWorks(userId: string, guildId: string, by?: 
 
 export async function addOrSubCoinsToMultipleUsers(users: string[], guildId: string, coins: number): Promise<void> {
 
-    const txQueue: PrismaPromise<any>[] = []; // eslint-disable-line
+    const txQueue: Prisma.PrismaPromise<any>[] = []; // eslint-disable-line
 
     for(let i = 0; i < users.length; i++) {
         txQueue.push(

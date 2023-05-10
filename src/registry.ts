@@ -54,11 +54,17 @@ export function getCtxMenus()
     return ctxMenus;
 }
 
-/** Registers all slash commands and context menus for multiple guilds */
-export async function registerGuildCommands(guildID: string[]): Promise<void>
-/** Registers all slash commands and context menus for one guild */
-export async function registerGuildCommands(guildID: string): Promise<void>
-export async function registerGuildCommands(...guildIDs: (string|string[])[]): Promise<void>
+/**
+ * (Re-)registers all slash commands and context menus for multiple guilds.  
+ * Set `forceUpdate` to true to (re-)register commands even if their meta hash hasn't changed.
+ */
+export async function registerGuildCommands(guildID: string[], forceUpdate?: boolean): Promise<void>
+/**
+ * (Re-)registers all slash commands and context menus for one guild.  
+ * Set `forceUpdate` to true to (re-)register commands even if their meta hash hasn't changed.
+ */
+export async function registerGuildCommands(guildID: string, forceUpdate?: boolean): Promise<void>
+export async function registerGuildCommands(guildIDs: (string|string[]), forceUpdate = false): Promise<void>
 {
     if(!client)
         throw new Error("Registry isn't initialized yet!");
@@ -114,9 +120,9 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     // 
     // console.log(`• Registered ${k.green(slashCmds.length)} global slash command${slashCmds.length != 1 ? "s" : ""}`);
 
-    if(commandsChanged) {
+    if(commandsChanged || forceUpdate) {
         const r = k.bold(k.bgYellow(k.black("↻ ")));
-        console.log(`${r} ${k.underline("Command meta has changed, updating commands")} ${r}\n`);
+        !forceUpdate && console.log(`${r} ${k.underline("Command meta has changed, updating commands")} ${r}\n`);
 
         // register guild commands
         for await(const guild of guilds) {
@@ -140,21 +146,22 @@ export async function registerGuildCommands(...guildIDs: (string|string[])[]): P
     }
 }
 
-const cmdHashPath = ".command_hash";
-
 /** Sets a new command hash by providing the JSON data */
 async function updateCommandHash(cmds: RESTPostAPIApplicationCommandsJSONBody[]) {
-    const curHash = await pathExists(cmdHashPath)
-        ? (await readFile(cmdHashPath)).toString()
-        : "";
-    const newHash = createHash("SHA512")
-        .update(JSON.stringify(cmds))
-        .digest("binary");
+    const curHash = await pathExists(settings.commands.hashFilePath)
+        ? await readFile(settings.commands.hashFilePath)
+        : Buffer.alloc(0);
+    const newHash = Buffer.from(
+        createHash("SHA512")
+            .update(JSON.stringify(cmds))
+            .digest("binary"),
+        "binary"
+    );
 
     let commandsChanged = false;
 
-    if(newHash !== curHash) {
-        await writeFile(cmdHashPath, newHash);
+    if(curHash.compare(newHash) !== 0) {
+        await writeFile(settings.commands.hashFilePath, newHash);
 
         commandsChanged = true;
     }
