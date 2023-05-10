@@ -56,6 +56,7 @@ export const settings: Settings = {
     emojiList: [ "🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯", "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹" ],
     devs: getEnvVar("DEV_IDS", "stringArray") ?? [],
     commands: {
+        hashFilePath: ".command_hash",
         execEnabled: !envVarEquals("EXEC_CMD_ENABLED", false),
         musicEnabled:!envVarEquals("MUSIC_CMDS_ENABLED", false),
     },
@@ -134,6 +135,7 @@ interface Settings {
     emojiList: string[];
     devs: string[];
     commands: {
+        hashFilePath: string;
         execEnabled: boolean;
         musicEnabled: boolean;
     }

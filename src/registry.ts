@@ -146,12 +146,10 @@ export async function registerGuildCommands(guildIDs: (string|string[]), forceUp
     }
 }
 
-const cmdHashPath = ".command_hash";
-
 /** Sets a new command hash by providing the JSON data */
 async function updateCommandHash(cmds: RESTPostAPIApplicationCommandsJSONBody[]) {
-    const curHash = await pathExists(cmdHashPath)
-        ? await readFile(cmdHashPath)
+    const curHash = await pathExists(settings.commands.hashFilePath)
+        ? await readFile(settings.commands.hashFilePath)
         : Buffer.alloc(0);
     const newHash = Buffer.from(
         createHash("SHA512")
@@ -163,7 +161,7 @@ async function updateCommandHash(cmds: RESTPostAPIApplicationCommandsJSONBody[])
     let commandsChanged = false;
 
     if(curHash.compare(newHash) !== 0) {
-        await writeFile(cmdHashPath, newHash);
+        await writeFile(settings.commands.hashFilePath, newHash);
 
         commandsChanged = true;
     }
