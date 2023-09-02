@@ -1,6 +1,7 @@
 import { prisma } from "../src/database/client";
 import { contests, guildId, submissions } from "./contestData";
 import { entries } from "./2048leaderboardData";
+import { users } from "./users";
 
 const run = async () => {
     await prepareDb();
@@ -105,17 +106,17 @@ async function prepareDb()
                 contestChannelId: "715561909482422363"
             },
         });
-
-        return;
     }
 
-    const hasContChan = (await prisma.guildSettings.findUnique({
+
+
+    const hasContestChan = (await prisma.guildSettings.findUnique({
         where: {
             guildId,
         },
     }))?.contestChannelId;
 
-    !hasContChan && await prisma.guildSettings.upsert({
+    !hasContestChan && await prisma.guildSettings.upsert({
         where: {
             guildId,
         },
@@ -126,6 +127,19 @@ async function prepareDb()
             guildId,
             contestChannelId: "715561909482422363"
         },
+    });
+
+
+    users.map(async (user) => {
+        await prisma.user.upsert({
+            where: {
+                id: user.id,
+            },
+            update: {},
+            create: {
+                id: user.id
+            }
+        });
     });
 
     entries.map(async (entry) => {

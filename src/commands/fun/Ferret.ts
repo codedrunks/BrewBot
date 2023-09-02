@@ -27,16 +27,16 @@ export class Ferret extends Command
     {
         await this.deferReply(int);
 
-        const { data, status, statusText } = await axios.get("https://ferretapi.canarado.xyz/", { timeout: 10000 });
+        const { data, status, statusText } = await axios.get("https://ferret-api.canarado.xyz/api/random", { timeout: 10000 });
 
-        if(status < 200 || status >= 300 || !data.file)
+        if(status < 200 || status >= 300 || !data.url)
             return await this.reply(int, `Ferret API is currently unreachable. Please try again later.\nStatus: ${status} - ${statusText}`, true);
 
         const embed = new EmbedBuilder()
             .setTitle(randomItem(titles))
             .setColor(settings.embedColors.default)
-            .setFooter({ text: "https://ferret.canarado.xyz" })
-            .setImage(data.file);
+            .setFooter({ text: "https://ferret-api.canarado.xyz" })
+            .setImage(data.url);
 
         await this.editReply(int, embed);
     }
