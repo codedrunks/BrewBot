@@ -10,12 +10,7 @@ interface BtnMsgOpts {
     timeout: number;
 }
 
-/**
- * Wrapper for discord.js' `ButtonBuilder`  
- * Contains convenience methods for easier creation of messages with attached buttons
- */
-export class BtnMsg extends EmitterBase
-{
+export interface BtnMsg extends EmitterBase {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: ButtonBuilder, int: ButtonInteraction) => void): this;
     /** Gets emitted when this BtnMsg times out */
@@ -24,12 +19,14 @@ export class BtnMsg extends EmitterBase
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
     /** Emitted on error and unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
+}
 
-    on(event: string, listener: (...args: any[]) => void): this {
-        super.on(event, listener);
-        return this;
-    }
-
+/**
+ * Wrapper for discord.js' `ButtonBuilder`  
+ * Contains convenience methods for easier creation of messages with attached buttons
+ */
+export class BtnMsg extends EmitterBase
+{
     readonly btns: ButtonBuilder[][];
     readonly msg: string | EmbedBuilder[];
 
