@@ -38,7 +38,7 @@ interface PageEmbedSettings {
 }
 
 
-export interface PageEmbed extends EmitterBase
+interface IPageEmbed extends EmitterBase
 {
     /** Emitted whenever an extra button is pressed */
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
@@ -52,7 +52,7 @@ export interface PageEmbed extends EmitterBase
     on(event: "update", listener: (msg?: Message) => void): this;
 }
 
-export class PageEmbed extends EmitterBase
+export class PageEmbed extends EmitterBase implements IPageEmbed
 {
     private readonly settings: PageEmbedSettings;
 

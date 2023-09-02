@@ -1,14 +1,10 @@
-import { ButtonInteraction, CommandInteraction, CommandInteractionOption, ActionRowBuilder, ButtonBuilder, EmbedBuilder, PermissionsString, ApplicationCommandOptionType, ChannelType } from "discord.js";
+import { CommandInteraction, CommandInteractionOption, ActionRowBuilder, ButtonBuilder, EmbedBuilder, PermissionsString, ApplicationCommandOptionType, ChannelType } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { CommandMeta, SubcommandMeta, Tuple } from "@src/types";
 import { RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 import k from "kleur";
 import { embedify } from "@utils/embedify";
 import { settings } from "./settings";
-
-export interface Command {
-    on(evt: "buttonPress", listener: (guildId: string, messageId: string, int: ButtonInteraction) => void): this;
-}
 
 /** Base class for all slash commands */
 export abstract class Command

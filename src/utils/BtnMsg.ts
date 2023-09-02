@@ -10,7 +10,7 @@ interface BtnMsgOpts {
     timeout: number;
 }
 
-export interface BtnMsg {
+interface IBtnMsg {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: ButtonBuilder, int: ButtonInteraction) => void): this;
     /** Gets emitted when this BtnMsg times out */
@@ -25,7 +25,7 @@ export interface BtnMsg {
  * Wrapper for discord.js' `ButtonBuilder`  
  * Contains convenience methods for easier creation of messages with attached buttons
  */
-export class BtnMsg extends EmitterBase
+export class BtnMsg extends EmitterBase implements IBtnMsg
 {
     readonly btns: ButtonBuilder[][];
     readonly msg: string | EmbedBuilder[];
