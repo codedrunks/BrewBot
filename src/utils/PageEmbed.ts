@@ -37,9 +37,7 @@ interface PageEmbedSettings {
     // TODO: embedTemplate function to allow modifying the pages on the fly without editing the pages prop
 }
 
-
-export interface PageEmbed extends EmitterBase
-{
+export interface PageEmbed extends EmitterBase {
     /** Emitted whenever an extra button is pressed */
     on(event: "press", listener: (int: ButtonInteraction, type: BtnType) => void): this;
     /** Emitted whenever this PageEmbed times out and is going to deregister and destroy itself */

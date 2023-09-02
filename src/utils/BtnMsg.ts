@@ -10,7 +10,7 @@ interface BtnMsgOpts {
     timeout: number;
 }
 
-export interface BtnMsg {
+export interface BtnMsg extends EmitterBase {
     /** Gets emitted whenever a button was pressed */
     on(event: "press", listener: (btn: ButtonBuilder, int: ButtonInteraction) => void): this;
     /** Gets emitted when this BtnMsg times out */

@@ -198,8 +198,7 @@ export function registerEvents()
 
 //#MARKER buttons
 
-
-interface BtnListener {
+interface BtnListener extends EventEmitter {
     /**
      * Emitted when a button is pressed. Gets passed the instance of the clicked button.  
      * Make sure to check that you're responding to the correct `btn`'s interaction by validating the customId!

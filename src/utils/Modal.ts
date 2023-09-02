@@ -10,7 +10,7 @@ interface ModalConstructor {
     inputs: TextInputBuilder[];
 }
 
-export interface Modal {
+export interface Modal extends EmitterBase {
     /** Emitted on error and unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
     /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
@@ -59,7 +59,7 @@ export abstract class Modal extends EmitterBase {
     {
         if(typeof content === "string")
             await int.reply({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof EmbedBuilder || content instanceof Array<EmbedBuilder>)
+        else if(content instanceof EmbedBuilder || Array.isArray(content))
             await int.reply({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
@@ -83,7 +83,7 @@ export abstract class Modal extends EmitterBase {
     {
         if(typeof content === "string")
             await int.editReply({ content, ...Command.useButtons(actions) });
-        else if(content instanceof EmbedBuilder || content instanceof Array<EmbedBuilder>)
+        else if(content instanceof EmbedBuilder || Array.isArray(content))
             await int.editReply({ embeds: Array.isArray(content) ? content : [content], ...Command.useButtons(actions) });
     }
 
@@ -98,7 +98,7 @@ export abstract class Modal extends EmitterBase {
     {
         if(typeof content === "string")
             await int.followUp({ content, ephemeral, ...Command.useButtons(actions) });
-        else if(content instanceof EmbedBuilder || content instanceof Array<EmbedBuilder>)
+        else if(content instanceof EmbedBuilder || Array.isArray(content))
             await int.followUp({ embeds: Array.isArray(content) ? content : [content], ephemeral, ...Command.useButtons(actions) });
     }
 
