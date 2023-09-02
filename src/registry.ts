@@ -198,18 +198,21 @@ export function registerEvents()
 
 //#MARKER buttons
 
+// TODO:FIXME: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
+class BtnListener extends EventEmitter
+{
 
-interface IBtnListener {
     /**
      * Emitted when a button is pressed. Gets passed the instance of the clicked button.  
      * Make sure to check that you're responding to the correct `btn`'s interaction by validating the customId!
      */
     on(event: "press", listener: (int: ButtonInteraction, btn: ButtonBuilder) => void): this;
-}
 
-// TODO:FIXME: I'm pretty sure this causes memory leaks if the events aren't cleaned up -sv
-class BtnListener extends EventEmitter implements IBtnListener
-{
+    on(event: string, listener: (...args: any[]) => void): this {
+        super.on(event, listener);
+        return this;
+    }
+
     private btns = new Collection<string, ButtonBuilder>();
 
     constructor()

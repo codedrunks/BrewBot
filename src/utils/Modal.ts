@@ -10,15 +10,19 @@ interface ModalConstructor {
     inputs: TextInputBuilder[];
 }
 
-interface IModal {
+/** Base class for all Modals */
+export abstract class Modal extends EmitterBase {
+
     /** Emitted on error and unhandled Promise rejection */
     on(event: "error", listener: (err: Error) => void): this;
     /** Gets emitted when this modal has finished submitting and needs to be deleted from the registry */
     on(event: "destroy", listener: (btnIds: string[]) => void): this;
-}
 
-/** Base class for all Modals */
-export abstract class Modal extends EmitterBase implements IModal {
+    on(event: string, listener: (...args: any[]) => void): this {
+        super.on(event, listener);
+        return this;
+    }
+
     readonly id: string;
     private readonly internalModal: DjsModal;
 
